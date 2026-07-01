@@ -1,5 +1,6 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const API_BASE_URL = window.MEDTOUR_API_BASE_URL || "http://127.0.0.1:8000";
+const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
 
 const state = {

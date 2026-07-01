@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from typing import Any, Literal
 import os
+from pathlib import Path
+import re
 
 from dotenv import load_dotenv
 from fastapi import Cookie, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 load_dotenv()
@@ -51,6 +53,12 @@ local_planner = LocalPlannerService()
 _adk_runner: AdkPlannerRunner | None = None
 
 SESSION_COOKIE_NAME = "medtour_session"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+STATIC_FILES = {
+    "index.html": PROJECT_ROOT / "index.html",
+    "app.js": PROJECT_ROOT / "app.js",
+    "styles.css": PROJECT_ROOT / "styles.css",
+}
 
 
 @app.exception_handler(Exception)
@@ -633,6 +641,8 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
         for index, option in enumerate(report.get("city_options") or report.get("options") or [])
         if isinstance(option, dict)
     ]
+    comparison = report.get("comparison") or {}
+    _apply_comparison_metrics_to_options(options, comparison, request.currency)
     recommended_option_id = report.get("recommended_option_id") or (options[0]["option_id"] if options else None)
     for option in options:
         option["selected_as_primary"] = option["option_id"] == recommended_option_id
@@ -643,7 +653,7 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
         "report_status": report.get("report_status", "ready"),
         "profile": profile,
         "city_options": options,
-        "comparison": report.get("comparison") or _comparison_from_options(options),
+        "comparison": comparison or _comparison_from_options(options),
         "recommended_option_id": recommended_option_id,
         "confirmation_requests": report.get("confirmation_requests", []),
         "disclaimers": report.get("disclaimers", []),
@@ -654,6 +664,71 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
     }
 
 
+def _apply_comparison_metrics_to_options(
+    options: list[dict[str, Any]],
+    comparison: dict[str, Any],
+    currency: str,
+) -> None:
+    metrics = comparison.get("metrics") if isinstance(comparison, dict) else None
+    if not isinstance(metrics, list):
+        return
+    for option in options:
+        metric = _find_comparison_metric(option, metrics)
+        if not metric:
+            continue
+        current_savings = option.get("estimated_net_savings") or {}
+        if (
+            not _money_has_numeric_value(option.get("estimated_net_savings"), current_savings)
+            or current_savings.get("source") == "derived_from_home_benchmark"
+        ):
+            raw_metric_savings = _first_present(
+                metric,
+                "estimated_savings",
+                "estimated_net_savings",
+                "net_savings",
+                "savings",
+                "savings_vs_home",
+                "estimated_savings_vs_home",
+            )
+            savings = _normalize_money(raw_metric_savings, currency)
+            if _money_has_numeric_value(raw_metric_savings, savings):
+                option["estimated_net_savings"] = savings
+        if not _money_has_numeric_value(option.get("total_estimated_cost"), option.get("total_estimated_cost") or {}):
+            option["total_estimated_cost"] = _normalize_money(
+                _first_present(metric, "total_cost", "total_estimated_cost"),
+                currency,
+            )
+        if not _money_has_numeric_value(option.get("home_country_benchmark"), option.get("home_country_benchmark") or {}):
+            option["home_country_benchmark"] = _normalize_money(
+                _first_present(
+                    metric,
+                    "home_country_benchmark",
+                    "home_cost_benchmark",
+                    "home_total_cost",
+                    "home_estimated_cost",
+                ),
+                currency,
+            )
+        if not _money_has_numeric_value(option.get("estimated_net_savings"), option.get("estimated_net_savings") or {}):
+            option["estimated_net_savings"] = _normalize_estimated_savings({**metric, **option}, option, currency)
+
+
+def _find_comparison_metric(option: dict[str, Any], metrics: list[Any]) -> dict[str, Any] | None:
+    option_id = option.get("option_id")
+    city = str(option.get("city") or "").strip().lower()
+    for metric in metrics:
+        if not isinstance(metric, dict):
+            continue
+        if option_id and metric.get("option_id") == option_id:
+            return metric
+    for metric in metrics:
+        if not isinstance(metric, dict):
+            continue
+        if city and str(metric.get("city") or "").strip().lower() == city:
+            return metric
+    return None
+
+
 def _normalize_city_option(option: dict[str, Any], index: int, currency: str) -> dict[str, Any]:
     city = option.get("city") or f"City {index + 1}"
     option_id = option.get("option_id") or f"opt_{_slug(city)}_{index + 1}"
@@ -662,8 +737,24 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
     normalized["city"] = city
     normalized["recommendation_label"] = option.get("recommendation_label") or option.get("label") or "City Option"
     normalized["target_hospital"] = option.get("target_hospital") or option.get("hospital") or option.get("hospital_name") or "Hospital to confirm"
-    normalized["required_days"] = int(option.get("required_days") or option.get("total_days") or len(option.get("timeline", [])) or 0)
-    normalized["timeline"] = _normalize_timeline(option.get("timeline", []), currency)
+    timeline_source = _first_non_empty(
+        option,
+        "timeline",
+        "detailed_timeline",
+        "plan_timeline",
+        "hospital_timeline",
+        "itinerary",
+        "schedule",
+        "days",
+        "timeline_days",
+    )
+    normalized["required_days"] = int(
+        option.get("required_days")
+        or option.get("total_days")
+        or _timeline_day_count(timeline_source)
+        or 0
+    )
+    normalized["timeline"] = _normalize_timeline(timeline_source, currency)
     normalized["cost_breakdown"] = {
         key: _normalize_money(value, currency)
         for key, value in (option.get("cost_breakdown") or {}).items()
@@ -681,7 +772,18 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
             "currency": currency,
         }
     normalized["total_estimated_cost"] = _normalize_money(total, currency)
-    normalized["estimated_net_savings"] = _normalize_money(option.get("estimated_net_savings") or option.get("estimated_net_savings_sgd"), currency)
+    normalized["home_country_benchmark"] = _normalize_money(
+        _first_present(
+            option,
+            "home_country_benchmark",
+            "home_country_benchmark_sgd",
+            "home_cost_benchmark",
+            "home_total_cost",
+            "home_estimated_cost",
+        ),
+        currency,
+    )
+    normalized["estimated_net_savings"] = _normalize_estimated_savings(option, normalized, currency)
     normalized["readiness_items"] = _normalize_readiness_items(option.get("readiness_items") or option.get("readiness_summary") or [])
     normalized["key_risks"] = option.get("key_risks") or []
     normalized["metadata"] = {
@@ -690,15 +792,38 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
         "data_status": "estimated",
         **(option.get("metadata") or {}),
     }
+    if not normalized["timeline"]:
+        normalized["timeline"] = _fallback_timeline_for_option(normalized, currency)
+        normalized["required_days"] = normalized["required_days"] or len(normalized["timeline"])
     return normalized
 
 
 def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
+    if isinstance(timeline, dict):
+        nested = _first_non_empty(
+            timeline,
+            "days",
+            "timeline",
+            "items",
+            "events",
+            "schedule",
+            "itinerary",
+            "timeline_days",
+        )
+        if nested is None:
+            nested = [
+                {"title": str(title), "items": items}
+                for title, items in timeline.items()
+                if isinstance(items, list)
+            ]
+        timeline = nested
     if not isinstance(timeline, list):
         return []
-    if timeline and all(isinstance(item, dict) and ("time" in item or "event" in item) for item in timeline):
+    if timeline and all(_looks_like_timeline_item(item) for item in timeline):
         grouped: dict[str, list[dict[str, Any]]] = {}
         for item in timeline:
+            if isinstance(item, str):
+                item = {"event": item}
             time_value = str(item.get("time") or "")
             date_value = time_value[:10] if len(time_value) >= 10 else ""
             grouped.setdefault(date_value, []).append(item)
@@ -710,11 +835,14 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
                 "items": [
                     {
                         "category": "medical" if any(keyword in str(item.get("event", "")).lower() for keyword in ("hospital", "registration", "diagnostic", "procedure", "follow-up", "consultation")) else "readiness",
-                        "title": item.get("event") or "Plan item",
+                        "title": item.get("event") or item.get("title") or item.get("name") or "Plan item",
                         "start_time": _normalize_agent_time(item.get("time"), date_value),
                         "end_time": _normalize_agent_time(item.get("time"), date_value),
-                        "location_name": item.get("location_name"),
+                        "location_name": item.get("location_name") or item.get("location"),
                         "details": item.get("details") or {},
+                        "estimated_cost": _normalize_money(item["estimated_cost"], currency)
+                        if item.get("estimated_cost") is not None
+                        else None,
                     }
                     for item in items
                 ],
@@ -726,13 +854,16 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
         if not isinstance(day, dict):
             continue
         items = []
-        for item in day.get("items", []):
+        day_items = day.get("items") or day.get("events") or day.get("schedule") or day.get("activities") or []
+        for item in day_items:
+            if isinstance(item, str):
+                item = {"title": item}
             if not isinstance(item, dict):
                 continue
             item = dict(item)
             item.setdefault("item_id", f"tli_agent_{index}_{len(items) + 1}")
             item.setdefault("category", "readiness")
-            item.setdefault("title", item.get("event") or "Plan item")
+            item.setdefault("title", item.get("event") or item.get("name") or "Plan item")
             if item.get("time") and not item.get("start_time"):
                 item["start_time"] = _normalize_agent_time(item.get("time"), day.get("date") or "")
             if item.get("start_time") and not item.get("end_time"):
@@ -752,6 +883,35 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
     return days
 
 
+def _looks_like_timeline_item(item: Any) -> bool:
+    if isinstance(item, str):
+        return True
+    if not isinstance(item, dict):
+        return False
+    return not any(key in item for key in ("items", "events", "schedule", "activities")) and any(
+        key in item
+        for key in (
+            "time",
+            "event",
+            "title",
+            "name",
+            "location",
+            "location_name",
+            "start_time",
+            "estimated_cost",
+        )
+    )
+
+
+def _timeline_day_count(timeline: Any) -> int:
+    normalized = timeline
+    if isinstance(normalized, dict):
+        normalized = _first_non_empty(normalized, "days", "timeline", "schedule", "itinerary", "timeline_days")
+    if isinstance(normalized, list):
+        return len(normalized)
+    return 0
+
+
 def _normalize_agent_time(value: Any, fallback_date: str) -> str:
     text = str(value or "")
     if "T" in text and len(text) == 16:
@@ -765,6 +925,177 @@ def _normalize_agent_time(value: Any, fallback_date: str) -> str:
     if fallback_date:
         return f"{fallback_date}T09:00:00+08:00"
     return ""
+
+
+def _fallback_timeline_for_option(option: dict[str, Any], currency: str) -> list[dict[str, Any]]:
+    city = option.get("city") or "Selected city"
+    hospital = option.get("target_hospital") or "selected hospital international clinic"
+    flight = option.get("flight") or {}
+    hotel = option.get("hotel") or {}
+    protocol = option.get("hospital_visit_protocol") or {}
+    contact = protocol.get("registration_contact") if isinstance(protocol, dict) else {}
+    doctor = protocol.get("suggested_doctor") if isinstance(protocol, dict) else {}
+    registration_email = (
+        (contact or {}).get("email")
+        or option.get("registration_email")
+        or "international.service@example-hospital.cn"
+    )
+    doctor_name = (
+        (doctor or {}).get("name")
+        or option.get("suggested_doctor_name")
+        or "Dr. Li Wen, International Clinic Coordinator"
+    )
+    doctor_specialty = (
+        (doctor or {}).get("specialty")
+        or option.get("suggested_doctor_specialty")
+        or "International outpatient coordination"
+    )
+    medical_cost = option.get("cost_breakdown", {}).get("medical")
+    flight_cost = flight.get("estimated_cost") or option.get("cost_breakdown", {}).get("flight")
+    hotel_cost = option.get("cost_breakdown", {}).get("hotel")
+
+    def item(
+        category: str,
+        title: str,
+        day: int,
+        start: str,
+        end: str,
+        *,
+        location: str = "",
+        cost: Any = None,
+        hard: bool = False,
+        steps: list[str] | None = None,
+    ) -> dict[str, Any]:
+        details = {}
+        if category == "medical":
+            details = {
+                "registration_email": registration_email,
+                "registration_email_status": "needs_confirmation",
+                "suggested_doctor_name": doctor_name,
+                "suggested_doctor_specialty": doctor_specialty,
+                "hospital_steps": steps or [],
+            }
+        return {
+            "item_id": f"tli_fallback_{day}_{_slug(title)}",
+            "category": category,
+            "title": title,
+            "start_time": f"0000-00-{day:02d}T{start}:00+08:00",
+            "end_time": f"0000-00-{day:02d}T{end}:00+08:00",
+            "location_name": location,
+            "estimated_cost": _normalize_money(cost, currency) if cost is not None else None,
+            "hard_constraint": hard,
+            "confidence_level": "medium",
+            "details": details,
+        }
+
+    return [
+        {
+            "day": 1,
+            "date": "",
+            "title": f"Arrival and {city} Setup",
+            "items": [
+                item("flight", "Arrival flight", 1, "08:00", "13:30", location=flight.get("arrival_airport") or city, cost=flight_cost),
+                item("hotel", "Hotel check-in near international clinic", 1, "15:00", "16:00", location=hotel.get("name") or city, cost=hotel_cost),
+                item(
+                    "medical",
+                    "International desk pre-registration email check",
+                    1,
+                    "16:30",
+                    "17:00",
+                    location=hospital,
+                    hard=True,
+                    steps=[
+                        "Confirm official international desk email before sending documents.",
+                        "Send passport name, preferred appointment window, medical purpose, and current insurance holder.",
+                        "Ask for doctor assignment, deposit requirement, interpreter support, and claim-document process.",
+                    ],
+                ),
+            ],
+        },
+        {
+            "day": 2,
+            "date": "",
+            "title": "Registration and Medical Assessment",
+            "items": [
+                item(
+                    "medical",
+                    "International outpatient registration and file setup",
+                    2,
+                    "08:30",
+                    "09:30",
+                    location=hospital,
+                    hard=True,
+                    steps=[
+                        "Show passport, appointment confirmation, insurance card or guarantee letter, and payment method.",
+                        "Create outpatient profile and confirm invoice name for insurance reimbursement.",
+                        "Complete consent, privacy, interpreter, and deposit or pre-authorization checks.",
+                    ],
+                ),
+                item(
+                    "medical",
+                    "Program-specific diagnostics and nurse intake",
+                    2,
+                    "09:30",
+                    "12:00",
+                    location=hospital,
+                    cost=medical_cost,
+                    hard=True,
+                    steps=[
+                        "Complete vitals, medical history, medication review, and program-specific tests.",
+                        "Confirm whether results allow the planned procedure or checkup to continue on this trip.",
+                    ],
+                ),
+                item(
+                    "medical",
+                    "Suggested doctor consultation and treatment decision",
+                    2,
+                    "14:00",
+                    "15:30",
+                    location=hospital,
+                    hard=True,
+                    steps=[
+                        f"Meet {doctor_name} or request confirmed assignment through the international clinic.",
+                        "Review eligibility, alternatives, risks, final price, insurance handling, and timing.",
+                    ],
+                ),
+            ],
+        },
+        {
+            "day": 3,
+            "date": "",
+            "title": "Procedure, Documents, and Follow-up",
+            "items": [
+                item(
+                    "medical",
+                    "Procedure or treatment block",
+                    3,
+                    "09:00",
+                    "12:00",
+                    location=hospital,
+                    cost=medical_cost,
+                    hard=True,
+                    steps=[
+                        "Reconfirm consent, assigned doctor, final estimate, deposit, and pre-authorization status.",
+                        "Proceed only after same-day safety and eligibility confirmation.",
+                    ],
+                ),
+                item(
+                    "medical",
+                    "Discharge briefing and insurance claim document collection",
+                    3,
+                    "14:00",
+                    "15:30",
+                    location=hospital,
+                    hard=True,
+                    steps=[
+                        "Collect medical report, diagnosis certificate, itemized invoice, prescriptions, and receipts.",
+                        "Confirm emergency contact route, medication instructions, and remote follow-up channel.",
+                    ],
+                ),
+                item("flight", "Return flight after medical clearance", 3, "17:30", "22:30", location=flight.get("arrival_airport") or city, cost=flight_cost),
+            ],
+        },
+    ]
 
 
 def _normalize_readiness_items(items: Any) -> list[dict[str, Any]]:
@@ -792,14 +1123,165 @@ def _normalize_readiness_items(items: Any) -> list[dict[str, Any]]:
 def _normalize_money(value: Any, currency: str) -> dict[str, Any]:
     if isinstance(value, dict):
         result = dict(value)
-        result["amount"] = _safe_float(result.get("amount") or result.get("mid") or result.get("value") or 0)
-        result["currency"] = result.get("currency") or currency
+        amount = _extract_money_amount(result)
+        result["amount"] = amount
+        result["currency"] = result.get("currency") or _extract_money_currency(result) or currency
+        for range_key in ("low", "high", "min", "max"):
+            if range_key in result:
+                result[range_key] = _safe_float(result[range_key])
         return result
     if isinstance(value, (int, float)):
         return {"amount": float(value), "currency": currency}
     if isinstance(value, str):
         return {"amount": _safe_float(value), "currency": currency, "label": value}
     return {"amount": 0, "currency": currency}
+
+
+def _extract_money_amount(value: dict[str, Any]) -> float:
+    for key in (
+        "amount",
+        "mid",
+        "median",
+        "value",
+        "estimated_amount",
+        "estimated_cost",
+        "estimated_cost_sgd",
+        "estimated_cost_rmb",
+        "cost",
+        "cost_sgd",
+        "cost_rmb",
+        "price",
+        "price_sgd",
+        "price_rmb",
+        "total",
+        "total_cost",
+        "total_estimated_cost",
+        "premium",
+        "estimated_premium",
+    ):
+        if key in value and value[key] is not None:
+            amount = _money_amount_from_candidate(value[key])
+            if amount is not None:
+                return amount
+
+    low = _first_present(value, "low", "min", "minimum", "lower_bound", "from")
+    high = _first_present(value, "high", "max", "maximum", "upper_bound", "to")
+    low_amount = _money_amount_from_candidate(low)
+    high_amount = _money_amount_from_candidate(high)
+    if low_amount is not None and high_amount is not None:
+        return (low_amount + high_amount) / 2
+    if low_amount is not None:
+        return low_amount
+    if high_amount is not None:
+        return high_amount
+
+    range_value = _first_present(value, "range", "estimate_range", "estimated_range")
+    range_amount = _money_range_midpoint(range_value)
+    if range_amount is not None:
+        return range_amount
+
+    return 0
+
+
+def _money_amount_from_candidate(candidate: Any) -> float | None:
+    if isinstance(candidate, (int, float)):
+        return float(candidate)
+    if isinstance(candidate, str):
+        amount = _safe_float(candidate)
+        return amount if amount != 0 else None
+    if isinstance(candidate, dict):
+        amount = _extract_money_amount(candidate)
+        return amount if amount != 0 else None
+    return None
+
+
+def _money_range_midpoint(value: Any) -> float | None:
+    if isinstance(value, (list, tuple)) and value:
+        amounts = [
+            amount
+            for amount in (_money_amount_from_candidate(item) for item in value[:2])
+            if amount is not None
+        ]
+        if len(amounts) == 2:
+            return sum(amounts) / 2
+        if amounts:
+            return amounts[0]
+    if isinstance(value, str):
+        numbers = _numbers_from_text(value)
+        if len(numbers) >= 2:
+            return (numbers[0] + numbers[1]) / 2
+        if numbers:
+            return numbers[0]
+    return None
+
+
+def _extract_money_currency(value: dict[str, Any]) -> str | None:
+    for key in ("amount", "estimated_cost", "cost", "price", "total", "estimated_premium"):
+        nested = value.get(key)
+        if isinstance(nested, dict) and nested.get("currency"):
+            return nested["currency"]
+    return None
+
+
+def _normalize_estimated_savings(
+    option: dict[str, Any],
+    normalized: dict[str, Any],
+    currency: str,
+) -> dict[str, Any]:
+    raw_savings = _first_present(
+        option,
+        "estimated_net_savings",
+        "estimated_net_savings_sgd",
+        "estimated_savings",
+        "estimated_savings_sgd",
+        "net_savings",
+        "savings",
+        "savings_vs_home",
+        "estimated_savings_vs_home",
+    )
+    savings = _normalize_money(raw_savings, currency)
+    if _money_has_numeric_value(raw_savings, savings):
+        return savings
+
+    home_benchmark = normalized.get("home_country_benchmark") or {}
+    total = normalized.get("total_estimated_cost") or {}
+    home_amount = float(home_benchmark.get("amount") or 0)
+    total_amount = float(total.get("amount") or 0)
+    if home_amount and total_amount:
+        return {
+            "amount": max(home_amount - total_amount, 0),
+            "currency": home_benchmark.get("currency") or total.get("currency") or currency,
+            "source": "derived_from_home_benchmark",
+        }
+    return savings
+
+
+def _first_present(payload: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in payload and payload[key] is not None:
+            return payload[key]
+    return None
+
+
+def _first_non_empty(payload: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key not in payload:
+            continue
+        value = payload[key]
+        if value is None:
+            continue
+        if isinstance(value, (str, list, dict, tuple, set)) and not value:
+            continue
+        return value
+    return None
+
+
+def _money_has_numeric_value(raw_value: Any, normalized_value: dict[str, Any]) -> bool:
+    if raw_value is None:
+        return False
+    if isinstance(raw_value, str) and raw_value.strip().upper() in {"", "TBD", "N/A", "NA", "-", "UNKNOWN"}:
+        return False
+    return float(normalized_value.get("amount") or 0) != 0
 
 
 def _safe_float(value: Any) -> float:
@@ -812,8 +1294,21 @@ def _safe_float(value: Any) -> float:
         try:
             return float(cleaned)
         except ValueError:
+            numbers = _numbers_from_text(cleaned)
+            if numbers:
+                return numbers[0]
             return 0
     return 0
+
+
+def _numbers_from_text(value: str) -> list[float]:
+    numbers = []
+    for match in re.finditer(r"[-+]?\d*\.?\d+", value.replace(",", "")):
+        try:
+            numbers.append(float(match.group(0)))
+        except ValueError:
+            continue
+    return numbers
 
 
 def _comparison_from_options(options: list[dict[str, Any]]) -> dict[str, Any]:
@@ -880,3 +1375,31 @@ def _get_adk_runner() -> AdkPlannerRunner:
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
     return _adk_runner
+
+
+@app.get("/")
+def serve_index() -> FileResponse:
+    return _static_file_response("index.html")
+
+
+@app.get("/index.html")
+def serve_index_file() -> FileResponse:
+    return _static_file_response("index.html")
+
+
+@app.get("/{asset_path:path}")
+def serve_frontend_asset_or_spa(asset_path: str) -> FileResponse:
+    if asset_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    if asset_path in STATIC_FILES:
+        return _static_file_response(asset_path)
+    if "." in asset_path:
+        raise HTTPException(status_code=404, detail="Not Found")
+    return _static_file_response("index.html")
+
+
+def _static_file_response(asset_path: str) -> FileResponse:
+    file_path = STATIC_FILES.get(asset_path)
+    if not file_path or not file_path.exists():
+        raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse(file_path)

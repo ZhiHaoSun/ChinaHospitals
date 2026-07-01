@@ -2,6 +2,12 @@ __pycache__/
 *.py[cod]
 .venv/
 .DS_Store
+.vercel/
+node_modules/
+.cache/
+dist/
+build/
+*.log
 
 # Local secrets and environment overrides
 .env

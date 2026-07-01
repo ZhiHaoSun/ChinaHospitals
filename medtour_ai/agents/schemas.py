@@ -107,6 +107,7 @@ class InsurancePolicy(BaseModel):
     policy_status: str
     summary: str
     hospital_policy: HospitalInsurancePolicy
+    provider_policy: dict[str, Any] = Field(default_factory=dict)
     estimated_premium: Money
     suggestions: list[str] = Field(default_factory=list)
     helpful_links: list[dict[str, str]] = Field(default_factory=list)

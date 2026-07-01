@@ -11,6 +11,11 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from medtour_ai.agents.insurance_provider_skills import (
+    list_supported_providers,
+    lookup_provider_skill,
+)
+
 
 CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
     "Shanghai": {
@@ -433,6 +438,7 @@ def get_hospital_insurance_policy(
         },
     )
     holder = (current_insurance_holder or "").strip()
+    provider_skill = lookup_provider_skill(holder)
     estimated_premium = 95 if (stay_days or 0) <= 7 else 135
     if nationality and nationality.upper() == "US":
         estimated_premium += 35
@@ -446,10 +452,15 @@ def get_hospital_insurance_policy(
         "Keep itemized invoices, medical reports, prescriptions, receipts, and discharge or visit summaries.",
         "Buy a separate travel medical policy if your current policy excludes planned treatment abroad.",
     ]
+    provider_questions = [
+        f"Ask {provider_skill['display_name']}: {question}"
+        for question in provider_skill.get("preauthorization_questions", [])[:4]
+    ]
     if holder:
         suggestions.insert(0, f"Contact {holder} with the hospital name and procedure estimate to confirm coverage.")
     else:
         suggestions.insert(0, "Add your current insurance holder so the advisor can check policy-specific requirements.")
+    suggestions.extend(provider_questions)
 
     return {
         "current_holder": holder or None,
@@ -458,15 +469,40 @@ def get_hospital_insurance_policy(
         "policy_status": "needs_insurer_confirmation",
         "summary": f"{hospital_name} insurance handling should be confirmed before booking; assume pre-authorization is required.",
         "hospital_policy": policy,
+        "provider_policy": {
+            "provider_key": provider_skill["provider_key"],
+            "display_name": provider_skill["display_name"],
+            "matched": provider_skill["matched"],
+            "policy_lookup_focus": provider_skill["policy_lookup_focus"],
+            "direct_billing_assumption": provider_skill["direct_billing_assumption"],
+            "preauthorization_questions": provider_skill["preauthorization_questions"],
+            "claim_documents": provider_skill["claim_documents"],
+            "risk_flags": provider_skill["risk_flags"],
+            "agent_notes": provider_skill["agent_notes"],
+        },
         "estimated_premium": {"amount": estimated_premium, "currency": "SGD"},
         "suggestions": suggestions,
-        "helpful_links": [],
+        "helpful_links": provider_skill.get("helpful_links", []),
         "metadata": {
             "source": "agent_estimate",
             "source_updated_at": date.today().isoformat(),
             "confidence_level": "medium",
             "data_status": "needs_confirmation",
         },
+    }
+
+
+def lookup_insurance_provider_policy(provider_name: str | None = None) -> dict[str, Any]:
+    """Return provider-specific lookup guidance for common insurers.
+
+    Use this with the user's current insurance holder before making
+    assumptions about China hospital direct billing or reimbursement.
+    """
+
+    return {
+        "provider_name": provider_name,
+        "provider_skill": lookup_provider_skill(provider_name),
+        "supported_providers": list_supported_providers(),
     }
 
 

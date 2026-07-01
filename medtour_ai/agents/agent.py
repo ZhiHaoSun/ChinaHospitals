@@ -20,6 +20,7 @@ from medtour_ai.agents.tools import (
     get_hospital_visit_protocol,
     get_today,
     get_visa_entry_guidance,
+    lookup_insurance_provider_policy,
     retrieve_medical_rules,
     search_hospital_city_candidates,
     search_hotels,
@@ -137,11 +138,20 @@ For the selected city, call tools to estimate:
 - Alipay international setup guidance
 - hospital-specific insurance policy, including current insurer fit,
   pre-authorization, direct billing, claim documents, exclusions, and suggested actions
+- provider-specific insurance lookup guidance for popular insurers such as
+  Cigna, AIA, Bupa, Allianz, and AXA using the user's current insurance holder
 - hospital visit protocol, including international registration desk, official
   registration email status, suggested doctor or doctor-assignment request,
   diagnostics, consultation, procedure, discharge, and claim-document steps
 - add insurance premium estimate to cost_breakdown.travel_insurance and include it
   in total_estimated_cost and estimated_net_savings calculations
+
+Before writing insurance_policy, call `lookup_insurance_provider_policy` with
+the user's current insurance holder, then call `get_hospital_insurance_policy`.
+Merge both results. Mention provider-specific pre-authorization questions,
+direct-billing assumptions, claim documents, and risk flags. If the provider is
+unknown or not supported, ask for insurer name, issuing country, plan type, and
+policy territory instead of guessing coverage.
 
 Choose the hospital's 国际部 / international section whenever available. The
 target_hospital value should name the international section or international
@@ -186,6 +196,7 @@ confirmation_requests.
             estimate_trip_costs,
             get_visa_entry_guidance,
             get_alipay_international_setup,
+            lookup_insurance_provider_policy,
             get_hospital_insurance_policy,
             get_hospital_visit_protocol,
         ],
@@ -237,6 +248,9 @@ Build a final report for the frontend compare page. Requirements:
 - Insurance policy must be studied for the selected hospital, not only generic
   travel insurance. Include direct billing assumptions, pre-authorization needs,
   claim documents, exclusions, and suggestions for the user's current insurance holder.
+- Preserve provider_policy details from the option agents, especially Cigna/AIA
+  style provider lookup questions, issuing-country checks, direct-billing
+  assumptions, and claim-document requirements.
 - Include comparison metrics for city, hospital, total days, medical cost, travel cost,
   insurance estimate, total cost, estimated savings, flight convenience, hotel convenience,
   and readiness risk.
@@ -284,8 +298,9 @@ dates and the change is still feasible. Produce a new timeline_version with a
 diff_summary explaining what changed. If the requested preference creates a
 conflict, return confirmation_requests instead of silently making a risky plan.
 If edits change stay length, dates, hospital, or city, refresh insurance_policy
-with `get_hospital_insurance_policy`; otherwise preserve the selected option's
-insurance_policy and mention it in assumptions.
+with `lookup_insurance_provider_policy` and `get_hospital_insurance_policy`;
+otherwise preserve the selected option's insurance_policy and mention it in
+assumptions.
 If the selected option names a hospital parent and an international section is
 available, target the 国际部 / international section for appointments, insurance
 review, registration, and timeline steps.
@@ -305,6 +320,7 @@ insurance_policy, confirmation_requests, assumptions.
         search_hotels,
         estimate_trip_costs,
         get_visa_entry_guidance,
+        lookup_insurance_provider_policy,
         get_hospital_insurance_policy,
         get_hospital_visit_protocol,
     ],
