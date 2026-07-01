@@ -1,0 +1,312 @@
+"""ADK multi-agent graph for MedTour AI.
+
+Run with ADK tooling by pointing at this package and using `root_agent`.
+The graph uses OpenAI through LiteLLM, so set OPENAI_API_KEY before running.
+"""
+
+from __future__ import annotations
+
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents.parallel_agent import ParallelAgent
+from google.adk.agents.sequential_agent import SequentialAgent
+from google.adk.models.lite_llm import LiteLlm
+
+from medtour_ai.agents.config import get_settings
+from medtour_ai.agents.tools import (
+    estimate_flights,
+    estimate_trip_costs,
+    get_alipay_international_setup,
+    get_hospital_insurance_policy,
+    get_hospital_visit_protocol,
+    get_today,
+    get_visa_entry_guidance,
+    retrieve_medical_rules,
+    search_hospital_city_candidates,
+    search_hotels,
+)
+
+settings = get_settings()
+
+
+def _model(name: str | None = None) -> LiteLlm:
+    return LiteLlm(model=name or settings.llm_model)
+
+
+COMMON_OUTPUT_RULES = """
+Output rules:
+- Return valid JSON only. Do not wrap JSON in Markdown.
+- Include source, freshness, confidence_level, and data_status for generated medical, travel, cost, visa, payment, and insurance claims.
+- Do not provide diagnosis or guarantee treatment eligibility.
+- Ask for user confirmation when a decision is uncertain or has multiple reasonable choices.
+- Do not request passport number, payment card number, CVV, OTP, or payment password.
+- Use the user's preferred currency when provided; otherwise use SGD.
+"""
+
+
+profile_agent = LlmAgent(
+    name="user_profiler_agent",
+    model=_model(),
+    description="Normalizes guided intake answers into a planning profile.",
+    instruction=f"""
+You are the User Profiler Agent for MedTour AI.
+
+Input is a JSON object of guided intake answers from a web platform. Normalize it
+into a compact planning profile with:
+- medical purpose and procedure subtype
+- adaptive program details such as prescription, teeth count, screening focus,
+  treatment area, imaging status, contact lens usage, or downtime tolerance
+- nationality, residence country, departure city
+- current insurance holder, if provided
+- planned date mode and date constraints
+- acceptable duration
+- season flexibility, including winter/off-season preference
+- budget tier, traveler count, hotel preference, tourism intensity
+- fields that are user_confirmed, system_default, or needs_confirmation
+- confirmation questions only when the missing answer changes plan quality
+
+Use short confirmation questions with at most three choices.
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+profile, field_status, defaults, confirmation_requests, assumptions.
+""",
+    tools=[get_today],
+    output_key="profile_summary",
+)
+
+
+medical_shortlist_agent = LlmAgent(
+    name="medical_city_shortlist_agent",
+    model=_model(settings.planner_model),
+    description="Finds eligible China city and hospital candidates.",
+    instruction=f"""
+You are the Medical Consultant Agent.
+
+Use the normalized profile from state key `profile_summary`. Call tools to get:
+1. medical planning rules
+2. candidate cities and hospitals
+
+Generate a city shortlist for up to four China cities. Each candidate must
+explain why it fits the medical purpose, expected care cycle, service language
+considerations, appointment uncertainty, hospital insurance handling hints, and
+any medical hard constraints.
+
+When evaluating hospitals in China, prefer the hospital's 国际部, international
+department, International Medical Center, International Medical Services,
+international clinic, VIP clinic, or foreign-patient service desk when one is
+available. Treat the international section as the target care pathway, not just
+as a note. If a hospital has no clear international section, explain that gap and
+lower confidence for international visitor suitability.
+
+Prefer a diversified set:
+- high medical strength
+- best overall
+- lower total cost
+- easiest/shortest travel
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+medical_rules, city_shortlist, medical_hard_constraints, insurance_policy_notes,
+confirmation_requests.
+""",
+    tools=[retrieve_medical_rules, search_hospital_city_candidates],
+    output_key="medical_shortlist",
+)
+
+
+def _city_option_agent(name: str, strategy: str, output_key: str) -> LlmAgent:
+    return LlmAgent(
+        name=name,
+        model=_model(settings.planner_model),
+        description=f"Generates one city option optimized for {strategy}.",
+        instruction=f"""
+You are a City Option Planning Agent optimized for: {strategy}.
+
+Use state keys `profile_summary` and `medical_shortlist`. Pick one city from
+the shortlist that best matches this strategy. If another option agent might
+choose the same city, still optimize for your strategy and clearly explain the
+trade-off; the final ranking agent will deduplicate if needed.
+
+For the selected city, call tools to estimate:
+- flights with flight number, airline, departure/arrival time, and cost
+- foreigner-friendly hotel choice with address, nightly price, nights, and policy
+- detailed trip cost breakdown
+- visa/entry guidance
+- Alipay international setup guidance
+- hospital-specific insurance policy, including current insurer fit,
+  pre-authorization, direct billing, claim documents, exclusions, and suggested actions
+- hospital visit protocol, including international registration desk, official
+  registration email status, suggested doctor or doctor-assignment request,
+  diagnostics, consultation, procedure, discharge, and claim-document steps
+- add insurance premium estimate to cost_breakdown.travel_insurance and include it
+  in total_estimated_cost and estimated_net_savings calculations
+
+Choose the hospital's 国际部 / international section whenever available. The
+target_hospital value should name the international section or international
+patient pathway, not only the parent hospital. Preserve any international visitor
+policy, service language, appointment desk, direct-billing, and insurance
+coverage notes from the shortlist. Only use a standard domestic department when
+no credible international section exists, and flag that as a risk.
+
+Generate a detailed timeline with hour-level steps. Include medical hard
+constraints as hard_constraint=true. Include:
+- arrival flight
+- hotel check-in
+- international desk pre-registration email check
+- in-hospital registration, outpatient file setup, passport/insurance/payment verification
+- nurse intake, consent forms, and pre-authorization or deposit check
+- program-specific diagnostics and tests
+- suggested doctor consultation, including doctor name if verified or
+  doctor-assignment request if the name is not verified
+- procedure, treatment, or checkup time blocks
+- medication, discharge briefing, invoice, medical report, and claim-document collection
+- follow-up/review time blocks with return-fitness confirmation
+- local transport
+- light tourism only when medically appropriate
+- return flight
+Each hospital timeline item must include details.registration_email,
+details.registration_email_status, details.suggested_doctor_name,
+details.suggested_doctor_specialty, and details.hospital_steps when available.
+Do not invent official emails or doctor names; mark them needs_confirmation if
+not verified.
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+option_id, city, recommendation_label, target_hospital, recommendation_reason,
+required_days, flight, hotel, timeline, cost_breakdown, total_estimated_cost,
+estimated_net_savings, insurance_policy, readiness_items, key_risks, metadata,
+confirmation_requests.
+""",
+        tools=[
+            estimate_flights,
+            search_hotels,
+            estimate_trip_costs,
+            get_visa_entry_guidance,
+            get_alipay_international_setup,
+            get_hospital_insurance_policy,
+            get_hospital_visit_protocol,
+        ],
+        output_key=output_key,
+    )
+
+
+city_options_parallel_agent = ParallelAgent(
+    name="city_options_parallel_agent",
+    description="Generates diversified city options in parallel.",
+    sub_agents=[
+        _city_option_agent("best_overall_option_agent", "best overall balance", "option_best_overall"),
+        _city_option_agent("lowest_cost_option_agent", "lowest total cost", "option_lowest_cost"),
+        _city_option_agent("shortest_trip_option_agent", "shortest viable trip", "option_shortest_trip"),
+        _city_option_agent("medical_strength_option_agent", "strongest medical resources", "option_medical_strength"),
+    ],
+)
+
+
+report_synthesis_agent = LlmAgent(
+    name="report_synthesis_agent",
+    model=_model(settings.planner_model),
+    description="Merges city options into the final comparison report.",
+    instruction=f"""
+You are the Orchestrator and Report Synthesis Agent.
+
+Merge these state keys:
+- `profile_summary`
+- `medical_shortlist`
+- `option_best_overall`
+- `option_lowest_cost`
+- `option_shortest_trip`
+- `option_medical_strength`
+
+Build a final report for the frontend compare page. Requirements:
+- Return up to four distinct city options.
+- If duplicate cities appear, keep the stronger option and explain deduping in assumptions.
+- Each option must carry timeline, flight number/time, hotel choice/address/prices,
+  itemized cost breakdown, insurance_policy, visa/payment readiness, key risks,
+  and confidence.
+- Timeline items inside the hospital must show detailed registration,
+  diagnostics, suggested doctor/doctor-assignment, procedure, discharge, and
+  insurance document steps. Preserve details fields for registration email,
+  email status, suggested doctor, specialty, and hospital_steps.
+- Hospital recommendations should prefer the hospital's 国际部 / international
+  section or equivalent international patient pathway. Keep that section in
+  target_hospital and comparison labels. Do not collapse it back to the parent
+  hospital unless no international section exists.
+- Insurance policy must be studied for the selected hospital, not only generic
+  travel insurance. Include direct billing assumptions, pre-authorization needs,
+  claim documents, exclusions, and suggestions for the user's current insurance holder.
+- Include comparison metrics for city, hospital, total days, medical cost, travel cost,
+  insurance estimate, total cost, estimated savings, flight convenience, hotel convenience,
+  and readiness risk.
+- Include confirmation_requests from all agents, plus your own if ranking is uncertain.
+- Include medical disclaimers and booking warnings.
+- Mark recommended option, but do not auto-select it.
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+report_status, profile, city_options, comparison, recommended_option_id,
+confirmation_requests, disclaimers, assumptions.
+""",
+    output_key="generated_report",
+)
+
+
+root_agent = SequentialAgent(
+    name="medtour_ai_multi_agent_planner",
+    description="Generates multi-city China medical travel plans from guided intake answers.",
+    sub_agents=[
+        profile_agent,
+        medical_shortlist_agent,
+        city_options_parallel_agent,
+        report_synthesis_agent,
+    ],
+)
+
+
+timeline_regeneration_agent = LlmAgent(
+    name="timeline_regeneration_agent",
+    model=_model(settings.planner_model),
+    description="Regenerates a selected plan timeline after user preference edits.",
+    instruction=f"""
+You regenerate only the selected option timeline.
+
+Input contains:
+- selected city option
+- accepted timeline version
+- user preference edits such as stay length, hotel tier, flight preference,
+  tourism intensity, or date changes
+
+Keep medical hard constraints fixed unless the user explicitly changes medical
+dates and the change is still feasible. Produce a new timeline_version with a
+diff_summary explaining what changed. If the requested preference creates a
+conflict, return confirmation_requests instead of silently making a risky plan.
+If edits change stay length, dates, hospital, or city, refresh insurance_policy
+with `get_hospital_insurance_policy`; otherwise preserve the selected option's
+insurance_policy and mention it in assumptions.
+If the selected option names a hospital parent and an international section is
+available, target the 国际部 / international section for appointments, insurance
+review, registration, and timeline steps.
+Use `get_hospital_visit_protocol` to preserve or refresh detailed in-hospital
+steps. Keep registration email and doctor name honest: include official/verified
+values only when available; otherwise use a doctor-assignment request and
+needs_confirmation status.
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+timeline_version_id, status, timeline, cost_delta, diff_summary,
+insurance_policy, confirmation_requests, assumptions.
+""",
+    tools=[
+        estimate_flights,
+        search_hotels,
+        estimate_trip_costs,
+        get_visa_entry_guidance,
+        get_hospital_insurance_policy,
+        get_hospital_visit_protocol,
+    ],
+    output_key="regenerated_timeline",
+)

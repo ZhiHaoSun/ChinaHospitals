@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MedTour AI - Guided Planner</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#9cf2e8",
+                    "on-surface": "#0b1c30",
+                    "surface-container-highest": "#d3e4fe",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#a3faef",
+                    "on-background": "#0b1c30",
+                    "tertiary-fixed": "#ffdcc3",
+                    "outline": "#6e7977",
+                    "primary-fixed-dim": "#80d5cb",
+                    "surface-dim": "#cbdbf5",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#dce9ff",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#80d5cb",
+                    "tertiary-fixed-dim": "#ffb77d",
+                    "surface-tint": "#006a63",
+                    "surface-container-low": "#eff4ff",
+                    "tertiary-container": "#a15600",
+                    "surface": "#f8f9ff",
+                    "secondary": "#0051d5",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary": "#005c55",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#2f1500",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#00504a",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface-variant": "#3e4947",
+                    "background": "#f8f9ff",
+                    "outline-variant": "#bdc9c6",
+                    "tertiary": "#7d4200",
+                    "on-tertiary-container": "#ffe6d5",
+                    "inverse-surface": "#213145",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#dbe1ff",
+                    "primary-container": "#0f766e",
+                    "secondary-container": "#316bf3",
+                    "on-primary-fixed": "#00201d",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "on-secondary-fixed": "#00174b",
+                    "on-secondary-container": "#fefcff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "sm": "8px",
+                    "lg": "24px",
+                    "xs": "4px",
+                    "base": "4px",
+                    "margin-desktop": "48px",
+                    "gutter": "16px",
+                    "xl": "32px",
+                    "md": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop h-16 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">medical_services</span>
+<span class="font-headline-md text-primary font-bold">MedTour AI</span>
+</div>
+<nav class="hidden md:flex items-center gap-lg">
+<a class="text-on-surface font-label-md hover:text-primary transition-colors" href="#">Destinations</a>
+<a class="text-on-surface font-label-md hover:text-primary transition-colors" href="#">Treatments</a>
+<a class="text-on-surface font-label-md hover:text-primary transition-colors" href="#">How it Works</a>
+</nav>
+<div class="flex items-center gap-sm">
+<button class="hidden md:flex items-center gap-2 px-4 py-2 text-primary border border-outline-variant rounded-full font-label-md hover:bg-surface-container-low transition-colors">
+                    Log in
+                </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-full font-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+                    Plan Trip
+                </button>
+<button class="md:hidden text-on-surface p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow py-xl px-margin-mobile md:px-margin-desktop">
+<div class="max-w-[960px] mx-auto w-full">
+<!-- Header Section -->
+<div class="text-center mb-xl">
+<h1 class="font-headline-xl text-on-surface mb-sm">Plan Your Medical Journey</h1>
+<p class="font-body-lg text-on-surface-variant max-w-2xl mx-auto">Let us help you find the best destinations, clinics, and travel options tailored to your needs.</p>
+</div>
+<!-- Progress Indicator -->
+<div class="mb-xl px-4">
+<div class="flex items-center justify-between relative">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-variant rounded-full -z-10"></div>
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1/4 h-1 bg-primary rounded-full -z-10"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md shadow-sm ring-4 ring-background">1</div>
+<span class="font-label-md text-primary hidden sm:block">Medical Need</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md shadow-sm ring-4 ring-background">2</div>
+<span class="font-label-md text-on-surface-variant hidden sm:block">Logistics</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md shadow-sm ring-4 ring-background">3</div>
+<span class="font-label-md text-on-surface-variant hidden sm:block">Timeline</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md shadow-sm ring-4 ring-background">4</div>
+<span class="font-label-md text-on-surface-variant hidden sm:block">Preferences</span>
+</div>
+</div>
+</div>
+<!-- Form Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-lg md:p-xl flex flex-col gap-xl">
+<!-- Step 1: Medical Need -->
+<section>
+<h2 class="font-headline-md text-on-surface mb-md">What is your medical need?</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-md">
+<!-- Card 1 -->
+<button class="flex flex-col items-center p-md rounded-lg border-2 border-primary bg-surface-container-low text-primary transition-colors text-center gap-sm">
+<span class="material-symbols-outlined text-4xl mb-2">visibility</span>
+<span class="font-label-md">Eye Surgery</span>
+</button>
+<!-- Card 2 -->
+<button class="flex flex-col items-center p-md rounded-lg border border-outline-variant hover:border-outline hover:bg-surface-container-lowest transition-colors text-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-4xl mb-2 text-on-surface-variant">dentistry</span>
+<span class="font-label-md">Dental Implants</span>
+</button>
+<!-- Card 3 -->
+<button class="flex flex-col items-center p-md rounded-lg border border-outline-variant hover:border-outline hover:bg-surface-container-lowest transition-colors text-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-4xl mb-2 text-on-surface-variant">monitor_heart</span>
+<span class="font-label-md">Health Checkups</span>
+</button>
+<!-- Card 4 -->
+<button class="flex flex-col items-center p-md rounded-lg border border-outline-variant hover:border-outline hover:bg-surface-container-lowest transition-colors text-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-4xl mb-2 text-on-surface-variant">face_retouching_natural</span>
+<span class="font-label-md">Medical Aesthetics</span>
+</button>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Step 2: Logistics -->
+<section>
+<h2 class="font-headline-md text-on-surface mb-md">Where are you traveling from?</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-on-surface">Nationality / Residence</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">public</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-on-surface font-body-md placeholder:text-on-surface-variant/50" placeholder="e.g. United States" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-on-surface">Departure City</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">flight_takeoff</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-on-surface font-body-md placeholder:text-on-surface-variant/50" placeholder="Search cities..." type="text"/>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Step 3: Timeline -->
+<section>
+<h2 class="font-headline-md text-on-surface mb-md">When do you plan to travel?</h2>
+<div class="flex flex-col gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-on-surface">Estimated Dates</label>
+<div class="relative max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">calendar_month</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-on-surface font-body-md placeholder:text-on-surface-variant/50" placeholder="Select date range" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-on-surface mb-sm">Estimated Duration</label>
+<div class="flex flex-wrap gap-sm">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors font-label-md">7 days</button>
+<button class="px-4 py-2 rounded-full border-2 border-primary bg-primary-container/10 text-primary transition-colors font-label-md">14 days</button>
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors font-label-md">21+ days</button>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-outline-variant"/>
+<!-- Step 4: Preferences -->
+<section>
+<h2 class="font-headline-md text-on-surface mb-md">Preferences &amp; Flexibility</h2>
+<div class="flex flex-col gap-md">
+<label class="flex items-center justify-between p-4 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex flex-col">
+<span class="font-label-md text-on-surface">Winter Travel</span>
+<span class="font-body-sm text-on-surface-variant">I prefer traveling during winter months.</span>
+</div>
+<div class="relative inline-flex items-center">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</label>
+<label class="flex items-center justify-between p-4 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex flex-col">
+<span class="font-label-md text-on-surface">Off-Season Flexibility</span>
+<span class="font-body-sm text-on-surface-variant">I'm flexible to travel during off-peak seasons for better rates.</span>
+</div>
+<div class="relative inline-flex items-center">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</label>
+</div>
+</section>
+<!-- Action Area -->
+<div class="pt-md mt-md flex justify-end gap-sm">
+<button class="px-6 py-3 rounded-full text-primary font-label-md hover:bg-surface-container-low transition-colors">
+                        Save Draft
+                    </button>
+<button class="px-8 py-3 rounded-full bg-primary text-on-primary font-label-md shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-colors flex items-center gap-2">
+                        Generate Options
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant mt-auto">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-xl">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-2 mb-sm">
+<span class="material-symbols-outlined text-primary text-3xl">medical_services</span>
+<span class="font-headline-md text-primary font-bold">MedTour AI</span>
+</div>
+<p class="text-on-surface-variant font-body-sm max-w-sm">
+                        Empowering patients to make informed decisions about their global medical care journeys with AI-driven insights and planning.
+                    </p>
+</div>
+<div>
+<h4 class="font-label-md text-on-surface mb-sm">Platform</h4>
+<ul class="flex flex-col gap-2">
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Destinations</a></li>
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Treatments</a></li>
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Pricing</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-on-surface mb-sm">Legal</h4>
+<ul class="flex flex-col gap-2">
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Terms of Service</a></li>
+<li><a class="text-on-surface-variant hover:text-primary font-body-sm transition-colors" href="#">Contact Support</a></li>
+</ul>
+</div>
+</div>
+<div class="mt-xl pt-lg border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-on-surface-variant font-body-sm">© 2024 MedTour AI. All rights reserved.</p>
+<div class="flex gap-4">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="sr-only">Twitter</span>
+<svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+</svg>
+</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="sr-only">LinkedIn</span>
+<svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24">
+<path clip-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" fill-rule="evenodd"></path>
+</svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.production.example
+*.pem
+*.key
+*.p8
+*.p12
+*.crt
+*.cer
+*.jks
+secrets/
+*.secret
