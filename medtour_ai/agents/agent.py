@@ -13,6 +13,7 @@ from google.adk.models.lite_llm import LiteLlm
 
 from medtour_ai.agents.config import get_settings
 from medtour_ai.agents.tools import (
+    audit_city_option_sources_and_costs,
     estimate_flights,
     estimate_trip_costs,
     get_alipay_international_setup,
@@ -37,6 +38,7 @@ COMMON_OUTPUT_RULES = """
 Output rules:
 - Return valid JSON only. Do not wrap JSON in Markdown.
 - Include source, freshness, confidence_level, and data_status for generated medical, travel, cost, visa, payment, and insurance claims.
+- Mark live provider data and official-source checks separately from representative planning estimates.
 - Do not provide diagnosis or guarantee treatment eligibility.
 - Ask for user confirmation when a decision is uncertain or has multiple reasonable choices.
 - Do not request passport number, payment card number, CVV, OTP, or payment password.
@@ -188,7 +190,12 @@ Required JSON keys:
 option_id, city, recommendation_label, target_hospital, recommendation_reason,
 required_days, flight, hotel, timeline, cost_breakdown, total_estimated_cost,
 estimated_net_savings, insurance_policy, readiness_items, key_risks, metadata,
-confirmation_requests.
+audit_inputs, confirmation_requests.
+
+audit_inputs must summarize the exact hospital source used, flight fare source,
+hotel rate source, medical-cost source, insurance source, quote timestamp or
+source_updated_at, and whether each value is representative, live, official, or
+needs_confirmation.
 """,
         tools=[
             estimate_flights,
@@ -216,6 +223,55 @@ city_options_parallel_agent = ParallelAgent(
 )
 
 
+option_audit_agent = LlmAgent(
+    name="option_audit_agent",
+    model=_model(settings.planner_model),
+    description="Audits generated city options for source coverage and cost reasonableness.",
+    instruction=f"""
+You are the Audit Agent for the MedTour AI multi-agent planner.
+
+Review these state keys:
+- `profile_summary`
+- `medical_shortlist`
+- `option_best_overall`
+- `option_lowest_cost`
+- `option_shortest_trip`
+- `option_medical_strength`
+
+For each non-empty city option, call `audit_city_option_sources_and_costs` with
+the full option payload. Use the tool result as the baseline audit, then add
+your own concise cross-checks when needed.
+
+Audit duties:
+- Verify that the selected hospital and international patient pathway are tied
+  to a named source and identify whether that source is official, RAG/curated,
+  external API, or only an agent estimate.
+- Challenge whether each material cost is reasonable: medical estimate, flight
+  fare, hotel nightly rate and subtotal, local transport, meals, insurance, and
+  total estimate.
+- Check that flight and hotel prices include data status, timestamp/freshness,
+  route or location, traveler count/nights, and booking caveats.
+- Check hospital source quality: international department name, official
+  appointment contact status, foreign-patient support, insurance handling, and
+  medical program fit.
+- Flag stale, missing, internally inconsistent, or suspiciously precise data.
+- Require user/advisor confirmation before non-refundable booking whenever
+  data is not live or official.
+
+Do not silently fix another agent's numbers. Report the issue, suggested
+correction path, and whether the report can be shown as planning-only.
+
+{COMMON_OUTPUT_RULES}
+
+Required JSON keys:
+audit_status, option_audits, cross_option_findings, blocking_issues,
+recommended_followups, confirmation_requests, assumptions.
+""",
+    tools=[audit_city_option_sources_and_costs],
+    output_key="option_audit",
+)
+
+
 report_synthesis_agent = LlmAgent(
     name="report_synthesis_agent",
     model=_model(settings.planner_model),
@@ -230,6 +286,7 @@ Merge these state keys:
 - `option_lowest_cost`
 - `option_shortest_trip`
 - `option_medical_strength`
+- `option_audit`
 
 Build a final report for the frontend compare page. Requirements:
 - Return up to four distinct city options.
@@ -251,9 +308,15 @@ Build a final report for the frontend compare page. Requirements:
 - Preserve provider_policy details from the option agents, especially Cigna/AIA
   style provider lookup questions, issuing-country checks, direct-billing
   assumptions, and claim-document requirements.
+- Merge audit results into each city option as audit_report. Preserve audit
+  checks for hospital source verification, flight price, hotel price, medical
+  price, total-cost math, insurance source, and source freshness.
+- Add a top-level audit_summary that states whether the report is planning-only,
+  which values need live re-checking, and which issues block non-refundable
+  booking.
 - Include comparison metrics for city, hospital, total days, medical cost, travel cost,
   insurance estimate, total cost, estimated savings, flight convenience, hotel convenience,
-  and readiness risk.
+  readiness risk, and audit_status.
 - Include confirmation_requests from all agents, plus your own if ranking is uncertain.
 - Include medical disclaimers and booking warnings.
 - Mark recommended option, but do not auto-select it.
@@ -262,7 +325,7 @@ Build a final report for the frontend compare page. Requirements:
 
 Required JSON keys:
 report_status, profile, city_options, comparison, recommended_option_id,
-confirmation_requests, disclaimers, assumptions.
+audit_summary, confirmation_requests, disclaimers, assumptions.
 """,
     output_key="generated_report",
 )
@@ -275,6 +338,7 @@ root_agent = SequentialAgent(
         profile_agent,
         medical_shortlist_agent,
         city_options_parallel_agent,
+        option_audit_agent,
         report_synthesis_agent,
     ],
 )
@@ -308,12 +372,16 @@ Use `get_hospital_visit_protocol` to preserve or refresh detailed in-hospital
 steps. Keep registration email and doctor name honest: include official/verified
 values only when available; otherwise use a doctor-assignment request and
 needs_confirmation status.
+After regenerating material costs, dates, hotel, flight, hospital, or insurance
+details, audit source freshness and cost reasonableness before returning. If the
+selected option includes audit_report, preserve it and add a note that it must
+be refreshed after edits.
 
 {COMMON_OUTPUT_RULES}
 
 Required JSON keys:
 timeline_version_id, status, timeline, cost_delta, diff_summary,
-insurance_policy, confirmation_requests, assumptions.
+insurance_policy, audit_notes, confirmation_requests, assumptions.
 """,
     tools=[
         estimate_flights,

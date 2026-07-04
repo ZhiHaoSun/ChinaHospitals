@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Literal
+from io import BytesIO
 import os
 from pathlib import Path
 import re
@@ -12,6 +13,14 @@ from fastapi import Cookie, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+import reportlab
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 load_dotenv()
 
@@ -59,6 +68,15 @@ STATIC_FILES = {
     "app.js": PROJECT_ROOT / "app.js",
     "styles.css": PROJECT_ROOT / "styles.css",
 }
+PDF_FONT_NAME = "MedTourSans"
+REPORTLAB_FONT_DIR = Path(reportlab.__file__).resolve().parent / "fonts"
+PDF_FONT_PATHS = [
+    Path(os.getenv("MEDTOUR_PDF_FONT_PATH", "")),
+    PROJECT_ROOT / "assets" / "fonts" / "DejaVuSans.ttf",
+    REPORTLAB_FONT_DIR / "Vera.ttf",
+    Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+    Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+]
 
 
 @app.exception_handler(Exception)
@@ -94,6 +112,11 @@ class RegenerateTimelineRequest(BaseModel):
     preferences: dict[str, Any]
     run_now: bool = True
     planner_backend: Literal["local", "adk"] = Field(default_factory=lambda: os.getenv("DEFAULT_PLANNER_BACKEND", "local"))
+
+
+class PlanExportRequest(BaseModel):
+    option: dict[str, Any]
+    report: dict[str, Any] = Field(default_factory=dict)
 
 
 class UpdateReadinessItemRequest(BaseModel):
@@ -243,7 +266,7 @@ def intake_schema() -> dict[str, Any]:
                 "id": "medical_purpose",
                 "type": "single_choice",
                 "title": "What medical care are you planning for?",
-                "options": ["eye_surgery", "dental_care", "health_checkup", "medical_aesthetics"],
+                "options": ["eye_surgery", "dental_care", "health_checkup", "car_t_blood_cancer"],
             },
             {
                 "id": "procedure_subtype",
@@ -254,7 +277,7 @@ def intake_schema() -> dict[str, Any]:
                     "eye_surgery": ["smile_pro", "lasik", "icl", "cataract", "not_sure"],
                     "dental_care": ["single_implant", "multiple_implants", "crown_bridge", "root_canal", "not_sure"],
                     "health_checkup": ["executive_screening", "cardio_screening", "cancer_markers", "women_health", "not_sure"],
-                    "medical_aesthetics": ["skin_laser", "injectables", "body_contouring", "minor_surgery", "not_sure"],
+                    "car_t_blood_cancer": ["car_t_consult", "b_cell_lymphoma", "multiple_myeloma", "leukemia", "not_sure"],
                 },
             },
             {
@@ -517,6 +540,40 @@ def get_costs(report_id: str, option_id: str) -> dict[str, Any]:
         "categories": option.get("cost_breakdown", {}),
         "benchmark": {"net_savings": option.get("estimated_net_savings")},
     }
+
+
+@app.get("/api/v1/reports/{report_id}/options/{option_id}/export.pdf")
+def export_plan_pdf(report_id: str, option_id: str) -> Response:
+    report = store.get_report(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="report_id not found")
+    option = store.find_option(report_id, option_id)
+    if not option:
+        raise HTTPException(status_code=404, detail="option_id not found")
+
+    pdf_bytes = _build_plan_pdf(report, option)
+    filename = f"medtour_{_slug(option.get('city') or 'plan')}_{_slug(option_id)}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/api/v1/plan-export.pdf")
+def export_plan_snapshot_pdf(request: PlanExportRequest) -> Response:
+    option = request.option
+    if not option:
+        raise HTTPException(status_code=422, detail="option is required")
+
+    pdf_bytes = _build_plan_pdf(request.report, option)
+    option_id = option.get("option_id") or "local_plan"
+    filename = f"medtour_{_slug(option.get('city') or 'local_plan')}_{_slug(option_id)}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/api/v1/reports/{report_id}/options/{option_id}/readiness")
@@ -970,7 +1027,7 @@ def _fallback_timeline_for_option(option: dict[str, Any], currency: str) -> list
         if category == "medical":
             details = {
                 "registration_email": registration_email,
-                "registration_email_status": "needs_confirmation",
+                "registration_email_status": "sample_contact_verify_with_hospital",
                 "suggested_doctor_name": doctor_name,
                 "suggested_doctor_specialty": doctor_specialty,
                 "hospital_steps": steps or [],
@@ -1156,6 +1213,12 @@ def _extract_money_amount(value: dict[str, Any]) -> float:
         "total",
         "total_cost",
         "total_estimated_cost",
+        "estimated_net_savings",
+        "estimated_savings",
+        "net_savings",
+        "savings",
+        "savings_vs_home",
+        "estimated_savings_vs_home",
         "premium",
         "estimated_premium",
     ):
@@ -1216,7 +1279,18 @@ def _money_range_midpoint(value: Any) -> float | None:
 
 
 def _extract_money_currency(value: dict[str, Any]) -> str | None:
-    for key in ("amount", "estimated_cost", "cost", "price", "total", "estimated_premium"):
+    for key in (
+        "amount",
+        "estimated_cost",
+        "cost",
+        "price",
+        "total",
+        "estimated_net_savings",
+        "estimated_savings",
+        "net_savings",
+        "savings",
+        "estimated_premium",
+    ):
         nested = value.get(key)
         if isinstance(nested, dict) and nested.get("currency"):
             return nested["currency"]
@@ -1375,6 +1449,299 @@ def _get_adk_runner() -> AdkPlannerRunner:
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
     return _adk_runner
+
+
+def _build_plan_pdf(report: dict[str, Any], option: dict[str, Any]) -> bytes:
+    font_name = _register_pdf_fonts()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=0.55 * inch,
+        leftMargin=0.55 * inch,
+        topMargin=0.6 * inch,
+        bottomMargin=0.55 * inch,
+        title=f"MedTour AI Plan - {option.get('city') or 'Selected City'}",
+        author="MedTour AI",
+    )
+    styles = _pdf_styles(font_name)
+    story: list[Any] = []
+
+    city = _clean_text(option.get("city") or "Selected City")
+    hospital = _clean_text(option.get("target_hospital") or "Hospital to confirm")
+    story.append(Paragraph("MedTour AI Care Plan", styles["title"]))
+    story.append(Paragraph(f"{city} - {hospital}", styles["subtitle"]))
+    story.append(Spacer(1, 14))
+
+    summary_rows = [
+        ["City", city],
+        ["Hospital", hospital],
+        ["Medical need", _clean_text(option.get("medical_purpose") or "To confirm").replace("_", " ")],
+        ["Procedure", _clean_text(option.get("procedure_subtype") or "To confirm").replace("_", " ")],
+        ["Duration", f"{option.get('required_days') or '-'} days"],
+        ["Total estimate", _format_money(option.get("total_estimated_cost"))],
+    ]
+    story.append(Paragraph("Plan Summary", styles["section"]))
+    story.append(_pdf_key_value_table(summary_rows, styles))
+    story.append(Spacer(1, 12))
+
+    categories = option.get("cost_breakdown") or {}
+    if categories:
+        cost_rows = [["Category", "Estimate"]]
+        cost_rows.extend(
+            [_clean_text(label).replace("_", " ").title(), _format_money(value)]
+            for label, value in categories.items()
+        )
+        story.append(Paragraph("Cost Breakdown", styles["section"]))
+        story.append(_pdf_table(cost_rows, [3.8 * inch, 1.8 * inch], styles))
+        story.append(Spacer(1, 12))
+
+    policy = option.get("insurance_policy") or {}
+    if policy:
+        story.append(Paragraph("Insurance Notes", styles["section"]))
+        story.append(Paragraph(_clean_text(policy.get("summary") or "Confirm coverage and claim requirements before booking."), styles["body"]))
+        insurance_rows = [
+            ["Policy status", _clean_text(policy.get("policy_status") or "needs confirmation").replace("_", " ")],
+            ["Current holder", _clean_text(policy.get("current_holder") or "Not provided")],
+            ["Hospital billing", _clean_text((policy.get("hospital_policy") or {}).get("direct_billing") or "Confirm with hospital")],
+        ]
+        story.append(_pdf_key_value_table(insurance_rows, styles))
+        suggestions = policy.get("suggestions") or []
+        if suggestions:
+            story.append(Paragraph("Suggested Actions", styles["small_heading"]))
+            for suggestion in suggestions[:6]:
+                story.append(Paragraph(f"- {_clean_text(suggestion)}", styles["bullet"]))
+        story.append(Spacer(1, 12))
+
+    timeline = option.get("timeline") or []
+    story.append(Paragraph("Itinerary Timeline", styles["section"]))
+    if timeline:
+        for day in timeline:
+            day_parts = [
+                Paragraph(
+                    f"Day {day.get('day') or '-'}: {_clean_text(day.get('title') or 'Scheduled care')}",
+                    styles["day"],
+                )
+            ]
+            if day.get("date"):
+                day_parts.append(Paragraph(_clean_text(day["date"]), styles["muted"]))
+            for item in day.get("items") or []:
+                day_parts.extend(_pdf_timeline_item(item, styles))
+            story.append(KeepTogether(day_parts))
+            story.append(Spacer(1, 10))
+    else:
+        story.append(Paragraph("No itinerary timeline is available for this option yet.", styles["body"]))
+
+    readiness_items = option.get("readiness_items") or option.get("readiness_summary") or []
+    if readiness_items:
+        story.append(Spacer(1, 4))
+        story.append(Paragraph("Readiness Checklist", styles["section"]))
+        for item in readiness_items[:12]:
+            line = (
+                f"{_clean_text(item.get('title') or 'Readiness item')} "
+                f"({_clean_text(item.get('priority') or 'medium')} priority, {_clean_text(item.get('status') or 'pending')})"
+            )
+            story.append(Paragraph(f"- {line}", styles["bullet"]))
+
+    story.append(Spacer(1, 12))
+    story.append(
+        Paragraph(
+            "Planning note: estimates must be confirmed with the hospital, airline, hotel, insurer, and relevant authorities before booking.",
+            styles["footnote"],
+        )
+    )
+    doc.build(
+        story,
+        onFirstPage=lambda canvas, document: _pdf_footer(canvas, document, font_name),
+        onLaterPages=lambda canvas, document: _pdf_footer(canvas, document, font_name),
+    )
+    return buffer.getvalue()
+
+
+def _register_pdf_fonts() -> str:
+    if PDF_FONT_NAME in pdfmetrics.getRegisteredFontNames():
+        return PDF_FONT_NAME
+    for font_path in PDF_FONT_PATHS:
+        if font_path.is_file():
+            pdfmetrics.registerFont(TTFont(PDF_FONT_NAME, str(font_path)))
+            return PDF_FONT_NAME
+    return "Helvetica"
+
+
+def _pdf_styles(font_name: str) -> dict[str, ParagraphStyle]:
+    sample = getSampleStyleSheet()
+    return {
+        "title": ParagraphStyle(
+            "MedTourTitle",
+            parent=sample["Title"],
+            fontName=font_name,
+            fontSize=22,
+            leading=28,
+            textColor=colors.HexColor("#143a5a"),
+            spaceAfter=4,
+        ),
+        "subtitle": ParagraphStyle(
+            "MedTourSubtitle",
+            parent=sample["BodyText"],
+            fontName=font_name,
+            fontSize=11,
+            leading=15,
+            textColor=colors.HexColor("#506070"),
+        ),
+        "section": ParagraphStyle(
+            "MedTourSection",
+            parent=sample["Heading2"],
+            fontName=font_name,
+            fontSize=14,
+            leading=18,
+            textColor=colors.HexColor("#143a5a"),
+            spaceBefore=8,
+            spaceAfter=8,
+        ),
+        "small_heading": ParagraphStyle(
+            "MedTourSmallHeading",
+            parent=sample["Heading3"],
+            fontName=font_name,
+            fontSize=11,
+            leading=14,
+            textColor=colors.HexColor("#143a5a"),
+            spaceBefore=8,
+            spaceAfter=4,
+        ),
+        "day": ParagraphStyle(
+            "MedTourDay",
+            parent=sample["Heading3"],
+            fontName=font_name,
+            fontSize=12,
+            leading=15,
+            textColor=colors.HexColor("#1f2937"),
+            spaceBefore=4,
+            spaceAfter=2,
+        ),
+        "body": ParagraphStyle("MedTourBody", parent=sample["BodyText"], fontName=font_name, fontSize=9, leading=13),
+        "muted": ParagraphStyle(
+            "MedTourMuted",
+            parent=sample["BodyText"],
+            fontName=font_name,
+            fontSize=8,
+            leading=11,
+            textColor=colors.HexColor("#697586"),
+        ),
+        "bullet": ParagraphStyle(
+            "MedTourBullet",
+            parent=sample["BodyText"],
+            fontName=font_name,
+            fontSize=8.5,
+            leading=12,
+            leftIndent=10,
+            firstLineIndent=-7,
+        ),
+        "footnote": ParagraphStyle(
+            "MedTourFootnote",
+            parent=sample["BodyText"],
+            fontName=font_name,
+            fontSize=8,
+            leading=11,
+            textColor=colors.HexColor("#697586"),
+        ),
+    }
+
+
+def _pdf_key_value_table(rows: list[list[str]], styles: dict[str, ParagraphStyle]) -> Table:
+    table_rows = [
+        [Paragraph(_clean_text(label), styles["muted"]), Paragraph(_clean_text(value), styles["body"])]
+        for label, value in rows
+    ]
+    return _pdf_table(table_rows, [1.45 * inch, 4.15 * inch], styles, has_header=False)
+
+
+def _pdf_table(rows: list[Any], widths: list[float], styles: dict[str, ParagraphStyle], has_header: bool = True) -> Table:
+    normalized_rows = []
+    for row_index, row in enumerate(rows):
+        normalized_row = []
+        for cell in row:
+            if isinstance(cell, Paragraph):
+                normalized_row.append(cell)
+            else:
+                style = styles["small_heading"] if has_header and row_index == 0 else styles["body"]
+                normalized_row.append(Paragraph(_clean_text(cell), style))
+        normalized_rows.append(normalized_row)
+    table = Table(normalized_rows, colWidths=widths, hAlign="LEFT")
+    table_style = [
+        ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#d7e0ea")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#d7e0ea")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]
+    if has_header:
+        table_style.append(("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#edf3ff")))
+    table.setStyle(TableStyle(table_style))
+    return table
+
+
+def _pdf_timeline_item(item: dict[str, Any], styles: dict[str, ParagraphStyle]) -> list[Any]:
+    time = _format_time_range(item)
+    title = _clean_text(item.get("title") or "Scheduled item")
+    location = _clean_text(item.get("location_name") or item.get("address") or "")
+    cost = _format_money(item.get("estimated_cost")) if item.get("estimated_cost") else ""
+    meta = " | ".join(part for part in [time, location, cost] if part)
+    parts: list[Any] = [Paragraph(f"- {title}", styles["bullet"])]
+    if meta:
+        parts.append(Paragraph(meta, styles["muted"]))
+    details = item.get("details") or {}
+    doctor = details.get("suggested_doctor_name")
+    specialty = details.get("suggested_doctor_specialty")
+    if doctor or specialty:
+        parts.append(Paragraph(f"Suggested doctor: {_clean_text(' - '.join(part for part in [doctor, specialty] if part))}", styles["muted"]))
+    for step in (details.get("hospital_steps") or [])[:4]:
+        parts.append(Paragraph(f"  - {_clean_text(step)}", styles["bullet"]))
+    return parts
+
+
+def _pdf_footer(canvas: Any, doc: SimpleDocTemplate, font_name: str) -> None:
+    canvas.saveState()
+    canvas.setFont(font_name, 7)
+    canvas.setFillColor(colors.HexColor("#697586"))
+    canvas.drawString(doc.leftMargin, 0.32 * inch, "MedTour AI planning export")
+    canvas.drawRightString(A4[0] - doc.rightMargin, 0.32 * inch, f"Page {doc.page}")
+    canvas.restoreState()
+
+
+def _format_money(value: Any) -> str:
+    if not value:
+        return "N/A"
+    if isinstance(value, dict):
+        amount = value.get("amount")
+        currency = value.get("currency") or _extract_money_currency(value) or "SGD"
+        if amount is None:
+            amount = _extract_money_amount(value)
+        try:
+            return f"{currency} {float(amount):,.0f}"
+        except (TypeError, ValueError):
+            return _clean_text(value.get("label") or value)
+    if isinstance(value, (int, float)):
+        return f"SGD {value:,.0f}"
+    return _clean_text(value)
+
+
+def _format_time_range(item: dict[str, Any]) -> str:
+    start = str(item.get("start_time") or "")
+    end = str(item.get("end_time") or "")
+    start_time = start[11:16] if len(start) >= 16 else start
+    end_time = end[11:16] if len(end) >= 16 else end
+    if start_time and end_time:
+        return f"{start_time} - {end_time}"
+    return start_time or end_time
+
+
+def _clean_text(value: Any) -> str:
+    text = str(value or "")
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 @app.get("/")

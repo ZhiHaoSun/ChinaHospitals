@@ -18,7 +18,8 @@ This package contains the Python backend scaffold for the MedTour AI web platfor
 flowchart TD
   A["User Profiler Agent"] --> B["Medical City Shortlist Agent"]
   B --> C["Parallel City Option Agents"]
-  C --> D["Report Synthesis Agent"]
+  C --> D["Option Audit Agent"]
+  D --> E["Report Synthesis Agent"]
   C --> C1["Best Overall"]
   C --> C2["Lowest Cost"]
   C --> C3["Shortest Trip"]
@@ -31,6 +32,11 @@ The graph uses Google ADK workflow agents:
 - `ParallelAgent` for the four diversified city options.
 - `LlmAgent` for specialized reasoning steps.
 - `LiteLlm(model="openai/...")` so reasoning calls OpenAI through `OPENAI_API_KEY`.
+
+The audit step checks whether each selected hospital source, flight estimate,
+hotel estimate, medical cost, insurance data, and total-cost calculation is
+reasonable enough for planning. It marks values that still need official or live
+provider confirmation before non-refundable booking.
 
 ## Local Setup
 

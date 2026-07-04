@@ -1,116 +1,82 @@
-# Medical Price Differences: China vs Singapore vs USA
+# 医疗价格差异：中国 vs 新加坡 vs 美国
 
-Last updated: 2026-07-01
+最后更新：2026-07-01
 
-This note summarizes major self-pay price differences for common medical travel
-use cases across China, Singapore, and the United States. Treat all figures as
-planning ranges, not quotes. Actual prices vary by hospital tier, doctor,
-international department, insurance network, anesthesia, diagnostics, medication,
-implants, complications, and exchange rate.
+本文总结中国、新加坡和美国在常见医疗旅行场景中的主要自费价格差异。所有数字都应视为规划用区间，而不是正式报价。实际价格会受到医院等级、医生、国际部路径、保险网络、麻醉、检查、药物、植入物、并发症和汇率等因素影响。
 
-## Currency Assumptions
+## 货币假设
 
-- SGD 1 ~= RMB 5.35
-- USD 1 ~= SGD 1.35
-- China figures are oriented toward private/international-department or
-  international-visitor planning, not the lowest local public-hospital price.
-- USA figures represent uninsured/self-pay or out-of-network planning ranges;
-  insured allowed amounts may be lower, while hospital list prices may be much
-  higher.
+- SGD 1 约等于 RMB 5.35
+- USD 1 约等于 SGD 1.35
+- 中国价格主要面向私立医院、国际部或国际访客规划场景，而不是本地公立医院最低价格。
+- 美国价格代表无保险、自费或网络外就医的规划区间；有保险时的协议价可能更低，但医院标价也可能高得多。
 
-## Headline Comparison
+## 核心对比
 
-China often has the strongest price advantage for diagnostics, dental care,
-routine health screening, and some elective/scheduled procedures, especially
-when the patient can self-pay and does not require complex inpatient care.
+中国在检查、牙科、常规体检以及部分可预约的择期项目上通常有最明显的价格优势，尤其适合可自费、且不需要复杂住院治疗的患者。
 
-Singapore is usually more predictable and English-friendly, but pricing is
-often closer to premium private-market care. It can still be cheaper than the
-USA for many self-pay services.
+新加坡通常更可预测，英语服务也更成熟，但价格更接近高端私立医疗市场。即便如此，在许多自费医疗服务上，新加坡仍可能低于美国。
 
-The USA is usually the most expensive market for self-pay planned care. Its
-pricing can vary dramatically because hospital facility fees, physician fees,
-anesthesia, imaging, pathology, and insurance-contract adjustments are often
-separated.
+美国通常是自费计划性医疗中价格最高的市场。其价格差异很大，因为医院设施费、医生费、麻醉费、影像、病理和保险合同调整经常分开计费。
 
-## Planning Price Ranges
+## 规划价格区间
 
-| Medical area | China planning range | Singapore planning range | USA planning range | Major price difference |
+| 医疗领域 | 中国规划区间 | 新加坡规划区间 | 美国规划区间 | 主要价格差异 |
 |---|---:|---:|---:|---|
-| Specialist consultation | SGD 80-300 | SGD 150-450 | USD 200-600, about SGD 270-810 | China can be 40-70% lower than USA self-pay. |
-| Comprehensive health screening | SGD 700-3,200 | SGD 800-3,500 | USD 1,000-5,000, about SGD 1,350-6,750 | China and Singapore are often much cheaper than US self-pay screening packages. |
-| MRI / advanced imaging | SGD 150-800 | SGD 700-2,000 | USD 1,000-5,000, about SGD 1,350-6,750 | China can be several times cheaper than US outpatient imaging. |
-| Cataract / refractive eye procedure | SGD 3,300-7,200 | SGD 3,000-8,000 | USD 3,000-7,000 per eye, about SGD 4,050-9,450 | China and Singapore can both be cheaper than USA self-pay, depending on lens/laser package. |
-| Dental implant / restorative dentistry | SGD 2,800-9,800 | SGD 3,500-8,000 | USD 3,000-6,000+ per tooth, about SGD 4,050-8,100+ | China can be lower, but implant brand, imaging, crown, bone graft, and multi-visit timing matter. |
-| Minor outpatient procedure | SGD 1,000-5,000 | SGD 2,000-8,000 | USD 5,000-20,000, about SGD 6,750-27,000 | USA facility and physician billing can make even minor procedures much more expensive. |
-| Knee / orthopedic surgery | SGD 10,000-25,000 | SGD 20,000-45,000 | USD 30,000-80,000, about SGD 40,500-108,000 | China may be far lower, but implant choice, inpatient stay, rehab, and complication risk dominate. |
-| Medical aesthetics / dermatology | SGD 500-5,000 | SGD 800-8,000 | USD 1,000-15,000, about SGD 1,350-20,250 | China can be lower for package pricing, but regulation, doctor credentialing, and aftercare are critical. |
+| 专科门诊咨询 | SGD 80-300 | SGD 150-450 | USD 200-600，约 SGD 270-810 | 中国可比美国自费低约 40-70%。 |
+| 综合体检 | SGD 700-3,200 | SGD 800-3,500 | USD 1,000-5,000，约 SGD 1,350-6,750 | 中国和新加坡通常明显低于美国自费体检套餐。 |
+| MRI / 高阶影像检查 | SGD 150-800 | SGD 700-2,000 | USD 1,000-5,000，约 SGD 1,350-6,750 | 中国门诊影像检查可能比美国便宜数倍。 |
+| 白内障 / 屈光眼科手术 | SGD 3,300-7,200 | SGD 3,000-8,000 | USD 3,000-7,000 / 眼，约 SGD 4,050-9,450 | 中国和新加坡都可能低于美国自费，具体取决于晶体、激光和套餐。 |
+| 牙种植 / 修复牙科 | SGD 2,800-9,800 | SGD 3,500-8,000 | USD 3,000-6,000+ / 颗，约 SGD 4,050-8,100+ | 中国可能更低，但植体品牌、影像、牙冠、植骨和多次就诊安排会显著影响总价。 |
+| 小型门诊手术 | SGD 1,000-5,000 | SGD 2,000-8,000 | USD 5,000-20,000，约 SGD 6,750-27,000 | 美国的设施费和医生分账可能让小型手术也变得很贵。 |
+| 膝关节 / 骨科手术 | SGD 10,000-25,000 | SGD 20,000-45,000 | USD 30,000-80,000，约 SGD 40,500-108,000 | 中国可能低很多，但植入物选择、住院、康复和并发症风险是关键变量。 |
+| 医美 / 皮肤科 | SGD 500-5,000 | SGD 800-8,000 | USD 1,000-15,000，约 SGD 1,350-20,250 | 中国套餐价格可能更低，但监管、医生资质和术后护理非常重要。 |
 
-## What Usually Drives the Price Gap
+## 价格差异通常来自哪里
 
-1. Facility fees  
-   USA prices often split hospital facility, surgeon/physician, anesthesia,
-   imaging, pathology, and medication bills. China and Singapore packages are
-   more likely to present bundled estimates for self-pay patients.
+1. 设施费  
+   美国价格经常拆分为医院设施费、外科医生或医生费、麻醉费、影像费、病理费和药品费。中国和新加坡在自费患者场景中更常见打包估价。
 
-2. Labor and operating costs  
-   Clinical labor, malpractice exposure, billing administration, and facility
-   overhead are materially higher in the USA.
+2. 人力和运营成本  
+   美国的临床人力、医疗责任风险、计费行政成本和机构运营成本通常明显更高。
 
-3. Insurance structure  
-   US list prices and self-pay prices are shaped by payer contracts. A patient
-   without in-network coverage may see much higher prices than an insured
-   allowed amount.
+3. 保险结构  
+   美国的标价和自费价格受到保险合同影响。没有网络内保险覆盖的患者，看到的价格可能远高于保险协议价。
 
-4. Public vs private vs international pathway  
-   China local public-hospital prices may be lower than international-department
-   prices, but foreign visitors usually need a more navigable international or
-   VIP pathway with language support and clearer documentation.
+4. 公立、私立和国际部路径差异  
+   中国本地公立医院价格可能低于国际部价格，但外国访客通常更需要国际部或 VIP 路径，以降低语言、挂号、支付和文件准备摩擦。
 
-5. Documentation and claim requirements  
-   International patients may need English reports, itemized invoices, diagnosis
-   certificates, pre-authorization letters, and insurer claim forms. These can
-   change both cost and timeline.
+5. 文件和理赔要求  
+   国际患者可能需要英文报告、分项发票、诊断证明、预授权信和保险理赔表。这些都会影响成本和时间安排。
 
-## Product Implications For MedTour AI
+## 对 MedTour AI 的产品启示
 
-- Show ranges, not exact prices, until the hospital confirms the package.
-- Always separate medical cost, diagnostics, hotel, flight, local transport,
-  visa/payment setup, and insurance/travel medical policy.
-- Ask for the user’s insurer and policy issuing country early.
-- Prefer China hospital international departments when available, even if they
-  are more expensive than standard local departments, because they reduce
-  language, registration, payment, and documentation friction.
-- For USA users, highlight that savings may be substantial only if the planned
-  care is not covered in-network at home or the deductible/out-of-pocket burden
-  is high.
-- For Singapore users, compare China mainly on dental, diagnostics, health
-  screening, and selected elective procedures; Singapore may already be
-  competitive for some private outpatient services.
+- 在医院确认套餐前，只展示价格区间，不展示精确价格。
+- 始终拆分医疗费用、检查费用、酒店、机票、本地交通、签证/支付准备和保险/旅行医疗保单。
+- 尽早询问用户的保险公司和保单签发国家或地区。
+- 如果中国医院有国际部，应优先推荐国际部；即使它比普通本地科室更贵，也能减少语言、挂号、支付和文件准备方面的不确定性。
+- 对美国用户，应说明只有当计划治疗在本国无法网络内报销，或免赔额/自付压力很高时，跨境节省才可能非常明显。
+- 对新加坡用户，中国的比较重点应放在牙科、诊断检查、体检和部分择期项目；新加坡某些私立门诊项目本身已经具备竞争力。
 
-## Agent Guidance
+## Agent 使用指导
 
-When generating a plan, agents should:
+生成计划时，Agent 应该：
 
-- quote price ranges and confidence levels;
-- identify whether each estimate is public, private, or international-department
-  oriented;
-- include a “what could change the price” note;
-- avoid claiming insurance reimbursement unless the insurer confirms it;
-- include claim documents and pre-authorization tasks in the timeline;
-- use the same currency as the user’s selected view, while preserving source
-  currency metadata where possible.
+- 提供价格区间和置信度；
+- 标明每个估算是面向公立、私立还是国际部路径；
+- 加入“哪些因素会改变价格”的说明；
+- 在保险公司确认前，不声称可以报销；
+- 在时间线中加入理赔文件和预授权任务；
+- 使用用户当前选择的币种展示，同时尽可能保留原始币种元数据。
 
-## Suggested Sources To Refresh
+## 建议定期刷新的来源
 
-- Singapore Ministry of Health fee benchmarks and bill amount information:
+- 新加坡卫生部费用基准和账单金额信息：  
   https://www.moh.gov.sg/
-- Medicare Procedure Price Lookup for US outpatient benchmark references:
+- Medicare Procedure Price Lookup，用于美国门诊价格基准参考：  
   https://www.medicare.gov/procedure-price-lookup/
-- Hospital price transparency files for US hospital-specific estimates:
+- 美国医院价格透明文件，用于具体医院估算：  
   https://www.cms.gov/priorities/key-initiatives/hospital-price-transparency
-- China hospital international department or private-hospital published package
-  pages, where available.
-- Insurer pre-authorization and claim-document pages for Cigna, AIA, Bupa,
-  Allianz, AXA, or the user’s current provider.
+- 中国医院国际部或私立医院公开套餐页面，如有。
+- Cigna、AIA、Bupa、Allianz、AXA 或用户当前保险公司的预授权和理赔文件要求页面。
 

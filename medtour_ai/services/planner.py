@@ -13,6 +13,7 @@ from typing import Any
 from uuid import uuid4
 
 from medtour_ai.agents.tools import (
+    audit_city_option_sources_and_costs,
     estimate_flights,
     estimate_trip_costs,
     get_alipay_international_setup,
@@ -102,6 +103,7 @@ class LocalPlannerService:
             "city_options": city_options,
             "comparison": _comparison(city_options),
             "recommended_option_id": city_options[0]["option_id"] if city_options else None,
+            "audit_summary": _audit_summary(city_options),
             "confirmation_requests": confirmation_requests,
             "disclaimers": [
                 "This plan is for travel and budgeting support only and is not medical diagnosis.",
@@ -114,6 +116,7 @@ class LocalPlannerService:
                 "Hotel choices are filtered for foreign-guest eligibility in the local estimate model.",
                 "Medical timelines preserve pre-treatment, procedure, and follow-up hard constraints.",
                 "Insurance policy guidance is estimated from hospital-level rules and requires insurer confirmation.",
+                "Audit checks identify planning-only values that require official or live-source verification before booking.",
             ],
         }
 
@@ -198,6 +201,8 @@ class LocalPlannerService:
         city = candidate["city"]
         hospital = candidate["hospital"]
         required_days = _duration_to_days(profile.get("duration_preference"), medical_rules["typical_days"])
+        if profile.get("medical_purpose") == "car_t_blood_cancer":
+            required_days = max(required_days, medical_rules["typical_days"])
         nights = max(required_days - 1, 1)
         flight_payload = estimate_flights(profile["departure_city"], city, start_date.isoformat())["recommended"]
         hotel_payload = search_hotels(city, hospital, profile.get("budget_tier", "balanced"))["hotels"][0]
@@ -293,6 +298,8 @@ class LocalPlannerService:
             },
             "confirmation_requests": [],
         }
+        option["audit_report"] = audit_city_option_sources_and_costs(option)
+        option["readiness_items"].append(_audit_readiness_item(option["audit_report"]))
         return option
 
 
@@ -480,7 +487,7 @@ def _protocol_details(protocol: dict[str, Any], step_key: str) -> dict[str, Any]
     return {
         "registration_desk": contact.get("desk"),
         "registration_email": contact.get("email"),
-        "registration_email_status": contact.get("email_status", "needs_confirmation"),
+        "registration_email_status": contact.get("email_status", "sample_contact_verify_with_hospital"),
         "suggested_doctor_name": doctor.get("name"),
         "suggested_doctor_specialty": doctor.get("specialty"),
         "suggested_doctor_request": doctor.get("request_note"),
@@ -575,9 +582,46 @@ def _comparison(options: list[dict[str, Any]]) -> dict[str, Any]:
                 "total_cost": option["total_estimated_cost"],
                 "estimated_savings": option["estimated_net_savings"],
                 "readiness_risk_count": len(option["key_risks"]),
+                "audit_status": option.get("audit_report", {}).get("audit_status", "not_audited"),
             }
             for option in options
         ]
+    }
+
+
+def _audit_summary(options: list[dict[str, Any]]) -> dict[str, Any]:
+    option_audits = [option.get("audit_report", {}) for option in options]
+    blocking = [
+        issue
+        for audit in option_audits
+        for issue in audit.get("blocking_issues", [])
+    ]
+    warnings = [
+        warning
+        for audit in option_audits
+        for warning in audit.get("warnings", [])
+    ]
+    return {
+        "audit_status": "needs_confirmation" if blocking else "passed_with_warnings",
+        "planning_only": True,
+        "option_count": len(options),
+        "blocking_issue_count": len(blocking),
+        "warning_count": len(warnings),
+        "checks_performed": [
+            "hospital_source",
+            "flight_price",
+            "hotel_price",
+            "hotel_total_math",
+            "medical_cost",
+            "total_cost_math",
+            "source_freshness",
+        ],
+        "required_before_booking": [
+            "Verify selected hospital international department and official appointment contact.",
+            "Refresh flight fare from a live provider for the exact travel dates and traveler count.",
+            "Refresh hotel nightly rate, taxes, cancellation terms, and foreign-guest eligibility.",
+            "Confirm medical package scope, final price, eligibility, and insurance documents with the hospital.",
+        ],
     }
 
 
@@ -621,6 +665,25 @@ def _readiness_items(visa: dict[str, Any], alipay: dict[str, Any], insurance: di
         },
     ]
     return items
+
+
+def _audit_readiness_item(audit_report: dict[str, Any]) -> dict[str, Any]:
+    blocking = audit_report.get("blocking_issues", [])
+    warnings = audit_report.get("warnings", [])
+    return {
+        "id": "audit_source_and_cost_checks",
+        "title": "Verify sources and live prices before booking",
+        "priority": "high",
+        "status": "pending",
+        "steps": [
+            "Review hospital source, international department, appointment contact, and insurance handling.",
+            "Re-check flight fare for exact route, date, cabin, baggage, and refund rules.",
+            "Re-check hotel nightly rate, subtotal, taxes, cancellation policy, and foreign-guest eligibility.",
+            "Reconcile total estimate against itemized medical, travel, hotel, insurance, and local costs.",
+            f"Resolve {len(blocking)} blocking audit items and review {len(warnings)} warnings before any non-refundable booking.",
+        ],
+        "helpful_links": [],
+    }
 
 
 def _key_risks(visa: dict[str, Any], medical_rules: dict[str, Any], insurance: dict[str, Any]) -> list[str]:

@@ -71,9 +71,9 @@
                   <span class="material-symbols-outlined">monitor_heart</span>
                   <strong>Health Checkups</strong>
                 </button>
-                <button class="choice-card" type="button" data-choice-group="need" data-value="medical_aesthetics">
-                  <span class="material-symbols-outlined">face_retouching_natural</span>
-                  <strong>Medical Aesthetics</strong>
+                <button class="choice-card" type="button" data-choice-group="need" data-value="car_t_blood_cancer">
+                  <span class="material-symbols-outlined">bloodtype</span>
+                  <strong>CAR-T Blood Cancer</strong>
                 </button>
               </div>
               <div class="program-details" id="programDetails" aria-live="polite"></div>
@@ -295,7 +295,10 @@
                 <p id="planSubtitle">Detailed schedule for your selected care journey.</p>
               </div>
               <div class="plan-actions">
-                <button class="outline-button icon-left" type="button"><span class="material-symbols-outlined">download</span>Export PDF</button>
+                <button class="outline-button icon-left" type="button" id="exportPdfButton">
+                  <span class="material-symbols-outlined">download</span>
+                  <span class="button-label">Export PDF</span>
+                </button>
                 <button class="primary-button" type="button" id="regenerateTimelineButton">Regenerate Timeline</button>
               </div>
             </div>
@@ -465,6 +468,6 @@
       </nav>
     </footer>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260702-smile-pro-costs"></script>
   </body>
 </html>

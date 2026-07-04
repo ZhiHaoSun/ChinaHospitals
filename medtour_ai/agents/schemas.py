@@ -144,6 +144,35 @@ class ReadinessItem(BaseModel):
     helpful_links: list[dict[str, str]] = Field(default_factory=list)
 
 
+class AuditCheck(BaseModel):
+    check_id: str
+    category: Literal[
+        "hospital_source",
+        "flight_price",
+        "hotel_price",
+        "medical_cost",
+        "insurance_source",
+        "cost_math",
+        "source_freshness",
+        "itinerary_consistency",
+    ]
+    status: Literal["pass", "warn", "fail", "needs_confirmation"]
+    finding: str
+    evidence: list[str] = Field(default_factory=list)
+    suggested_action: str
+
+
+class OptionAuditReport(BaseModel):
+    option_id: str | None = None
+    city: str | None = None
+    target_hospital: str | None = None
+    audit_status: Literal["passed", "passed_with_warnings", "needs_confirmation", "failed"]
+    checks: list[AuditCheck] = Field(default_factory=list)
+    blocking_issues: list[AuditCheck] = Field(default_factory=list)
+    warnings: list[AuditCheck] = Field(default_factory=list)
+    metadata: SourceMetadata
+
+
 class CityPlanOption(BaseModel):
     option_id: str
     city: str
@@ -161,6 +190,7 @@ class CityPlanOption(BaseModel):
     readiness_summary: list[str] = Field(default_factory=list)
     key_risks: list[str]
     metadata: SourceMetadata
+    audit_report: OptionAuditReport | None = None
 
 
 class GeneratedReport(BaseModel):
@@ -170,4 +200,5 @@ class GeneratedReport(BaseModel):
     city_options: list[CityPlanOption]
     confirmation_requests: list[ConfirmationRequest] = Field(default_factory=list)
     selected_option_id: str | None = None
+    audit_summary: dict[str, Any] = Field(default_factory=dict)
     disclaimers: list[str] = Field(default_factory=list)

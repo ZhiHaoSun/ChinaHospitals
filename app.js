@@ -1,4 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
+const APP_BUILD_ID = "20260702-smile-pro-costs";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -117,26 +118,27 @@ const fallbackOptions = [
       foreign_guest_eligible: true,
     },
     cost_breakdown: {
-      medical: { amount: 5500, low: 4200, high: 6800, currency: "SGD" },
+      medical: { amount: 3900, low: 3200, high: 4600, currency: "SGD" },
       flight: { amount: 520, currency: "SGD" },
       hotel: { amount: 495, currency: "SGD" },
-      local_transport: { amount: 192, currency: "SGD" },
+      local_transport: { amount: 160, currency: "SGD" },
       meals: { amount: 135, currency: "SGD" },
       visa_and_payment_setup: { amount: 80, currency: "SGD" },
       travel_insurance: { amount: 95, currency: "SGD" },
     },
-    total_estimated_cost: { amount: 7017, currency: "SGD" },
-    estimated_net_savings: { amount: 2590, currency: "SGD" },
+    total_estimated_cost: { amount: 5385, currency: "SGD" },
+    home_country_benchmark: { amount: 6200, currency: "SGD" },
+    estimated_net_savings: { amount: 815, currency: "SGD" },
     hospital_visit_protocol: {
       registration_contact: {
         desk: "International patient registration desk",
-        email: "intl.service@shanghai-imc-demo.example",
-        email_status: "sample_not_verified",
+        email: "international.appointments@shanghai-imc.example.cn",
+        email_status: "sample_contact_verify_with_hospital",
       },
       suggested_doctor: {
-        name: "Dr. Chen Minghao (sample)",
-        specialty: "Ophthalmology / refractive surgery",
-        request_note: "Request a senior refractive-surgery consultant and confirm the named doctor in the appointment reply.",
+        name: "Dr. Li Xiaoran",
+        specialty: "Cornea and refractive surgery consultant",
+        request_note: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
       },
     },
     insurance_policy: {
@@ -194,11 +196,11 @@ const fallbackOptions = [
             confidence_level: "medium",
             details: {
               registration_desk: "International patient registration desk",
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
-              suggested_doctor_request: "Request a senior refractive-surgery consultant and confirm the named doctor in the appointment reply.",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
+              suggested_doctor_request: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
               hospital_steps: [
                 "Email the international desk with passport name, preferred date, SMILE Pro interest, current prescription, and insurance holder.",
                 "Attach prior eye reports only after confirming the official email channel.",
@@ -223,11 +225,11 @@ const fallbackOptions = [
             confidence_level: "medium",
             details: {
               registration_desk: "International patient registration desk",
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
-              suggested_doctor_request: "Request a senior refractive-surgery consultant and confirm the named doctor in the appointment reply.",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
+              suggested_doctor_request: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
               hospital_steps: [
                 "Show passport, appointment confirmation, insurance card or pre-authorization letter, and payment method.",
                 "Create outpatient profile, confirm invoice name for claims, and sign privacy/consent forms.",
@@ -243,10 +245,10 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Complete vision testing, corneal scan, eye-pressure check, tear-film assessment, and dilation if required.",
                 "Confirm soft contact lens pause period and whether test results allow same-trip procedure.",
@@ -262,11 +264,11 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
-              suggested_doctor_request: "Ask the international clinic to confirm the named surgeon before final payment.",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
+              suggested_doctor_request: "Ask the international clinic to confirm Dr. Li Xiaoran or the assigned operating surgeon before final payment.",
               hospital_steps: [
                 "Review test results, eligibility, treatment alternatives, procedure risks, and final price.",
                 "Confirm whether insurance requires guarantee-of-payment or reimbursement-only handling.",
@@ -289,10 +291,10 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Reconfirm doctor, eye marking, consent forms, final price, and payment or pre-authorization status.",
                 "Ask for post-procedure medicine list and emergency contact route before entering treatment.",
@@ -305,13 +307,14 @@ const fallbackOptions = [
             start_time: "2026-08-14T09:30:00+08:00",
             end_time: "2026-08-14T12:00:00+08:00",
             location_name: "Shanghai International Medical Center - International Patient Service",
+            estimated_cost: { amount: 3900, currency: "SGD" },
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Complete procedure only after same-day surgeon confirmation and eligibility check.",
                 "Rest in clinic observation area until cleared by the medical team.",
@@ -327,10 +330,10 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Collect eyedrops, written aftercare instructions, diagnosis certificate, itemized invoice, doctor report, and receipts.",
                 "Confirm next-day follow-up time and emergency contact instructions.",
@@ -353,10 +356,10 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
-              suggested_doctor_name: "Dr. Chen Minghao (sample)",
-              suggested_doctor_specialty: "Ophthalmology / refractive surgery",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
+              suggested_doctor_name: "Dr. Li Xiaoran",
+              suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Check healing, vision status, medication use, screen-time limits, and flight fitness.",
                 "Confirm remote follow-up route after returning home.",
@@ -371,8 +374,8 @@ const fallbackOptions = [
             location_name: "Shanghai International Medical Center - International Patient Service",
             confidence_level: "medium",
             details: {
-              registration_email: "intl.service@shanghai-imc-demo.example",
-              registration_email_status: "sample_not_verified",
+              registration_email: "international.appointments@shanghai-imc.example.cn",
+              registration_email_status: "sample_contact_verify_with_hospital",
               hospital_steps: [
                 "Verify all claim documents are stamped or digitally valid.",
                 "Confirm whether translated reports are required by the insurer.",
@@ -484,34 +487,35 @@ const programDetailConfigs = {
       },
     ],
   },
-  medical_aesthetics: {
-    icon: "face_retouching_natural",
-    title: "Aesthetic program details",
-    subtitle: "Clarify treatment area and downtime tolerance.",
-    subtypeLabel: "Treatment type",
+  car_t_blood_cancer: {
+    icon: "bloodtype",
+    title: "CAR-T blood cancer details",
+    subtitle: "Clarify diagnosis, treatment stage, and whether prior records are ready for review.",
+    subtypeLabel: "Treatment focus",
     subtypeOptions: [
-      ["skin_laser", "Skin laser"],
-      ["injectables", "Injectables"],
-      ["body_contouring", "Body contouring"],
-      ["minor_surgery", "Minor surgical procedure"],
+      ["car_t_consult", "CAR-T eligibility consult"],
+      ["b_cell_lymphoma", "B-cell lymphoma CAR-T"],
+      ["multiple_myeloma", "Multiple myeloma CAR-T"],
+      ["leukemia", "Leukemia CAR-T"],
       ["not_sure", "Not sure yet"],
     ],
     fields: [
       {
-        id: "treatmentArea",
-        label: "Treatment area",
-        icon: "gesture",
-        placeholder: "e.g. face, jawline, abdomen",
+        id: "diagnosis",
+        label: "Diagnosis",
+        icon: "clinical_notes",
+        placeholder: "e.g. DLBCL, multiple myeloma, ALL",
       },
       {
-        id: "downtimeTolerance",
-        label: "Downtime tolerance",
-        icon: "hotel",
+        id: "treatmentStage",
+        label: "Treatment stage",
+        icon: "biotech",
         type: "select",
         options: [
-          ["minimal", "Minimal downtime"],
-          ["three_to_five_days", "3-5 days"],
-          ["one_week_plus", "1 week or more"],
+          ["initial_consult", "Initial CAR-T consult"],
+          ["post_chemo_relapse", "Relapse after chemotherapy"],
+          ["bridging_therapy", "Bridging therapy needed"],
+          ["records_ready", "Records ready for review"],
           ["not_sure", "Not sure"],
         ],
       },
@@ -937,6 +941,30 @@ function money(value, targetCurrency = null) {
   return `${currency} ${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+function moneyAmount(value) {
+  return Number(value?.amount || 0);
+}
+
+function savingsForDisplay(option) {
+  if (!option) return null;
+  const explicitSavings = option.estimated_net_savings;
+  if (moneyAmount(explicitSavings) > 0) return explicitSavings;
+
+  const home = option.home_country_benchmark;
+  const total = option.total_estimated_cost;
+  const homeAmount = moneyAmount(home);
+  const totalAmount = moneyAmount(total);
+  if (homeAmount > totalAmount && totalAmount > 0) {
+    return {
+      amount: homeAmount - totalAmount,
+      currency: home?.currency || total?.currency || "SGD",
+      source: "client_derived_home_benchmark",
+    };
+  }
+
+  return null;
+}
+
 function normalizeCurrency(currency) {
   return currency === "CNY" ? "RMB" : currency;
 }
@@ -967,6 +995,134 @@ function timeRange(item) {
   const start = item.start_time?.slice(11, 16) || "";
   const end = item.end_time?.slice(11, 16) || "";
   return start && end ? `${start} - ${end}` : start || end;
+}
+
+function isoDateWithOffset(startValue, offset) {
+  const fallback = document.querySelector("#dateRangeInput")?.value
+    ? parseDateRange(document.querySelector("#dateRangeInput").value).start
+    : "2026-08-12";
+  const date = new Date(`${startValue || fallback}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function timelineTime(date, time) {
+  return date ? `${date}T${time}:00+08:00` : "";
+}
+
+function clientFallbackTimeline(option) {
+  if (!option) return [];
+  const city = option.city || "Selected city";
+  const hospital = option.target_hospital || "Selected hospital international clinic";
+  const hotel = option.hotel || {};
+  const flight = option.flight || {};
+  const doctor = option.hospital_visit_protocol?.suggested_doctor || {};
+  const contact = option.hospital_visit_protocol?.registration_contact || {};
+  const doctorName = doctor.name || option.suggested_doctor_name || "Dr. Li Wen, International Clinic Coordinator";
+  const doctorSpecialty = doctor.specialty || option.suggested_doctor_specialty || "International outpatient coordination";
+  const registrationEmail = contact.email || option.registration_email || "international.service@example-hospital.cn";
+  const medicalCost = option.cost_breakdown?.medical;
+  const start = option.start_date;
+  const details = (steps) => ({
+    registration_email: registrationEmail,
+    registration_email_status: contact.email_status || "sample_contact_verify_with_hospital",
+    suggested_doctor_name: doctorName,
+    suggested_doctor_specialty: doctorSpecialty,
+    suggested_doctor_request:
+      doctor.request_note || "Request the international clinic to confirm the named doctor before final payment.",
+    hospital_steps: steps,
+  });
+  const item = (category, title, dayIndex, startTime, endTime, location, extra = {}) => {
+    const date = isoDateWithOffset(start, dayIndex);
+    return {
+      item_id: `tli_client_${dayIndex + 1}_${title.toLowerCase().replaceAll(" ", "_")}`,
+      category,
+      title,
+      start_time: timelineTime(date, startTime),
+      end_time: timelineTime(date, endTime),
+      location_name: location,
+      confidence_level: "medium",
+      ...extra,
+    };
+  };
+
+  return [
+    {
+      day: 1,
+      date: isoDateWithOffset(start, 0),
+      title: `Arrival and ${city} setup`,
+      items: [
+        item("flight", "Arrival flight", 0, "08:00", "13:30", flight.arrival_airport || city, {
+          estimated_cost: flight.estimated_cost,
+        }),
+        item("hotel", "Hotel check-in near international clinic", 0, "15:00", "16:00", hotel.name || city, {
+          address: hotel.address,
+          estimated_cost: hotel.nightly_rate || option.cost_breakdown?.hotel,
+        }),
+        item("medical", "International desk pre-registration email check", 0, "16:30", "17:00", hospital, {
+          hard_constraint: true,
+          details: details([
+            "Confirm the official international desk email before sending documents.",
+            "Send passport name, preferred appointment window, medical purpose, and current insurance holder.",
+            "Ask for doctor assignment, deposit requirement, interpreter support, and claim-document process.",
+          ]),
+        }),
+      ],
+    },
+    {
+      day: 2,
+      date: isoDateWithOffset(start, 1),
+      title: "Registration and medical assessment",
+      items: [
+        item("medical", "International outpatient registration and file setup", 1, "08:30", "09:30", hospital, {
+          hard_constraint: true,
+          details: details([
+            "Show passport, appointment confirmation, insurance card or guarantee letter, and payment method.",
+            "Create outpatient profile and confirm invoice name for insurance reimbursement.",
+            "Complete consent, privacy, interpreter, and deposit or pre-authorization checks.",
+          ]),
+        }),
+        item("medical", "Program-specific diagnostics and nurse intake", 1, "09:30", "12:00", hospital, {
+          hard_constraint: true,
+          estimated_cost: medicalCost,
+          details: details([
+            "Complete vitals, medical history, medication review, and program-specific tests.",
+            "Confirm whether results allow the planned procedure or checkup to continue on this trip.",
+          ]),
+        }),
+        item("medical", "Suggested doctor consultation and treatment decision", 1, "14:00", "15:30", hospital, {
+          hard_constraint: true,
+          details: details([
+            `Meet ${doctorName} or request confirmed assignment through the international clinic.`,
+            "Review eligibility, alternatives, risks, final price, insurance handling, and timing.",
+          ]),
+        }),
+      ],
+    },
+    {
+      day: 3,
+      date: isoDateWithOffset(start, 2),
+      title: "Procedure, documents, and follow-up",
+      items: [
+        item("medical", "Procedure or treatment block", 2, "09:00", "12:00", hospital, {
+          hard_constraint: true,
+          estimated_cost: medicalCost,
+          details: details([
+            "Reconfirm consent, assigned doctor, final estimate, deposit, and pre-authorization status.",
+            "Proceed only after same-day safety and eligibility confirmation.",
+          ]),
+        }),
+        item("medical", "Discharge briefing and insurance claim document collection", 2, "14:00", "15:30", hospital, {
+          hard_constraint: true,
+          details: details([
+            "Collect medical report, diagnosis certificate, itemized invoice, prescriptions, and receipts.",
+            "Confirm emergency contact route, medication instructions, and remote follow-up channel.",
+          ]),
+        }),
+      ],
+    },
+  ];
 }
 
 function iconForCategory(category) {
@@ -1041,9 +1197,9 @@ function hospitalDetailTemplate(item, option) {
 
   return {
     registration_desk: contact.desk || "International patient registration desk",
-    registration_email: contact.email || "intl.service@shanghai-imc-demo.example",
-    registration_email_status: contact.email_status || "sample_not_verified",
-    suggested_doctor_name: doctor.name || "Dr. Chen Minghao (sample)",
+    registration_email: contact.email || "international.appointments@shanghai-imc.example.cn",
+    registration_email_status: contact.email_status || "sample_contact_verify_with_hospital",
+    suggested_doctor_name: doctor.name || "Dr. Li Xiaoran",
     suggested_doctor_specialty: doctor.specialty || "Relevant specialist for selected medical program",
     suggested_doctor_request:
       doctor.request_note || "Request the international clinic to confirm the named doctor before final payment.",
@@ -1109,7 +1265,7 @@ function confidence(option) {
 }
 
 function progressForOption(option, index) {
-  const savings = Number(option.estimated_net_savings?.amount || 0);
+  const savings = moneyAmount(savingsForDisplay(option));
   return Math.max(54, Math.min(92, 62 + index * 6 + Math.round(savings / 1000)));
 }
 
@@ -1158,7 +1314,7 @@ function renderCities() {
             <div><span>Total Duration</span><strong>${option.required_days || "-"} Days</strong></div>
           </div>
           <span class="muted">Est. Savings vs Home</span>
-          <strong class="savings-value">${money(option.estimated_net_savings)}</strong>
+          <strong class="savings-value">${money(savingsForDisplay(option))}</strong>
           <div class="savings-bar"><span style="width:${progressForOption(option, index)}%"></span></div>
           <div class="risk-tags">
             <span>Confidence: ${confidence(option)}</span>
@@ -1206,7 +1362,7 @@ function renderAnalysisTable() {
     ${row("Medical estimate", options.map((option) => money(option.cost_breakdown?.medical)))}
     ${row("Insurance estimate", options.map((option) => money(option.cost_breakdown?.travel_insurance || option.insurance_policy?.estimated_premium)))}
     ${row("Total estimate", options.map((option) => money(option.total_estimated_cost)))}
-    ${row("Estimated savings", options.map((option) => money(option.estimated_net_savings)))}
+    ${row("Estimated savings", options.map((option) => money(savingsForDisplay(option))))}
     <div class="section-row">Insurance Readiness</div>
     ${row("Policy review", options.map((option) => option.insurance_policy?.policy_status || "needs confirmation"))}
     ${row("Hospital billing", options.map((option) => option.insurance_policy?.hospital_policy?.direct_billing || "Confirm with hospital"))}
@@ -1217,8 +1373,16 @@ function renderAnalysisTable() {
 
 function renderPlan() {
   const option = selectedOption();
-  const rawTimelineDays = state.reportId ? state.timeline?.days || option?.timeline || [] : option?.timeline || [];
-  const displaySourceDays = rawTimelineDays.length ? rawTimelineDays : state.generationAttempted ? [] : fallbackOptions[0]?.timeline || [];
+  const endpointDays = Array.isArray(state.timeline?.days) ? state.timeline.days : [];
+  const optionDays = Array.isArray(option?.timeline) ? option.timeline : [];
+  const rawTimelineDays = endpointDays.length ? endpointDays : optionDays;
+  const displaySourceDays = rawTimelineDays.length
+    ? rawTimelineDays
+    : option
+      ? clientFallbackTimeline(option)
+      : state.generationAttempted
+        ? []
+        : fallbackOptions[0]?.timeline || [];
   const timelineDays = timelineDaysForDisplay(displaySourceDays, option || fallbackOptions[0]);
   document.querySelector("#sidePlanCity").textContent = option ? `${option.city} Plan` : "Selected Plan";
   document.querySelector("#sidePlanSubtitle").textContent = option
@@ -1753,6 +1917,77 @@ async function regenerateTimeline() {
   }
 }
 
+async function exportPlanPdf() {
+  const option = selectedOption();
+  if (!option) {
+    setStatus("Generate and select a plan before exporting a PDF.", "error");
+    return;
+  }
+  const button = document.querySelector("#exportPdfButton");
+  const label = button?.querySelector(".button-label");
+  const previousLabel = label?.textContent || "Export PDF";
+  try {
+    if (button) button.disabled = true;
+    if (label) label.textContent = "Preparing...";
+    const response = await fetchPlanPdfResponse(option);
+    await downloadPdfResponse(response, `medtour-plan-${option.option_id || "local"}.pdf`);
+    setStatus("PDF export ready.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(`Could not export PDF: ${error.message}`, "error");
+  } finally {
+    if (button) button.disabled = false;
+    if (label) label.textContent = previousLabel;
+  }
+}
+
+async function fetchPlanPdfResponse(option) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/plan-export.pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      report: state.report || {},
+      option: planExportSnapshot(option),
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`${response.status} ${response.statusText}: ${detail}`);
+  }
+  return response;
+}
+
+function planExportSnapshot(option) {
+  const snapshot = JSON.parse(JSON.stringify(option));
+  const endpointDays = Array.isArray(state.timeline?.days) ? state.timeline.days : [];
+  const optionDays = Array.isArray(option.timeline) ? option.timeline : [];
+  const timeline = endpointDays.length ? endpointDays : optionDays.length ? optionDays : clientFallbackTimeline(option);
+  snapshot.timeline = timelineDaysForDisplay(timeline, option);
+
+  if (state.costs?.categories) snapshot.cost_breakdown = state.costs.categories;
+  if (state.costs?.total) snapshot.total_estimated_cost = state.costs.total;
+
+  const readinessItems = (state.readiness?.sections || []).flatMap((section) => section.items || []);
+  if (readinessItems.length) snapshot.readiness_items = readinessItems;
+  if (!snapshot.option_id) snapshot.option_id = "local_plan";
+  return snapshot;
+}
+
+async function downloadPdfResponse(response, fallbackFilename) {
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1] || fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function updateReadiness(itemId, checked) {
   if (!state.reportId || !state.selectedOptionId) return;
   try {
@@ -1923,6 +2158,12 @@ function bindInteractions() {
     const regenerateButton = event.target.closest("#regenerateTimelineButton");
     if (regenerateButton) {
       regenerateTimeline();
+      return;
+    }
+
+    const exportPdfButton = event.target.closest("#exportPdfButton");
+    if (exportPdfButton) {
+      exportPlanPdf();
     }
   });
 
