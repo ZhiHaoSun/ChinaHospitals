@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cigna China Insurance"
+  short_description: "Cigna China coverage checks"
+  default_prompt: "Use the Cigna China insurance policy skill to assess coverage questions, pre-authorization needs, direct billing assumptions, claim documents, and verification steps for a China medical travel plan."

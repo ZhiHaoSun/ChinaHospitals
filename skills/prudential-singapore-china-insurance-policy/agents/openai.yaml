@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prudential Singapore China"
+  short_description: "Prudential China cover checks"
+  default_prompt: "Use the Prudential Singapore China insurance policy skill to assess whether a Prudential Singapore policy can support medical care in China, including PRUShield, PRUExtra, planned overseas treatment, pre-authorisation limits, eLOG exclusions, claims, and confirmation steps."

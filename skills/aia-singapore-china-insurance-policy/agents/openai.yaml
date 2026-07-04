@@ -1,0 +1,4 @@
+interface:
+  display_name: "AIA Singapore China"
+  short_description: "AIA China medical cover checks"
+  default_prompt: "Use the AIA Singapore China insurance policy skill to assess whether an AIA Singapore policy can support medical care in China, including plan type, covered area, pre-authorisation, guarantee of payment, direct billing, claims, and confirmation steps."

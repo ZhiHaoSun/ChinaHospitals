@@ -1,0 +1,4 @@
+interface:
+  display_name: "Great Eastern China"
+  short_description: "Great Eastern China cover checks"
+  default_prompt: "Use the Great Eastern Singapore China insurance policy skill to assess whether a Great Eastern Singapore policy can support medical care in China, including GREAT SupremeHealth, GREAT TotalCare, worldwide rider benefits, pre-authorisation, direct settlement, overseas claims, and confirmation steps."
