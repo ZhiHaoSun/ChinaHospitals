@@ -38,6 +38,13 @@ hotel estimate, medical cost, insurance data, and total-cost calculation is
 reasonable enough for planning. It marks values that still need official or live
 provider confirmation before non-refundable booking.
 
+Hospital contact lookup uses the versioned skill at
+`skills/lookup-china-hospital-contacts/SKILL.md`. City option agents must use
+that workflow before trusting a registration email, named contact person,
+appointment phone, WeChat/mini-program route, or international department
+contact. The audit step treats placeholder, general, or unverified contact
+routes as confirmation blockers.
+
 ## Local Setup
 
 ```bash

@@ -21,6 +21,7 @@ from medtour_ai.agents.tools import (
     get_hospital_visit_protocol,
     get_today,
     get_visa_entry_guidance,
+    lookup_china_hospital_contact_guidance,
     lookup_insurance_provider_policy,
     retrieve_medical_rules,
     search_hospital_city_candidates,
@@ -142,9 +143,14 @@ For the selected city, call tools to estimate:
   pre-authorization, direct billing, claim documents, exclusions, and suggested actions
 - provider-specific insurance lookup guidance for popular insurers such as
   Cigna, AIA, Bupa, Allianz, and AXA using the user's current insurance holder
+- China hospital contact lookup guidance from the lookup-china-hospital-contacts
+  skill before trusting any registration email, contact person, appointment
+  phone, WeChat route, service billing, direct-billing status, or international
+  department appointment pathway
 - hospital visit protocol, including international registration desk, official
   registration email status, suggested doctor or doctor-assignment request,
-  diagnostics, consultation, procedure, discharge, and claim-document steps
+  diagnostics, consultation, procedure, billing/deposit confirmation, discharge,
+  and claim-document steps
 - add insurance premium estimate to cost_breakdown.travel_insurance and include it
   in total_estimated_cost and estimated_net_savings calculations
 
@@ -154,6 +160,27 @@ Merge both results. Mention provider-specific pre-authorization questions,
 direct-billing assumptions, claim documents, and risk flags. If the provider is
 unknown or not supported, ask for insurer name, issuing country, plan type, and
 policy territory instead of guessing coverage.
+
+Before writing hospital_visit_protocol or any timeline registration email,
+contact person, phone, or WeChat/app route, call
+`lookup_china_hospital_contact_guidance` with the selected hospital, city,
+medical purpose, and target international department/service. Apply the
+lookup-china-hospital-contacts skill rules:
+- accept registration email only when an official hospital/university source
+  explicitly ties it to appointment, registration, international patients, or
+  the target department
+- mark official general hospital email as official_general_email, not verified
+  registration email
+- accept contact person only when an official source names the person and role
+- prefer official WeChat/mini-program/app/phone routes when the hospital
+  appointment guide uses those instead of email
+- use seed_official_sources from the lookup tool only as source-backed leads;
+  refresh before non-refundable booking and preserve date_checked/source_records
+- record service_billing, direct_billing_status, insurance_partners,
+  payment_or_deposit_notes, and claim_documents; mark missing billing evidence
+  as needs_confirmation instead of guessing
+- include contact_lookup_guidance and contact_verification_status in
+  audit_inputs
 
 Choose the hospital's 国际部 / international section whenever available. The
 target_hospital value should name the international section or international
@@ -168,7 +195,7 @@ constraints as hard_constraint=true. Include:
 - hotel check-in
 - international desk pre-registration email check
 - in-hospital registration, outpatient file setup, passport/insurance/payment verification
-- nurse intake, consent forms, and pre-authorization or deposit check
+- nurse intake, consent forms, and pre-authorization, billing, invoice, or deposit check
 - program-specific diagnostics and tests
 - suggested doctor consultation, including doctor name if verified or
   doctor-assignment request if the name is not verified
@@ -180,7 +207,9 @@ constraints as hard_constraint=true. Include:
 - return flight
 Each hospital timeline item must include details.registration_email,
 details.registration_email_status, details.suggested_doctor_name,
-details.suggested_doctor_specialty, and details.hospital_steps when available.
+details.suggested_doctor_specialty, details.appointment_phone,
+details.wechat_or_portal_route, details.service_billing_status,
+details.direct_billing_status, and details.hospital_steps when available.
 Do not invent official emails or doctor names; mark them needs_confirmation if
 not verified.
 
@@ -189,13 +218,16 @@ not verified.
 Required JSON keys:
 option_id, city, recommendation_label, target_hospital, recommendation_reason,
 required_days, flight, hotel, timeline, cost_breakdown, total_estimated_cost,
-estimated_net_savings, insurance_policy, readiness_items, key_risks, metadata,
-audit_inputs, confirmation_requests.
+estimated_net_savings, insurance_policy, hospital_visit_protocol,
+contact_lookup_guidance, contact_verification_status, readiness_items,
+key_risks, metadata, audit_inputs, confirmation_requests.
 
 audit_inputs must summarize the exact hospital source used, flight fare source,
 hotel rate source, medical-cost source, insurance source, quote timestamp or
 source_updated_at, and whether each value is representative, live, official, or
-needs_confirmation.
+needs_confirmation. For hospital source, include source_records, date_checked,
+email_status, appointment route, service_billing_status, direct_billing_status,
+and next_verification_step.
 """,
         tools=[
             estimate_flights,
@@ -203,6 +235,7 @@ needs_confirmation.
             estimate_trip_costs,
             get_visa_entry_guidance,
             get_alipay_international_setup,
+            lookup_china_hospital_contact_guidance,
             lookup_insurance_provider_policy,
             get_hospital_insurance_policy,
             get_hospital_visit_protocol,
@@ -254,6 +287,16 @@ Audit duties:
 - Check hospital source quality: international department name, official
   appointment contact status, foreign-patient support, insurance handling, and
   medical program fit.
+- Check whether the option used the lookup-china-hospital-contacts skill rules
+  for hospital contact lookup, including email_status, contact_person_status,
+  source_authority, source_urls/source_records, date_checked, appointment_phone,
+  WeChat/portal route, service_billing_status, direct_billing_status, and
+  next_verification_step. Treat sample, placeholder, missing, or official-general
+  emails as blocking until the hospital's official appointment route is
+  confirmed.
+- Check service billing evidence: direct settlement, insurance partners,
+  deposit/payment expectations, invoice route, and claim-document requirements.
+  Missing billing evidence blocks non-refundable booking.
 - Flag stale, missing, internally inconsistent, or suspiciously precise data.
 - Require user/advisor confirmation before non-refundable booking whenever
   data is not live or official.
@@ -297,7 +340,9 @@ Build a final report for the frontend compare page. Requirements:
 - Timeline items inside the hospital must show detailed registration,
   diagnostics, suggested doctor/doctor-assignment, procedure, discharge, and
   insurance document steps. Preserve details fields for registration email,
-  email status, suggested doctor, specialty, and hospital_steps.
+  email status, appointment phone, WeChat/portal route, service billing status,
+  direct billing status, suggested doctor, specialty, source records, and
+  hospital_steps.
 - Hospital recommendations should prefer the hospital's 国际部 / international
   section or equivalent international patient pathway. Keep that section in
   target_hospital and comparison labels. Do not collapse it back to the parent
@@ -310,7 +355,8 @@ Build a final report for the frontend compare page. Requirements:
   assumptions, and claim-document requirements.
 - Merge audit results into each city option as audit_report. Preserve audit
   checks for hospital source verification, flight price, hotel price, medical
-  price, total-cost math, insurance source, and source freshness.
+  price, total-cost math, service billing, insurance source, and source
+  freshness.
 - Add a top-level audit_summary that states whether the report is planning-only,
   which values need live re-checking, and which issues block non-refundable
   booking.
@@ -368,6 +414,10 @@ assumptions.
 If the selected option names a hospital parent and an international section is
 available, target the 国际部 / international section for appointments, insurance
 review, registration, and timeline steps.
+Before refreshing hospital_visit_protocol or changing registration/contact
+details, call `lookup_china_hospital_contact_guidance` and preserve its
+email/contact-person/service-billing acceptance rules in the regenerated
+timeline.
 Use `get_hospital_visit_protocol` to preserve or refresh detailed in-hospital
 steps. Keep registration email and doctor name honest: include official/verified
 values only when available; otherwise use a doctor-assignment request and
@@ -388,6 +438,7 @@ insurance_policy, audit_notes, confirmation_requests, assumptions.
         search_hotels,
         estimate_trip_costs,
         get_visa_entry_guidance,
+        lookup_china_hospital_contact_guidance,
         lookup_insurance_provider_policy,
         get_hospital_insurance_policy,
         get_hospital_visit_protocol,

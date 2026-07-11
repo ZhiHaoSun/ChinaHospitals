@@ -132,13 +132,13 @@ const fallbackOptions = [
     hospital_visit_protocol: {
       registration_contact: {
         desk: "International patient registration desk",
-        email: "international.appointments@shanghai-imc.example.cn",
-        email_status: "sample_contact_verify_with_hospital",
+        email: "",
+        email_status: "needs_confirmation",
       },
       suggested_doctor: {
-        name: "Dr. Li Xiaoran",
+        name: "",
         specialty: "Cornea and refractive surgery consultant",
-        request_note: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
+        request_note: "Request the International Patient Service team to assign or confirm a senior refractive-surgery consultant before deposit payment.",
       },
     },
     insurance_policy: {
@@ -196,11 +196,11 @@ const fallbackOptions = [
             confidence_level: "medium",
             details: {
               registration_desk: "International patient registration desk",
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
-              suggested_doctor_request: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
+              suggested_doctor_request: "Request the International Patient Service team to assign or confirm a senior refractive-surgery consultant before deposit payment.",
               hospital_steps: [
                 "Email the international desk with passport name, preferred date, SMILE Pro interest, current prescription, and insurance holder.",
                 "Attach prior eye reports only after confirming the official email channel.",
@@ -225,11 +225,11 @@ const fallbackOptions = [
             confidence_level: "medium",
             details: {
               registration_desk: "International patient registration desk",
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
-              suggested_doctor_request: "Request the International Patient Service team to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
+              suggested_doctor_request: "Request the International Patient Service team to assign or confirm a senior refractive-surgery consultant before deposit payment.",
               hospital_steps: [
                 "Show passport, appointment confirmation, insurance card or pre-authorization letter, and payment method.",
                 "Create outpatient profile, confirm invoice name for claims, and sign privacy/consent forms.",
@@ -245,9 +245,9 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Complete vision testing, corneal scan, eye-pressure check, tear-film assessment, and dilation if required.",
@@ -264,11 +264,11 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
-              suggested_doctor_request: "Ask the international clinic to confirm Dr. Li Xiaoran or the assigned operating surgeon before final payment.",
+              suggested_doctor_request: "Ask the international clinic to assign or confirm the operating surgeon before final payment.",
               hospital_steps: [
                 "Review test results, eligibility, treatment alternatives, procedure risks, and final price.",
                 "Confirm whether insurance requires guarantee-of-payment or reimbursement-only handling.",
@@ -291,9 +291,9 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Reconfirm doctor, eye marking, consent forms, final price, and payment or pre-authorization status.",
@@ -311,9 +311,9 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Complete procedure only after same-day surgeon confirmation and eligibility check.",
@@ -330,9 +330,9 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Collect eyedrops, written aftercare instructions, diagnosis certificate, itemized invoice, doctor report, and receipts.",
@@ -356,9 +356,9 @@ const fallbackOptions = [
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
-              suggested_doctor_name: "Dr. Li Xiaoran",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
+              suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
                 "Check healing, vision status, medication use, screen-time limits, and flight fitness.",
@@ -374,8 +374,8 @@ const fallbackOptions = [
             location_name: "Shanghai International Medical Center - International Patient Service",
             confidence_level: "medium",
             details: {
-              registration_email: "international.appointments@shanghai-imc.example.cn",
-              registration_email_status: "sample_contact_verify_with_hospital",
+              registration_email: "",
+              registration_email_status: "needs_confirmation",
               hospital_steps: [
                 "Verify all claim documents are stamped or digitally valid.",
                 "Confirm whether translated reports are required by the insurer.",
@@ -1019,18 +1019,25 @@ function clientFallbackTimeline(option) {
   const flight = option.flight || {};
   const doctor = option.hospital_visit_protocol?.suggested_doctor || {};
   const contact = option.hospital_visit_protocol?.registration_contact || {};
-  const doctorName = doctor.name || option.suggested_doctor_name || "Dr. Li Wen, International Clinic Coordinator";
-  const doctorSpecialty = doctor.specialty || option.suggested_doctor_specialty || "International outpatient coordination";
-  const registrationEmail = contact.email || option.registration_email || "international.service@example-hospital.cn";
+  const serviceBilling = option.hospital_visit_protocol?.service_billing || {};
+  const doctorName = doctor.name || option.suggested_doctor_name || "";
+  const doctorSpecialty = doctor.specialty || option.suggested_doctor_specialty || "Assigned specialist to confirm";
+  const registrationEmail = contact.email || option.registration_email || "";
   const medicalCost = option.cost_breakdown?.medical;
   const start = option.start_date;
   const details = (steps) => ({
     registration_email: registrationEmail,
-    registration_email_status: contact.email_status || "sample_contact_verify_with_hospital",
+    registration_email_status: contact.email_status || "needs_confirmation",
+    appointment_phone: contact.appointment_phone || "",
+    main_phone: contact.main_phone || "",
+    wechat_or_portal_route: contact.wechat_or_portal_route || "",
+    service_billing: serviceBilling,
+    service_billing_status: serviceBilling.service_billing_status || "needs_confirmation",
+    direct_billing_status: serviceBilling.direct_billing_status || "unknown",
     suggested_doctor_name: doctorName,
     suggested_doctor_specialty: doctorSpecialty,
     suggested_doctor_request:
-      doctor.request_note || "Request the international clinic to confirm the named doctor before final payment.",
+      doctor.request_note || "Request the international clinic to assign or confirm the responsible specialist before final payment.",
     hospital_steps: steps,
   });
   const item = (category, title, dayIndex, startTime, endTime, location, extra = {}) => {
@@ -1197,12 +1204,17 @@ function hospitalDetailTemplate(item, option) {
 
   return {
     registration_desk: contact.desk || "International patient registration desk",
-    registration_email: contact.email || "international.appointments@shanghai-imc.example.cn",
-    registration_email_status: contact.email_status || "sample_contact_verify_with_hospital",
-    suggested_doctor_name: doctor.name || "Dr. Li Xiaoran",
+    registration_email: contact.email || "",
+    registration_email_status: contact.email_status || "needs_confirmation",
+    appointment_phone: contact.appointment_phone || "",
+    main_phone: contact.main_phone || "",
+    wechat_or_portal_route: contact.wechat_or_portal_route || "",
+    service_billing_status: option.hospital_visit_protocol?.service_billing?.service_billing_status || "needs_confirmation",
+    direct_billing_status: option.hospital_visit_protocol?.service_billing?.direct_billing_status || "unknown",
+    suggested_doctor_name: doctor.name || "",
     suggested_doctor_specialty: doctor.specialty || "Relevant specialist for selected medical program",
     suggested_doctor_request:
-      doctor.request_note || "Request the international clinic to confirm the named doctor before final payment.",
+      doctor.request_note || "Request the international clinic to assign or confirm the responsible specialist before final payment.",
     hospital_steps: hospitalSteps,
   };
 }

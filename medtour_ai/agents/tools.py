@@ -30,8 +30,8 @@ CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
         "airport": "PVG",
         "registration_contact": {
             "desk": "International patient registration desk",
-            "email": "international.appointments@shanghai-imc.example.cn",
-            "email_status": "sample_contact_verify_with_hospital",
+            "email": None,
+            "email_status": "needs_confirmation",
         },
     },
     "Guangzhou": {
@@ -46,8 +46,8 @@ CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
         "airport": "CAN",
         "registration_contact": {
             "desk": "International clinic registration desk",
-            "email": "internationalclinic@gdph.example.cn",
-            "email_status": "sample_contact_verify_with_hospital",
+            "email": None,
+            "email_status": "needs_confirmation",
         },
     },
     "Beijing": {
@@ -62,8 +62,9 @@ CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
         "airport": "PEK",
         "registration_contact": {
             "desk": "International Medical Services appointment and registration desk",
-            "email": "ims.appointment@pumch.example.cn",
-            "email_status": "sample_contact_verify_with_hospital",
+            "email": "ims@pumch.cn",
+            "email_status": "verified_registration_email",
+            "appointment_phone": "+86-10-69156699",
         },
     },
     "Shenzhen": {
@@ -78,11 +79,219 @@ CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
         "airport": "SZX",
         "registration_contact": {
             "desk": "International Medical Center registration desk",
-            "email": "imc.appointments@hku-szh.example.cn",
-            "email_status": "sample_contact_verify_with_hospital",
+            "email": None,
+            "email_status": "not_found",
+            "appointment_phone": "0755-86913388",
+            "wechat_or_portal_route": "Official WeChat account hkuszh or 91160 appointment page",
         },
     },
 }
+
+CHINA_HOSPITAL_CONTACT_LOOKUP_SKILL: dict[str, Any] = {
+    "skill_name": "lookup-china-hospital-contacts",
+    "skill_path": "skills/lookup-china-hospital-contacts/SKILL.md",
+    "purpose": (
+        "Find and verify registration emails, contact persons, appointment routes, "
+        "phone numbers, and WeChat/mini-program paths for international departments "
+        "or specialty departments of Mainland China hospitals."
+    ),
+    "source_authority_ranking": [
+        "official hospital website on hospital or university domain",
+        "official English site, international department, VIP clinic, or specialty department page",
+        "official hospital WeChat account, mini-program, Alipay life account, or hospital app",
+        "official university, medical school, health commission, or hospital group page",
+        "main switchboard or department phone confirmation from an official page",
+        "insurer provider directory or embassy list as a lead only",
+        "third-party directories or brokers as unverified leads only",
+    ],
+    "acceptance_rules": {
+        "verified_registration_email": "Official source explicitly says the email is for appointment, registration, international patients, or the target department.",
+        "official_general_email": "Official hospital email exists, but appointment usage is not explicit.",
+        "verified_phone_route": "Official source gives a phone number for appointment, registration, department inquiries, or international services.",
+        "verified_wechat_route": "Official source directs patients to a WeChat account, mini-program, Alipay account, app, or official appointment portal.",
+        "verified_billing_route": "Official source describes international/VIP service billing, direct settlement, insurance, deposit, invoice, or claim-document route.",
+        "unverified_lead": "Found on third-party or indirect sources only.",
+        "rejected": "Source is unofficial, stale, inconsistent, or unsafe.",
+    },
+    "confidence_policy": {
+        "high": "Official registration/international department email or contact person found with an additional official corroborating signal.",
+        "medium": "Official hospital email or phone is found, but not explicitly tied to international registration or target specialty.",
+        "low": "Only third-party leads or indirect references exist.",
+        "blocked": "No official contact path found.",
+    },
+    "required_output_fields": [
+        "hospital",
+        "hospital_chinese",
+        "city",
+        "campus_or_branch",
+        "service",
+        "department",
+        "registration_email",
+        "email_status",
+        "contact_person",
+        "contact_person_status",
+        "appointment_phone",
+        "main_phone",
+        "wechat_or_portal_route",
+        "service_billing",
+        "direct_billing_status",
+        "insurance_partners",
+        "payment_or_deposit_notes",
+        "claim_documents",
+        "source_records",
+        "confidence",
+        "source_urls",
+        "source_authority",
+        "date_checked",
+        "next_verification_step",
+    ],
+}
+
+CHINA_HOSPITAL_OFFICIAL_SOURCE_SEEDS: list[dict[str, Any]] = [
+    {
+        "hospital": "Peking Union Medical College Hospital",
+        "hospital_chinese": "北京协和医院",
+        "city": "Beijing",
+        "international_department_name": "International Medical Services",
+        "official_domains": ["pumch.cn"],
+        "registration_email": "ims@pumch.cn",
+        "email_status": "verified_registration_email",
+        "appointment_phone": "+86-10-69156699",
+        "main_phone": "010-69151188",
+        "wechat_or_portal_route": None,
+        "service_billing": {
+            "service_billing_status": "needs_confirmation",
+            "direct_billing_status": "unknown",
+            "insurance_partners": [],
+            "payment_or_deposit_notes": [],
+            "claim_documents": [],
+        },
+        "source_records": [
+            {
+                "url": "https://www.pumch.cn/en.html",
+                "title": "PUMCH English site",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["hospital_identity", "campus_phone", "campus_address"],
+            },
+            {
+                "url": "https://www.pumch.cn/en/new_about.html",
+                "title": "PUMCH Contact Us",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["international_department_name", "registration_email", "appointment_phone"],
+            },
+        ],
+        "confidence": "high",
+        "date_checked": "2026-07-11",
+        "next_verification_step": "Email or call International Medical Services to confirm specialty fit, required documents, deposit, invoice, and insurance handling.",
+    },
+    {
+        "hospital": "The University of Hong Kong-Shenzhen Hospital",
+        "hospital_chinese": "香港大学深圳医院",
+        "city": "Shenzhen",
+        "international_department_name": "IMC / International Medical Center",
+        "official_domains": ["hku-szh.org"],
+        "registration_email": None,
+        "email_status": "not_found",
+        "appointment_phone": "0755-86913388",
+        "main_phone": "0755-86913366",
+        "wechat_or_portal_route": "Official WeChat account hkuszh; 91160 appointment page",
+        "service_billing": {
+            "service_billing_status": "needs_confirmation",
+            "direct_billing_status": "unknown",
+            "insurance_partners": [],
+            "payment_or_deposit_notes": [],
+            "claim_documents": [],
+        },
+        "source_records": [
+            {
+                "url": "https://www.hku-szh.org/en/index.html",
+                "title": "HKU-Shenzhen Hospital English site",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["hospital_identity", "imc_section", "booking_pages"],
+            },
+            {
+                "url": "https://www.hku-szh.org/en/PatientInfo/BookingService/BookingGuidelines/content/post_818462.html",
+                "title": "Appointment Channels",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["wechat_route", "appointment_phone", "imc_phone", "third_party_portal"],
+            },
+        ],
+        "confidence": "high",
+        "date_checked": "2026-07-11",
+        "next_verification_step": "Call IMC to confirm specialty availability, language support, deposit, direct settlement, invoice, and claim-document route.",
+    },
+    {
+        "hospital": "Guangdong Provincial People's Hospital",
+        "hospital_chinese": "广东省人民医院",
+        "city": "Guangzhou",
+        "international_department_name": "Concord Medical Center",
+        "official_domains": ["gdghospital.org.cn"],
+        "registration_email": "gdcmc@yahoo.cn",
+        "email_status": "official_general_email",
+        "appointment_phone": "(+8620) 83874283; (+8620) 87374289-8991",
+        "main_phone": "+8620-83827812",
+        "wechat_or_portal_route": "WeChat official account Guangdong Provincial People's Hospital; official portal; yihu.com; guahao.gov.cn",
+        "service_billing": {
+            "service_billing_status": "needs_confirmation",
+            "direct_billing_status": "unknown",
+            "insurance_partners": [],
+            "payment_or_deposit_notes": [],
+            "claim_documents": [],
+        },
+        "source_records": [
+            {
+                "url": "https://www.gdghospital.org.cn/en/",
+                "title": "Guangdong Provincial People's Hospital English site",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["hospital_identity", "contact_nav", "concord_medical_center_nav"],
+            },
+            {
+                "url": "https://www.gdghospital.org.cn/en/outpatientservices/index.html",
+                "title": "Outpatient Appointment",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["wechat_route", "official_portal", "appointment_phone", "onsite_registration"],
+            },
+            {
+                "url": "https://www.gdghospital.org.cn/en/CenterIntroduced/index.html",
+                "title": "Concord Medical Center",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["international_vip_center", "foreign_patient_service", "center_phone", "center_email"],
+            },
+            {
+                "url": "https://www.gdghospital.org.cn/en/contactus/index.html",
+                "title": "Contact Us",
+                "source_type": "official_hospital_website",
+                "fields_verified": ["main_phone", "address"],
+            },
+        ],
+        "confidence": "high",
+        "date_checked": "2026-07-11",
+        "next_verification_step": "Confirm whether Concord Medical Center accepts email appointment requests and request billing, deposit, direct-settlement, invoice, and claim-document instructions.",
+    },
+    {
+        "hospital": "Shanghai International Medical Center",
+        "hospital_chinese": "上海国际医学中心",
+        "city": "Shanghai",
+        "international_department_name": None,
+        "official_domains": [],
+        "registration_email": None,
+        "email_status": "not_found",
+        "appointment_phone": None,
+        "main_phone": None,
+        "wechat_or_portal_route": None,
+        "service_billing": {
+            "service_billing_status": "needs_confirmation",
+            "direct_billing_status": "unknown",
+            "insurance_partners": [],
+            "payment_or_deposit_notes": [],
+            "claim_documents": [],
+        },
+        "source_records": [],
+        "confidence": "blocked",
+        "date_checked": "2026-07-11",
+        "next_verification_step": "Manually verify official domain, appointment route, registration phone, billing desk, and insurance handling before use.",
+    },
+]
 
 HOSPITAL_INSURANCE_POLICIES: dict[str, dict[str, Any]] = {
     "Shanghai International Medical Center": {
@@ -199,6 +408,128 @@ def search_hospital_city_candidates(
     return {"candidates": candidates}
 
 
+def lookup_china_hospital_contact_guidance(
+    hospital_name: str,
+    city: str | None = None,
+    medical_purpose: str | None = None,
+    department_or_service: str | None = None,
+) -> dict[str, Any]:
+    """Return the hospital-contact lookup skill guidance for agent use.
+
+    This does not claim a contact is verified. It tells the planner how to look
+    up and classify registration email, contact person, phone, and WeChat/app
+    routes before hospital appointment details are trusted.
+    """
+
+    purpose_terms = {
+        "eye_surgery": ["ophthalmology", "eye clinic", "refractive surgery", "眼科", "屈光手术"],
+        "dental_care": ["dental implant", "stomatology", "implant dentistry", "口腔", "种植牙", "种植科"],
+        "health_checkup": ["health checkup", "health management", "体检", "健康管理"],
+        "car_t_blood_cancer": ["hematology", "oncology", "CAR-T", "血液科", "肿瘤科", "细胞治疗"],
+    }
+    specialty_terms = purpose_terms.get(medical_purpose or "", [])
+    service = department_or_service or (", ".join(specialty_terms[:3]) if specialty_terms else "international department")
+    city_prefix = f"{city} " if city else ""
+    target = f"{hospital_name} {service}".strip()
+
+    english_queries = [
+        f"{target} international department email",
+        f"{target} international medical center appointment",
+        f"{target} contact us English",
+        f"{city_prefix}{service} international hospital appointment email".strip(),
+    ]
+    chinese_queries = [
+        f"{hospital_name} 国际部 邮箱",
+        f"{hospital_name} 国际医疗部 预约 邮箱",
+        f"{hospital_name} 外宾门诊 联系方式",
+        f"{hospital_name} 特需门诊 预约 电话",
+        f"{hospital_name} 国际医疗 收费 保险 结算",
+        f"{hospital_name} 特需门诊 保险 直付 发票",
+        f"{hospital_name} 国际门诊 联系人",
+        f"{city_prefix}{' '.join(specialty_terms[-2:]) if specialty_terms else '医院'} 国际部 预约".strip(),
+        f"{hospital_name} 联系我们 邮箱",
+    ]
+    seed_sources = _matching_hospital_source_seeds(hospital_name, city)
+
+    return {
+        **CHINA_HOSPITAL_CONTACT_LOOKUP_SKILL,
+        "source_registry_reference": "skills/lookup-china-hospital-contacts/references/source-registry.md",
+        "seed_official_sources": seed_sources,
+        "lookup_target": {
+            "hospital_name": hospital_name,
+            "city": city,
+            "medical_purpose": medical_purpose,
+            "department_or_service": department_or_service,
+            "specialty_terms": specialty_terms,
+        },
+        "recommended_search_queries": {
+            "english": english_queries,
+            "chinese": chinese_queries,
+            "domain_scoped": [
+                f"site:<official-hospital-domain> {term}"
+                for term in [
+                    "Contact Us",
+                    "International Medical Center",
+                    "Appointment Guide",
+                    "Insurance Services",
+                    "Direct Settlement",
+                    "联系我们",
+                    "预约挂号",
+                    "国际部",
+                    "特需门诊",
+                    "保险服务",
+                    "结算",
+                ]
+            ],
+        },
+        "audit_requirements": [
+            "Record every source URL, page title, and date checked.",
+            "Classify email as verified_registration_email, official_general_email, unverified_lead, or rejected.",
+            "Classify contact person as verified only when the official source names the person and role.",
+            "Prefer WeChat/app/phone route when the official appointment guide does not accept email registration.",
+            "Record service billing, deposit, direct-settlement, invoice, and claim-document route; mark needs_confirmation when not found on an official source.",
+            "Use seed_official_sources as evidence leads only; refresh source URLs before non-refundable booking.",
+            "Add a blocking readiness item until official appointment path and required documents are confirmed.",
+        ],
+        "metadata": {
+            "source": "skill_file",
+            "source_updated_at": date.today().isoformat(),
+            "confidence_level": "high",
+            "data_status": "workflow_guidance_not_contact_verification",
+        },
+    }
+
+
+def _matching_hospital_source_seeds(hospital_name: str, city: str | None = None) -> list[dict[str, Any]]:
+    normalized_hospital = _normalize_lookup_text(hospital_name)
+    normalized_city = _normalize_lookup_text(city or "")
+    matches = []
+    for source in CHINA_HOSPITAL_OFFICIAL_SOURCE_SEEDS:
+        source_names = [
+            source.get("hospital", ""),
+            source.get("hospital_chinese", ""),
+            source.get("international_department_name", "") or "",
+        ]
+        source_city = _normalize_lookup_text(source.get("city", ""))
+        if normalized_city and source_city and normalized_city != source_city:
+            continue
+        if any(_normalize_lookup_text(name) in normalized_hospital or normalized_hospital in _normalize_lookup_text(name) for name in source_names if name):
+            matches.append(source)
+    if matches:
+        return matches
+    if normalized_city:
+        return [
+            source
+            for source in CHINA_HOSPITAL_OFFICIAL_SOURCE_SEEDS
+            if _normalize_lookup_text(source.get("city", "")) == normalized_city
+        ]
+    return []
+
+
+def _normalize_lookup_text(value: Any) -> str:
+    return "".join(char.lower() for char in str(value or "") if char.isalnum())
+
+
 def get_hospital_visit_protocol(
     hospital_name: str,
     medical_purpose: str,
@@ -219,30 +550,54 @@ def get_hospital_visit_protocol(
         "registration_contact",
         {
             "desk": "International patient registration desk",
-            "email": "international.appointments@example-hospital.cn",
-            "email_status": "sample_contact_verify_with_hospital",
+            "email": None,
+            "email_status": "needs_confirmation",
         },
     )
+    city = next(
+        (city_name for city_name, city_data in CITY_MEDICAL_DATA.items() if city_data["hospital"] == hospital_name),
+        None,
+    )
+    contact_lookup_guidance = lookup_china_hospital_contact_guidance(
+        hospital_name,
+        city=city,
+        medical_purpose=medical_purpose,
+        department_or_service=contact.get("desk"),
+    )
+    seed_source = (contact_lookup_guidance.get("seed_official_sources") or [{}])[0]
+    if seed_source:
+        contact = {
+            **contact,
+            "desk": seed_source.get("international_department_name") or contact.get("desk"),
+            "email": seed_source.get("registration_email"),
+            "email_status": seed_source.get("email_status") or contact.get("email_status"),
+            "appointment_phone": seed_source.get("appointment_phone"),
+            "main_phone": seed_source.get("main_phone"),
+            "wechat_or_portal_route": seed_source.get("wechat_or_portal_route"),
+            "source_records": seed_source.get("source_records", []),
+            "date_checked": seed_source.get("date_checked"),
+            "next_verification_step": seed_source.get("next_verification_step"),
+        }
     subtype = procedure_subtype or "not_sure"
     details = program_details or {}
     doctor_by_purpose = {
         "eye_surgery": {
-            "name": "Dr. Li Xiaoran",
+            "name": None,
             "specialty": "Cornea and refractive surgery consultant",
-            "request_note": "Request the international clinic to confirm Dr. Li Xiaoran or assign an equivalent senior refractive-surgery consultant before deposit payment.",
+            "request_note": "Request the international clinic to assign or confirm a senior refractive-surgery consultant before deposit payment.",
         },
         "dental_care": {
-            "name": "Dr. Zhou Wenhao",
+            "name": None,
             "specialty": "Oral implantology and restorative dentistry consultant",
-            "request_note": "Request the international clinic to confirm Dr. Zhou Wenhao or assign an equivalent senior implantology consultant after X-ray/CBCT review.",
+            "request_note": "Request the international clinic to assign or confirm a senior implantology consultant after X-ray/CBCT review.",
         },
         "health_checkup": {
-            "name": "Dr. Wang Meilin",
+            "name": None,
             "specialty": "Health management and internal medicine reviewer",
-            "request_note": "Request the international clinic to confirm Dr. Wang Meilin or assign an equivalent physician reviewer for the chosen screening package.",
+            "request_note": "Request the international clinic to assign or confirm a physician reviewer for the chosen screening package.",
         },
         "car_t_blood_cancer": {
-            "name": "Dr. Chen Rui",
+            "name": None,
             "specialty": "Hematology-oncology and cellular therapy consultant",
             "request_note": "Request the international clinic to confirm a hematology-oncology consultant experienced with CAR-T eligibility review before sending deposits or original records.",
         },
@@ -264,6 +619,15 @@ def get_hospital_visit_protocol(
         "medical_purpose": medical_purpose,
         "procedure_subtype": subtype,
         "registration_contact": contact,
+        "contact_lookup_guidance": contact_lookup_guidance,
+        "service_billing": seed_source.get("service_billing") if seed_source else {
+            "service_billing_status": "needs_confirmation",
+            "direct_billing_status": "unknown",
+            "insurance_partners": [],
+            "payment_or_deposit_notes": [],
+            "claim_documents": [],
+        },
+        "source_records": seed_source.get("source_records", []) if seed_source else [],
         "suggested_doctor": doctor_by_purpose.get(medical_purpose, doctor_by_purpose["health_checkup"]),
         "program_details": details,
         "in_hospital_steps": {
@@ -438,6 +802,92 @@ def audit_city_option_sources_and_costs(option: dict[str, Any]) -> dict[str, Any
             "Selected hospital was not matched to the curated hospital dataset.",
             [hospital or "missing_hospital", f"city={city or 'missing_city'}"],
             "Retrieve official hospital source data before presenting this option as bookable.",
+        )
+
+    hospital_protocol = option.get("hospital_visit_protocol") or {}
+    contact_lookup_guidance = (
+        option.get("contact_lookup_guidance")
+        or hospital_protocol.get("contact_lookup_guidance")
+        or (option.get("audit_inputs") or {}).get("contact_lookup_guidance")
+    )
+    registration_contact = hospital_protocol.get("registration_contact") or {}
+    service_billing = hospital_protocol.get("service_billing") or option.get("service_billing") or {}
+    source_records = hospital_protocol.get("source_records") or registration_contact.get("source_records") or []
+    email_status = (
+        registration_contact.get("email_status")
+        or option.get("registration_email_status")
+        or (option.get("audit_inputs") or {}).get("registration_email_status")
+    )
+    appointment_phone = registration_contact.get("appointment_phone") or option.get("appointment_phone")
+    wechat_or_portal_route = registration_contact.get("wechat_or_portal_route") or option.get("wechat_or_portal_route")
+    if not contact_lookup_guidance:
+        add_check(
+            "hospital_contact_lookup_skill",
+            "hospital_contact",
+            "needs_confirmation",
+            "Hospital contact lookup did not include lookup-china-hospital-contacts skill guidance.",
+            [hospital or "missing_hospital", f"email_status={email_status or 'missing'}"],
+            "Run lookup_china_hospital_contact_guidance and classify registration email, contact person, phone, and WeChat/app route before trusting appointment details.",
+        )
+    elif email_status in {"verified_registration_email", "verified_phone_route", "verified_wechat_route"} or (
+        source_records and (appointment_phone or wechat_or_portal_route)
+    ):
+        add_check(
+            "hospital_contact_lookup_skill",
+            "hospital_contact",
+            "pass",
+            "Hospital contact route is marked with a verified appointment-route status.",
+            [
+                f"skill={contact_lookup_guidance.get('skill_name', 'lookup-china-hospital-contacts')}",
+                f"email_status={email_status}",
+                f"skill_path={contact_lookup_guidance.get('skill_path', 'skills/lookup-china-hospital-contacts/SKILL.md')}",
+                f"appointment_phone={appointment_phone or 'missing'}",
+                f"wechat_or_portal_route={wechat_or_portal_route or 'missing'}",
+                f"source_records={len(source_records)}",
+            ],
+            "Keep official source URLs and date checked with the final booking packet.",
+        )
+    else:
+        add_check(
+            "hospital_contact_lookup_skill",
+            "hospital_contact",
+            "needs_confirmation",
+            "Hospital contact route has lookup guidance but is not verified for registration.",
+            [
+                f"skill={contact_lookup_guidance.get('skill_name', 'lookup-china-hospital-contacts')}",
+                f"email_status={email_status or 'missing'}",
+                f"skill_path={contact_lookup_guidance.get('skill_path', 'skills/lookup-china-hospital-contacts/SKILL.md')}",
+            ],
+            "Use official hospital website, official WeChat/mini-program, or hospital phone confirmation to verify the registration route and any contact person.",
+        )
+
+    service_billing_status = service_billing.get("service_billing_status") or "needs_confirmation"
+    direct_billing_status = service_billing.get("direct_billing_status") or "unknown"
+    if service_billing_status == "verified_billing_route":
+        add_check(
+            "hospital_service_billing",
+            "service_billing",
+            "pass",
+            "Hospital service billing route is backed by official source evidence.",
+            [
+                f"service_billing_status={service_billing_status}",
+                f"direct_billing_status={direct_billing_status}",
+                f"source_records={len(source_records)}",
+            ],
+            "Preserve billing source URLs, date checked, invoice route, and claim-document requirements in the booking packet.",
+        )
+    else:
+        add_check(
+            "hospital_service_billing",
+            "service_billing",
+            "needs_confirmation",
+            "Hospital service billing, deposit, direct settlement, invoice, or claim-document route is not verified.",
+            [
+                f"service_billing_status={service_billing_status}",
+                f"direct_billing_status={direct_billing_status}",
+                f"source_records={len(source_records)}",
+            ],
+            "Confirm billing desk, deposit/payment expectations, direct-settlement eligibility, invoice naming, and claim documents with the official international/VIP service route.",
         )
 
     expected_flight = {"Shanghai": 520, "Guangzhou": 430, "Beijing": 610, "Shenzhen": 460}.get(city)

@@ -286,6 +286,7 @@ class LocalPlannerService:
             "alipay_setup": alipay,
             "insurance_policy": insurance,
             "hospital_visit_protocol": hospital_protocol,
+            "contact_lookup_guidance": hospital_protocol.get("contact_lookup_guidance"),
             "readiness_items": _readiness_items(visa, alipay, insurance),
             "key_risks": _key_risks(visa, medical_rules, insurance),
             "medical_hard_constraints": medical_rules.get("hard_constraints", []),
@@ -484,10 +485,25 @@ def _build_timeline(
 def _protocol_details(protocol: dict[str, Any], step_key: str) -> dict[str, Any]:
     contact = protocol.get("registration_contact", {})
     doctor = protocol.get("suggested_doctor", {})
+    contact_lookup_guidance = protocol.get("contact_lookup_guidance", {})
+    service_billing = protocol.get("service_billing", {})
     return {
         "registration_desk": contact.get("desk"),
         "registration_email": contact.get("email"),
-        "registration_email_status": contact.get("email_status", "sample_contact_verify_with_hospital"),
+        "registration_email_status": contact.get("email_status", "needs_confirmation"),
+        "appointment_phone": contact.get("appointment_phone"),
+        "main_phone": contact.get("main_phone"),
+        "wechat_or_portal_route": contact.get("wechat_or_portal_route"),
+        "contact_source_records": contact.get("source_records", []),
+        "contact_lookup_skill": contact_lookup_guidance.get("skill_name"),
+        "contact_lookup_skill_path": contact_lookup_guidance.get("skill_path"),
+        "contact_lookup_source_registry": contact_lookup_guidance.get("source_registry_reference"),
+        "contact_lookup_seed_sources": contact_lookup_guidance.get("seed_official_sources", []),
+        "contact_lookup_required_fields": contact_lookup_guidance.get("required_output_fields", []),
+        "contact_lookup_audit_requirements": contact_lookup_guidance.get("audit_requirements", []),
+        "service_billing": service_billing,
+        "service_billing_status": service_billing.get("service_billing_status", "needs_confirmation"),
+        "direct_billing_status": service_billing.get("direct_billing_status", "unknown"),
         "suggested_doctor_name": doctor.get("name"),
         "suggested_doctor_specialty": doctor.get("specialty"),
         "suggested_doctor_request": doctor.get("request_note"),
@@ -615,6 +631,7 @@ def _audit_summary(options: list[dict[str, Any]]) -> dict[str, Any]:
             "medical_cost",
             "total_cost_math",
             "source_freshness",
+            "hospital_contact_lookup_skill",
         ],
         "required_before_booking": [
             "Verify selected hospital international department and official appointment contact.",

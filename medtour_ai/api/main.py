@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from fastapi import Cookie, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 import reportlab
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -24,7 +24,7 @@ from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Space
 
 load_dotenv()
 
-from medtour_ai.agents.schemas import IntakeAnswers
+from medtour_ai.agents.schemas import GeneratedReport, IntakeAnswers
 from medtour_ai.agents.config import get_settings
 from medtour_ai.services.adk_runner import AdkPlannerRunner
 from medtour_ai.services.auth_store import TRUSTED_SESSION_DAYS, InMemoryAuthStore
@@ -401,7 +401,7 @@ async def create_report(request: CreateReportRequest) -> dict[str, Any]:
             },
         }
     try:
-        generated = _normalize_generated_report(raw_report, draft, request)
+        generated = _normalize_generated_report(raw_report, draft, request, operation["report_id"])
     except Exception as exc:
         generated = _normalize_generated_report(
             {
@@ -413,6 +413,7 @@ async def create_report(request: CreateReportRequest) -> dict[str, Any]:
             },
             draft,
             request,
+            operation["report_id"],
         )
     if generated.get("status") != "failed" and not generated.get("city_options"):
         generated = {
@@ -675,9 +676,35 @@ def _set_session_cookie(response: Response, session_token: str) -> None:
     )
 
 
-def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], request: CreateReportRequest) -> dict[str, Any]:
+def _normalize_generated_report(
+    raw: Any,
+    draft: dict[str, Any],
+    request: CreateReportRequest,
+    report_id: str | None = None,
+) -> dict[str, Any]:
+    if isinstance(raw, list):
+        raw = {"city_options": raw}
+    if not isinstance(raw, dict):
+        return {
+            "report_id": report_id,
+            "status": "failed",
+            "report_status": "failed",
+            "profile": draft.get("profile", {}),
+            "city_options": [],
+            "comparison": {},
+            "confirmation_requests": [],
+            "disclaimers": [],
+            "error": {
+                "code": "PLANNER_INVALID_OUTPUT",
+                "message": f"Planner returned {type(raw).__name__}; expected an object or a list of city options.",
+            },
+            "events": [],
+            "session_id": None,
+            "planner_backend": request.planner_backend,
+        }
     if raw.get("error") or raw.get("status") == "failed":
         return {
+            "report_id": report_id,
             "status": "failed",
             "report_status": "failed",
             "profile": draft.get("profile", {}),
@@ -691,7 +718,13 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
             "planner_backend": request.planner_backend,
         }
 
-    report = raw.get("generated_report") if isinstance(raw.get("generated_report"), dict) else raw
+    generated_report = raw.get("generated_report")
+    if isinstance(generated_report, list):
+        report = {"city_options": generated_report}
+    elif isinstance(generated_report, dict):
+        report = generated_report
+    else:
+        report = raw
     profile = report.get("profile") or draft.get("profile", {})
     options = [
         _normalize_city_option(option, index, request.currency)
@@ -704,8 +737,9 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
     for option in options:
         option["selected_as_primary"] = option["option_id"] == recommended_option_id
 
-    return {
+    normalized = {
         **report,
+        "report_id": report_id or report.get("report_id") or "",
         "status": "ready",
         "report_status": report.get("report_status", "ready"),
         "profile": profile,
@@ -719,6 +753,39 @@ def _normalize_generated_report(raw: dict[str, Any], draft: dict[str, Any], requ
         "agent_session_id": raw.get("session_id"),
         "agent_events": raw.get("events", []),
     }
+    try:
+        GeneratedReport.model_validate(normalized)
+    except ValidationError as exc:
+        return {
+            "report_id": normalized["report_id"],
+            "status": "failed",
+            "report_status": "failed",
+            "profile": profile,
+            "city_options": [],
+            "comparison": {},
+            "confirmation_requests": normalized.get("confirmation_requests", []),
+            "disclaimers": normalized.get("disclaimers", []),
+            "error": {
+                "code": "REPORT_SCHEMA_VALIDATION_FAILED",
+                "message": "Planner output did not satisfy the GeneratedReport schema.",
+                "validation_errors": _schema_error_summary(exc),
+            },
+            "events": raw.get("events", []),
+            "session_id": raw.get("session_id"),
+            "planner_backend": request.planner_backend,
+        }
+    return normalized
+
+
+def _schema_error_summary(exc: ValidationError) -> list[dict[str, Any]]:
+    return [
+        {
+            "path": ".".join(str(part) for part in error.get("loc", ())),
+            "message": error.get("msg", ""),
+            "type": error.get("type", ""),
+        }
+        for error in exc.errors()
+    ]
 
 
 def _apply_comparison_metrics_to_options(
@@ -992,20 +1059,12 @@ def _fallback_timeline_for_option(option: dict[str, Any], currency: str) -> list
     protocol = option.get("hospital_visit_protocol") or {}
     contact = protocol.get("registration_contact") if isinstance(protocol, dict) else {}
     doctor = protocol.get("suggested_doctor") if isinstance(protocol, dict) else {}
-    registration_email = (
-        (contact or {}).get("email")
-        or option.get("registration_email")
-        or "international.service@example-hospital.cn"
-    )
-    doctor_name = (
-        (doctor or {}).get("name")
-        or option.get("suggested_doctor_name")
-        or "Dr. Li Wen, International Clinic Coordinator"
-    )
+    registration_email = (contact or {}).get("email") or option.get("registration_email")
+    doctor_name = (doctor or {}).get("name") or option.get("suggested_doctor_name")
     doctor_specialty = (
         (doctor or {}).get("specialty")
         or option.get("suggested_doctor_specialty")
-        or "International outpatient coordination"
+        or "Assigned specialist to confirm"
     )
     medical_cost = option.get("cost_breakdown", {}).get("medical")
     flight_cost = flight.get("estimated_cost") or option.get("cost_breakdown", {}).get("flight")
@@ -1027,7 +1086,13 @@ def _fallback_timeline_for_option(option: dict[str, Any], currency: str) -> list
         if category == "medical":
             details = {
                 "registration_email": registration_email,
-                "registration_email_status": "sample_contact_verify_with_hospital",
+                "registration_email_status": (contact or {}).get("email_status") or "needs_confirmation",
+                "appointment_phone": (contact or {}).get("appointment_phone"),
+                "main_phone": (contact or {}).get("main_phone"),
+                "wechat_or_portal_route": (contact or {}).get("wechat_or_portal_route"),
+                "service_billing": protocol.get("service_billing") if isinstance(protocol, dict) else {},
+                "service_billing_status": (protocol.get("service_billing") or {}).get("service_billing_status", "needs_confirmation") if isinstance(protocol, dict) else "needs_confirmation",
+                "direct_billing_status": (protocol.get("service_billing") or {}).get("direct_billing_status", "unknown") if isinstance(protocol, dict) else "unknown",
                 "suggested_doctor_name": doctor_name,
                 "suggested_doctor_specialty": doctor_specialty,
                 "hospital_steps": steps or [],

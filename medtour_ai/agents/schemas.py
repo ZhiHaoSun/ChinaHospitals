@@ -148,6 +148,8 @@ class AuditCheck(BaseModel):
     check_id: str
     category: Literal[
         "hospital_source",
+        "hospital_contact",
+        "service_billing",
         "flight_price",
         "hotel_price",
         "medical_cost",

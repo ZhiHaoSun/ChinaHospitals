@@ -1,0 +1,4 @@
+interface:
+  display_name: "China Hospital Contacts"
+  short_description: "Verify China hospital contacts and billing routes"
+  default_prompt: "Use the China hospital contact lookup skill to find and verify registration emails, contact persons, phone numbers, appointment routes, WeChat/portal paths, service billing, direct billing, and claim-document routes for international departments of China hospitals, with official-source authority checks and audit records."
