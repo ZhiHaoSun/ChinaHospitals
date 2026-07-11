@@ -3,6 +3,12 @@ const APP_BUILD_ID = "20260702-smile-pro-costs";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
+const SINGAPORE_MEDICAL_BUDGET_SGD = {
+  eye_surgery: { default: 6200, smile_pro: 6500, lasik: 5200, icl: 9000, cataract: 7000 },
+  dental_care: { default: 9000, single_implant: 5500, multiple_implants: 14000, crown_bridge: 6500, root_canal: 1800 },
+  health_checkup: { default: 2500, executive_screening: 3200, cardio_screening: 2800, cancer_markers: 2200, women_health: 2600 },
+  car_t_blood_cancer: { default: 350000, car_t_consult: 12000, b_cell_lymphoma: 360000, multiple_myeloma: 380000, leukemia: 390000 },
+};
 
 const state = {
   reportId: null,
@@ -44,38 +50,59 @@ let agentProgressTimers = [];
 const agentProgressSteps = [
   {
     id: "profile",
-    title: "User Profiler Agent",
+    title: "Profile Normalizer Agent",
     icon: "person_search",
-    working: "Normalizing medical need, program details, passport country, travel dates, and insurance holder.",
-    done: "Profile normalized and missing confirmations identified.",
+    working: "Normalizing medical purpose, program details, passport country, travel dates, insurance holder, and default assumptions.",
+    done: "Profile normalized, missing confirmations identified, and planning inputs prepared.",
   },
   {
     id: "medical",
-    title: "Medical Consultant Agent",
-    icon: "local_hospital",
-    working: "Shortlisting China cities, prioritizing hospital international sections and medical fit.",
-    done: "City and hospital candidates prepared.",
+    title: "Medical Rules Agent",
+    icon: "medical_information",
+    working: "Checking clinical fit, care-cycle constraints, candidate cities, and hospital international department requirements.",
+    done: "Medical constraints and candidate city strategy prepared.",
   },
   {
     id: "parallel",
-    title: "City Option Agents",
+    title: "Parallel City Option Agents",
     icon: "hub",
-    working: "Running city planners in parallel for best overall, lowest cost, shortest trip, and strongest resources.",
-    done: "Diversified city options generated.",
+    working: "Running city planners in parallel for best overall fit, lowest cost, shortest trip, and strongest hospital resources.",
+    done: "Diversified city option drafts generated.",
+  },
+  {
+    id: "hospital-contact",
+    title: "Hospital Contact Lookup Agent",
+    icon: "contact_phone",
+    working: "Looking up international department names, registration routes, appointment phone numbers, email availability, and official source records.",
+    done: "Hospital contact and registration evidence attached to each option.",
+  },
+  {
+    id: "travel-costs",
+    title: "Travel & Budget Agent",
+    icon: "payments",
+    working: "Estimating flights, foreigner-eligible hotels, local transport, meals, hospital deposits, and Singapore benchmark savings.",
+    done: "Travel costs, medical estimates, and savings math prepared.",
   },
   {
     id: "insurance",
     title: "Insurance Policy Agent",
     icon: "health_and_safety",
-    working: "Checking hospital billing assumptions, pre-authorization, claim documents, and user insurer fit.",
-    done: "Insurance policy notes attached to each city plan.",
+    working: "Checking pre-authorization, direct-billing likelihood, deposit expectations, invoices, translations, and claim document needs.",
+    done: "Insurance and hospital billing notes attached to each city plan.",
   },
   {
     id: "timeline",
     title: "Timeline Detail Agent",
     icon: "timeline",
-    working: "Building hospital registration, diagnostics, suggested doctor, procedure, discharge, and follow-up steps.",
-    done: "Detailed timelines assembled.",
+    working: "Building day-by-day registration, diagnostics, consultation, procedure, discharge, billing, claims, and follow-up steps.",
+    done: "Detailed timelines assembled with operational next steps.",
+  },
+  {
+    id: "audit",
+    title: "Source & Cost Audit Agent",
+    icon: "fact_check",
+    working: "Auditing hospital sources, contact confidence, billing evidence, flight and hotel prices, medical estimates, and total-cost arithmetic.",
+    done: "Audit status, warnings, source gaps, and cost checks attached.",
   },
   {
     id: "synthesis",
@@ -960,19 +987,32 @@ function savingsForDisplay(option) {
   const explicitSavings = option.estimated_net_savings;
   if (moneyAmount(explicitSavings) > 0) return explicitSavings;
 
-  const home = option.home_country_benchmark;
+  const home = moneyAmount(option.home_country_benchmark) > 0
+    ? option.home_country_benchmark
+    : singaporeBudgetForOption(option);
   const total = option.total_estimated_cost;
   const homeAmount = moneyAmount(home);
   const totalAmount = moneyAmount(total);
-  if (homeAmount > totalAmount && totalAmount > 0) {
+  if (homeAmount > 0 && totalAmount > 0) {
     return {
-      amount: homeAmount - totalAmount,
+      amount: Math.max(homeAmount - totalAmount, 0),
       currency: home?.currency || total?.currency || "SGD",
       source: "client_derived_home_benchmark",
     };
   }
 
   return null;
+}
+
+function singaporeBudgetForOption(option) {
+  const purpose = option?.medical_purpose || "health_checkup";
+  const subtype = option?.procedure_subtype || "default";
+  const purposeBudget = SINGAPORE_MEDICAL_BUDGET_SGD[purpose] || SINGAPORE_MEDICAL_BUDGET_SGD.health_checkup;
+  return {
+    amount: purposeBudget[subtype] || purposeBudget.default,
+    currency: "SGD",
+    source: "client_hard_written_singapore_budget",
+  };
 }
 
 function normalizeCurrency(currency) {

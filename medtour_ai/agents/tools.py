@@ -15,6 +15,7 @@ from medtour_ai.agents.insurance_provider_skills import (
     list_supported_providers,
     lookup_provider_skill,
 )
+from medtour_ai.services.singapore_benchmarks import singapore_budget_estimate_sgd
 
 
 CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
@@ -728,12 +729,7 @@ def estimate_trip_costs(
     visa_and_payment = 80
     medical_mid = round((medical_low + medical_high) / 2)
     total = medical_mid + hotel_rate * nights + local_transport + meals + visa_and_payment
-    if medical_purpose == "car_t_blood_cancer":
-        home_benchmark = round(medical_mid * 2.7 + (total - medical_mid))
-    elif medical_purpose == "eye_surgery":
-        home_benchmark = round(max(total + 850, medical_mid * 1.58))
-    else:
-        home_benchmark = round(total * 1.38)
+    home_benchmark = singapore_budget_estimate_sgd(medical_purpose)
     return {
         "currency": "SGD",
         "medical": {"low": medical_low, "high": medical_high, "amount": medical_mid},
@@ -742,8 +738,8 @@ def estimate_trip_costs(
         "meals": {"amount": meals},
         "visa_and_payment_setup": {"amount": visa_and_payment},
         "total": {"amount": total},
-        "home_country_benchmark": {"amount": home_benchmark},
-        "estimated_net_savings": {"amount": home_benchmark - total},
+        "home_country_benchmark": home_benchmark,
+        "estimated_net_savings": {"amount": max(home_benchmark["amount"] - total, 0)},
     }
 
 

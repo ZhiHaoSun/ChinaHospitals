@@ -213,6 +213,88 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertGreater(len(items), 0)
         self.assertTrue(any(item["category"] == "medical" for item in items))
 
+    def test_missing_savings_uses_hard_written_singapore_budget(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "city_options": [
+                {
+                    "option_id": "opt_missing_savings",
+                    "city": "Guangzhou",
+                    "recommendation_label": "Missing savings fixture",
+                    "target_hospital": "Concord Medical Center",
+                    "required_days": 3,
+                    "cost_breakdown": {
+                        "medical": {"amount": 2500, "currency": "SGD"},
+                        "flight": {"amount": 420, "currency": "SGD"},
+                        "hotel": {"amount": 360, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 3280, "currency": "SGD"},
+                    "timeline": [
+                        {
+                            "day": 1,
+                            "date": "2026-09-01",
+                            "title": "Arrival",
+                            "items": ["International registration check"],
+                        }
+                    ],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_missing_savings")
+
+        option = normalized["city_options"][0]
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(option["home_country_benchmark"]["amount"], 5200)
+        self.assertEqual(option["home_country_benchmark"]["source"], "hard_written_singapore_budget")
+        self.assertEqual(option["estimated_net_savings"]["amount"], 1920)
+
+    def test_string_disclaimers_are_normalized_to_list(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "disclaimers": "Planning estimate only; verify directly with the hospital.",
+            "assumptions": "Singapore resident paying out of pocket unless insurance confirms coverage.",
+            "city_options": [
+                {
+                    "option_id": "opt_string_disclaimer",
+                    "city": "Guangzhou",
+                    "recommendation_label": "String disclaimer fixture",
+                    "target_hospital": "Concord Medical Center",
+                    "required_days": 3,
+                    "flight": {"estimated_cost": {"amount": 420, "currency": "SGD"}},
+                    "hotel": {"nightly_rate": {"amount": 120, "currency": "SGD"}, "nights": 3},
+                    "cost_breakdown": {
+                        "medical": {"amount": 2500, "currency": "SGD"},
+                        "flight": {"amount": 420, "currency": "SGD"},
+                        "hotel": {"amount": 360, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 3280, "currency": "SGD"},
+                    "estimated_net_savings": {"amount": 1920, "currency": "SGD"},
+                    "timeline": [
+                        {
+                            "day": 1,
+                            "date": "2026-09-01",
+                            "title": "Arrival",
+                            "items": ["International registration check"],
+                        }
+                    ],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_string_disclaimer")
+
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(normalized["disclaimers"], ["Planning estimate only; verify directly with the hospital."])
+        self.assertEqual(
+            normalized["assumptions"],
+            ["Singapore resident paying out of pocket unless insurance confirms coverage."],
+        )
+
     def test_lookup_guidance_returns_official_seed_sources_and_billing_fields(self) -> None:
         guidance = lookup_china_hospital_contact_guidance(
             "Guangdong Provincial People's Hospital International Clinic",

@@ -26,6 +26,7 @@ load_dotenv()
 
 from medtour_ai.agents.schemas import GeneratedReport, IntakeAnswers
 from medtour_ai.agents.config import get_settings
+from medtour_ai.services.singapore_benchmarks import singapore_budget_estimate_sgd
 from medtour_ai.services.adk_runner import AdkPlannerRunner
 from medtour_ai.services.auth_store import TRUSTED_SESSION_DAYS, InMemoryAuthStore
 from medtour_ai.services.planner import LocalPlannerService
@@ -727,7 +728,7 @@ def _normalize_generated_report(
         report = raw
     profile = _normalize_profile_program_details(report.get("profile") or draft.get("profile", {}))
     options = [
-        _normalize_city_option(option, index, request.currency)
+        _normalize_city_option(option, index, request.currency, profile)
         for index, option in enumerate(report.get("city_options") or report.get("options") or [])
         if isinstance(option, dict)
     ]
@@ -748,8 +749,8 @@ def _normalize_generated_report(
         "recommended_option_id": recommended_option_id,
         "confirmation_requests": _normalize_confirmation_requests(report.get("confirmation_requests", [])),
         "audit_summary": _normalize_audit_summary(report.get("audit_summary")),
-        "disclaimers": report.get("disclaimers", []),
-        "assumptions": report.get("assumptions", []),
+        "disclaimers": _string_list(report.get("disclaimers", [])),
+        "assumptions": _string_list(report.get("assumptions", [])),
         "planner_backend": request.planner_backend,
         "agent_session_id": raw.get("session_id"),
         "agent_events": raw.get("events", []),
@@ -1011,12 +1012,20 @@ def _find_comparison_metric(option: dict[str, Any], metrics: list[Any]) -> dict[
     return None
 
 
-def _normalize_city_option(option: dict[str, Any], index: int, currency: str) -> dict[str, Any]:
+def _normalize_city_option(
+    option: dict[str, Any],
+    index: int,
+    currency: str,
+    profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     city = option.get("city") or f"City {index + 1}"
     option_id = option.get("option_id") or f"opt_{_slug(city)}_{index + 1}"
     normalized = dict(option)
+    profile = profile or {}
     normalized["option_id"] = option_id
     normalized["city"] = city
+    normalized["medical_purpose"] = option.get("medical_purpose") or profile.get("medical_purpose")
+    normalized["procedure_subtype"] = option.get("procedure_subtype") or profile.get("procedure_subtype")
     normalized["recommendation_label"] = option.get("recommendation_label") or option.get("label") or "City Option"
     normalized["target_hospital"] = option.get("target_hospital") or option.get("hospital") or option.get("hospital_name") or "Hospital to confirm"
     timeline_source = _first_non_empty(
@@ -1067,7 +1076,7 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
             "currency": currency,
         }
     normalized["total_estimated_cost"] = _normalize_money(total, currency)
-    normalized["home_country_benchmark"] = _normalize_money(
+    normalized["home_country_benchmark"] = _normalize_home_country_benchmark(
         _first_present(
             option,
             "home_country_benchmark",
@@ -1076,6 +1085,7 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
             "home_total_cost",
             "home_estimated_cost",
         ),
+        normalized,
         currency,
     )
     normalized["estimated_net_savings"] = _normalize_estimated_savings(option, normalized, currency)
@@ -1951,6 +1961,22 @@ def _extract_money_currency(value: dict[str, Any]) -> str | None:
         if isinstance(nested, dict) and nested.get("currency"):
             return nested["currency"]
     return None
+
+
+def _normalize_home_country_benchmark(
+    raw_value: Any,
+    option: dict[str, Any],
+    currency: str,
+) -> dict[str, Any]:
+    benchmark = _normalize_money(raw_value, currency)
+    if _money_has_numeric_value(raw_value, benchmark):
+        return benchmark
+    if currency != "SGD":
+        return benchmark
+    return singapore_budget_estimate_sgd(
+        option.get("medical_purpose"),
+        option.get("procedure_subtype"),
+    )
 
 
 def _normalize_estimated_savings(
