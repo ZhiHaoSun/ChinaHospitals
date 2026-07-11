@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ConfidenceLevel(StrEnum):
@@ -40,7 +40,7 @@ class SourceMetadata(BaseModel):
 class IntakeAnswers(BaseModel):
     medical_purpose: str
     procedure_subtype: str | None = None
-    program_details: dict[str, Any] = Field(default_factory=dict)
+    program_details: str = ""
     nationality: str
     residence_country: str | None = None
     departure_city: str
@@ -54,6 +54,23 @@ class IntakeAnswers(BaseModel):
     traveler_count: int = Field(default=1, ge=1, le=8)
     hotel_preference: str = "near_hospital_foreign_guest_eligible"
     tourism_intensity: str = "light"
+
+    @field_validator("program_details", mode="before")
+    @classmethod
+    def normalize_program_details(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, dict):
+            return "; ".join(
+                f"{str(key).replace('_', ' ')}: {value_part}"
+                for key, value_part in value.items()
+                if value_part not in (None, "")
+            )
+        if isinstance(value, list):
+            return "; ".join(str(item) for item in value if item not in (None, ""))
+        return str(value)
 
 
 class ConfirmationOption(BaseModel):

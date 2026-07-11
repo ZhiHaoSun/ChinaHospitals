@@ -282,7 +282,7 @@ def intake_schema() -> dict[str, Any]:
             },
             {
                 "id": "program_details",
-                "type": "adaptive_object",
+                "type": "adaptive_text",
                 "title": "What details clarify this medical program?",
                 "depends_on": "medical_purpose",
             },
@@ -725,7 +725,7 @@ def _normalize_generated_report(
         report = generated_report
     else:
         report = raw
-    profile = report.get("profile") or draft.get("profile", {})
+    profile = _normalize_profile_program_details(report.get("profile") or draft.get("profile", {}))
     options = [
         _normalize_city_option(option, index, request.currency)
         for index, option in enumerate(report.get("city_options") or report.get("options") or [])
@@ -746,7 +746,8 @@ def _normalize_generated_report(
         "city_options": options,
         "comparison": comparison or _comparison_from_options(options),
         "recommended_option_id": recommended_option_id,
-        "confirmation_requests": report.get("confirmation_requests", []),
+        "confirmation_requests": _normalize_confirmation_requests(report.get("confirmation_requests", [])),
+        "audit_summary": _normalize_audit_summary(report.get("audit_summary")),
         "disclaimers": report.get("disclaimers", []),
         "assumptions": report.get("assumptions", []),
         "planner_backend": request.planner_backend,
@@ -786,6 +787,163 @@ def _schema_error_summary(exc: ValidationError) -> list[dict[str, Any]]:
         }
         for error in exc.errors()
     ]
+
+
+def _normalize_confirmation_requests(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    normalized = []
+    for index, item in enumerate(value, start=1):
+        if isinstance(item, str):
+            text = item.strip()
+            if not text:
+                continue
+            normalized.append(
+                {
+                    "confirmation_id": f"conf_agent_{index}",
+                    "blocking": False,
+                    "question": text if text.endswith("?") else text,
+                    "reason": "Agent requested user confirmation.",
+                    "recommended_option": "confirm",
+                    "options": [
+                        {
+                            "id": "confirm",
+                            "label": "Confirm",
+                            "impact": "Keeps planning moving after this detail is verified.",
+                            "recommended": True,
+                        },
+                        {
+                            "id": "needs_help",
+                            "label": "Need help",
+                            "impact": "Marks this item for advisor follow-up.",
+                        },
+                    ],
+                    "affected_sections": ["planning"],
+                }
+            )
+            continue
+        if isinstance(item, dict):
+            request = dict(item)
+            request.setdefault("confirmation_id", f"conf_agent_{index}")
+            request.setdefault("blocking", False)
+            request.setdefault("question", request.get("title") or request.get("message") or "Please confirm this planning detail.")
+            request.setdefault("reason", request.get("description") or "Agent requested user confirmation.")
+            request.setdefault("recommended_option", None)
+            request["options"] = _normalize_confirmation_options(request.get("options"))
+            request.setdefault("affected_sections", [])
+            normalized.append(request)
+    return normalized
+
+
+def _normalize_profile_program_details(profile: Any) -> dict[str, Any]:
+    if not isinstance(profile, dict):
+        return {}
+    normalized = dict(profile)
+    normalized["program_details"] = _program_details_text(normalized.get("program_details"))
+    return normalized
+
+
+def _program_details_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        return "; ".join(
+            f"{str(key).replace('_', ' ')}: {value_part}"
+            for key, value_part in value.items()
+            if value_part not in (None, "")
+        )
+    if isinstance(value, list):
+        return "; ".join(str(item) for item in value if item not in (None, ""))
+    return str(value)
+
+
+def _normalize_confirmation_options(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list) or not value:
+        return [
+            {
+                "id": "confirm",
+                "label": "Confirm",
+                "impact": "Uses this confirmed detail in the plan.",
+                "recommended": True,
+            },
+            {
+                "id": "needs_help",
+                "label": "Need help",
+                "impact": "Marks this item for follow-up.",
+            },
+        ]
+    normalized = []
+    for index, option in enumerate(value, start=1):
+        if isinstance(option, str):
+            normalized.append(
+                {
+                    "id": f"option_{index}",
+                    "label": option,
+                    "impact": "Uses this answer for planning.",
+                    "recommended": index == 1,
+                }
+            )
+            continue
+        if isinstance(option, dict):
+            normalized.append(
+                {
+                    "id": str(option.get("id") or f"option_{index}"),
+                    "label": str(option.get("label") or option.get("title") or f"Option {index}"),
+                    "impact": str(option.get("impact") or option.get("description") or "Uses this answer for planning."),
+                    "recommended": bool(option.get("recommended", index == 1)),
+                }
+            )
+    return normalized or _normalize_confirmation_options(None)
+
+
+def _normalize_insurance_policy(
+    insurance: dict[str, Any],
+    option: dict[str, Any],
+    currency: str,
+) -> dict[str, Any]:
+    normalized = dict(insurance)
+    hospital_name = option.get("target_hospital") or normalized.get("hospital_name") or "Hospital to confirm"
+    normalized["hospital_name"] = hospital_name
+    normalized["medical_purpose"] = normalized.get("medical_purpose") or option.get("medical_purpose")
+    normalized["policy_status"] = str(
+        normalized.get("policy_status")
+        or normalized.get("coverage_status")
+        or normalized.get("status")
+        or "needs_confirmation"
+    )
+    normalized["summary"] = str(
+        normalized.get("summary")
+        or normalized.get("notes")
+        or "Insurance coverage, pre-authorization, direct billing, and reimbursement require insurer confirmation."
+    )
+    hospital_policy = normalized.get("hospital_policy")
+    if not isinstance(hospital_policy, dict):
+        hospital_policy = {}
+    normalized["hospital_policy"] = {
+        "direct_billing": str(
+            hospital_policy.get("direct_billing")
+            or normalized.get("direct_billing")
+            or normalized.get("direct_billing_status")
+            or "unknown"
+        ),
+        "preauthorization_required": bool(
+            hospital_policy.get("preauthorization_required", normalized.get("preauthorization_required", True))
+        ),
+        "claim_documents": _string_list(
+            hospital_policy.get("claim_documents")
+            or normalized.get("claim_documents")
+            or ["Medical report", "Itemized invoice", "Official receipt"]
+        ),
+        "common_exclusions": _string_list(hospital_policy.get("common_exclusions") or normalized.get("common_exclusions") or []),
+    }
+    normalized["provider_policy"] = normalized.get("provider_policy") if isinstance(normalized.get("provider_policy"), dict) else {}
+    normalized["estimated_premium"] = _normalize_money(normalized.get("estimated_premium") or 0, currency)
+    normalized["suggestions"] = _string_list(normalized.get("suggestions") or normalized.get("next_steps") or [])
+    normalized["helpful_links"] = normalized.get("helpful_links") if isinstance(normalized.get("helpful_links"), list) else []
+    normalized["metadata"] = _normalize_source_metadata(normalized.get("metadata"))
+    return normalized
 
 
 def _apply_comparison_metrics_to_options(
@@ -883,10 +1041,23 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
         key: _normalize_money(value, currency)
         for key, value in (option.get("cost_breakdown") or {}).items()
     }
+    flight = _normalize_flight(option, normalized, currency)
+    if flight:
+        normalized["flight"] = flight
+        normalized["cost_breakdown"].setdefault("flight", flight["estimated_cost"])
+    hotel = _normalize_hotel(option, normalized, currency)
+    if hotel:
+        normalized["hotel"] = hotel
+        normalized["cost_breakdown"].setdefault(
+            "hotel",
+            {
+                "amount": hotel["nightly_rate"]["amount"] * hotel["nights"],
+                "currency": hotel["nightly_rate"]["currency"],
+            },
+        )
     insurance = option.get("insurance_policy")
     if isinstance(insurance, dict):
-        insurance = dict(insurance)
-        insurance["estimated_premium"] = _normalize_money(insurance.get("estimated_premium"), currency)
+        insurance = _normalize_insurance_policy(insurance, normalized, currency)
         normalized["insurance_policy"] = insurance
         normalized["cost_breakdown"].setdefault("travel_insurance", insurance["estimated_premium"])
     total = option.get("total_estimated_cost") or option.get("total_estimated_cost_sgd")
@@ -910,16 +1081,130 @@ def _normalize_city_option(option: dict[str, Any], index: int, currency: str) ->
     normalized["estimated_net_savings"] = _normalize_estimated_savings(option, normalized, currency)
     normalized["readiness_items"] = _normalize_readiness_items(option.get("readiness_items") or option.get("readiness_summary") or [])
     normalized["key_risks"] = option.get("key_risks") or []
-    normalized["metadata"] = {
+    normalized["metadata"] = _normalize_source_metadata({
         "source": "agent_estimate",
         "confidence_level": "medium",
         "data_status": "estimated",
         **(option.get("metadata") or {}),
-    }
-    if not normalized["timeline"]:
+    })
+    if isinstance(normalized.get("audit_report"), dict):
+        normalized["audit_report"] = _normalize_audit_report(normalized["audit_report"])
+    if not normalized["timeline"] or not _timeline_has_items(normalized["timeline"]):
         normalized["timeline"] = _fallback_timeline_for_option(normalized, currency)
         normalized["required_days"] = normalized["required_days"] or len(normalized["timeline"])
     return normalized
+
+
+def _normalize_flight(
+    option: dict[str, Any],
+    normalized: dict[str, Any],
+    currency: str,
+) -> dict[str, Any] | None:
+    source = _first_non_empty(
+        option,
+        "flight",
+        "recommended_flight",
+        "flight_details",
+        "travel_flight",
+        "arrival_flight",
+        "outbound_flight",
+    )
+    cost_breakdown = normalized.get("cost_breakdown") or {}
+    cost_hint = _first_non_empty(cost_breakdown, "flight", "airfare", "air_ticket", "travel")
+    if not isinstance(source, dict):
+        if cost_hint is None:
+            return None
+        source = {}
+    cost = _normalize_money(
+        _first_present(
+            source,
+            "estimated_cost",
+            "estimated_cost_sgd",
+            "cost",
+            "price",
+            "fare",
+        )
+        or cost_hint,
+        currency,
+    )
+    return {
+        "airline": str(_first_present(source, "airline", "carrier") or "Airline to confirm"),
+        "flight_number": str(
+            _first_present(source, "flight_number", "flight_no", "number") or "Flight number to confirm"
+        ),
+        "departure_airport": str(
+            _first_present(source, "departure_airport", "from_airport", "origin_airport", "origin")
+            or option.get("departure_city")
+            or "Departure airport to confirm"
+        ),
+        "arrival_airport": str(
+            _first_present(source, "arrival_airport", "to_airport", "destination_airport", "destination")
+            or normalized.get("city")
+            or "Arrival airport to confirm"
+        ),
+        "departure_time": str(
+            _first_present(source, "departure_time", "depart_at", "departure_datetime", "outbound_departure_time")
+            or ""
+        ),
+        "arrival_time": str(
+            _first_present(source, "arrival_time", "arrive_at", "arrival_datetime", "outbound_arrival_time")
+            or ""
+        ),
+        "estimated_cost": cost,
+    }
+
+
+def _normalize_hotel(
+    option: dict[str, Any],
+    normalized: dict[str, Any],
+    currency: str,
+) -> dict[str, Any] | None:
+    source = _first_non_empty(
+        option,
+        "hotel",
+        "recommended_hotel",
+        "hotel_choice",
+        "accommodation",
+        "lodging",
+    )
+    cost_breakdown = normalized.get("cost_breakdown") or {}
+    cost_hint = _first_non_empty(cost_breakdown, "hotel", "lodging", "accommodation")
+    if not isinstance(source, dict):
+        if cost_hint is None:
+            return None
+        source = {}
+    nights = int(_safe_float(_first_present(source, "nights", "night_count") or max(normalized.get("required_days", 0) - 1, 1)))
+    nightly_rate_raw = _first_present(
+        source,
+        "nightly_rate",
+        "nightly_rate_sgd",
+        "rate",
+        "daily_rate",
+        "price_per_night",
+    )
+    nightly_rate = _normalize_money(nightly_rate_raw, currency)
+    if not _money_has_numeric_value(nightly_rate_raw, nightly_rate) and cost_hint is not None:
+        total = _normalize_money(cost_hint, currency)
+        nightly_rate = {
+            "amount": float(total.get("amount") or 0) / max(nights, 1),
+            "currency": total.get("currency") or currency,
+        }
+    foreign_guest_eligible = _first_present(source, "foreign_guest_eligible", "foreigner_friendly")
+    return {
+        "name": str(_first_present(source, "name", "hotel_name") or "Hotel to confirm"),
+        "address": str(_first_present(source, "address", "location") or normalized.get("city") or ""),
+        "nightly_rate": nightly_rate,
+        "nights": max(nights, 1),
+        "distance_to_hospital": str(
+            _first_present(source, "distance_to_hospital", "distance", "hospital_distance")
+            or "Distance to hospital to confirm"
+        ),
+        "foreign_guest_eligible": bool(foreign_guest_eligible) if foreign_guest_eligible is not None else False,
+        "cancellation_policy": str(
+            _first_present(source, "cancellation_policy", "refund_policy")
+            or "Cancellation policy to confirm"
+        ),
+    }
 
 
 def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
@@ -928,10 +1213,14 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
             timeline,
             "days",
             "timeline",
+            "timeline_items",
             "items",
             "events",
             "schedule",
             "itinerary",
+            "agenda",
+            "tasks",
+            "steps",
             "timeline_days",
         )
         if nested is None:
@@ -963,7 +1252,7 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
                         "start_time": _normalize_agent_time(item.get("time"), date_value),
                         "end_time": _normalize_agent_time(item.get("time"), date_value),
                         "location_name": item.get("location_name") or item.get("location"),
-                        "details": item.get("details") or {},
+                        "details": _normalize_timeline_details(item.get("details")),
                         "estimated_cost": _normalize_money(item["estimated_cost"], currency)
                         if item.get("estimated_cost") is not None
                         else None,
@@ -978,7 +1267,8 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
         if not isinstance(day, dict):
             continue
         items = []
-        day_items = day.get("items") or day.get("events") or day.get("schedule") or day.get("activities") or []
+        day_date = str(day.get("date") or f"0000-00-{index:02d}")
+        day_items = _timeline_day_items(day)
         for item in day_items:
             if isinstance(item, str):
                 item = {"title": item}
@@ -989,11 +1279,16 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
             item.setdefault("category", "readiness")
             item.setdefault("title", item.get("event") or item.get("name") or "Plan item")
             if item.get("time") and not item.get("start_time"):
-                item["start_time"] = _normalize_agent_time(item.get("time"), day.get("date") or "")
+                item["start_time"] = _normalize_agent_time(item.get("time"), day_date)
+            if not item.get("start_time"):
+                item["start_time"] = _default_timeline_time(day_date, len(items), end=False)
             if item.get("start_time") and not item.get("end_time"):
-                item["end_time"] = item["start_time"]
+                item["end_time"] = _default_timeline_time(day_date, len(items), end=True)
+            item["category"] = _normalize_timeline_category(item.get("category"))
+            item["confidence_level"] = _normalize_confidence_level(item.get("confidence_level"))
             if item.get("estimated_cost") is not None:
                 item["estimated_cost"] = _normalize_money(item["estimated_cost"], currency)
+            item["details"] = _normalize_timeline_details(item.get("details"))
             items.append(item)
         days.append(
             {
@@ -1007,12 +1302,53 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
     return days
 
 
+def _timeline_day_items(day: dict[str, Any]) -> list[Any]:
+    source = _first_non_empty(
+        day,
+        "items",
+        "timeline_items",
+        "events",
+        "schedule",
+        "activities",
+        "agenda",
+        "tasks",
+        "steps",
+        "appointments",
+    )
+    if isinstance(source, dict):
+        flattened = []
+        for section_title, section_items in source.items():
+            if isinstance(section_items, list):
+                for item in section_items:
+                    if isinstance(item, dict):
+                        flattened.append({"phase": str(section_title), **item})
+                    else:
+                        flattened.append({"phase": str(section_title), "title": str(item)})
+            elif section_items:
+                flattened.append({"phase": str(section_title), "title": str(section_items)})
+        return flattened
+    if isinstance(source, list):
+        return source
+    if isinstance(source, str):
+        return [source]
+    if _looks_like_timeline_item(day):
+        return [day]
+    summary = _first_non_empty(day, "summary", "description", "details", "plan")
+    if summary:
+        return [{"title": str(summary)}]
+    return []
+
+
+def _timeline_has_items(days: list[dict[str, Any]]) -> bool:
+    return any(day.get("items") for day in days if isinstance(day, dict))
+
+
 def _looks_like_timeline_item(item: Any) -> bool:
     if isinstance(item, str):
         return True
     if not isinstance(item, dict):
         return False
-    return not any(key in item for key in ("items", "events", "schedule", "activities")) and any(
+    return not any(key in item for key in ("items", "events", "schedule", "activities", "timeline_items", "tasks", "steps")) and any(
         key in item
         for key in (
             "time",
@@ -1023,6 +1359,8 @@ def _looks_like_timeline_item(item: Any) -> bool:
             "location_name",
             "start_time",
             "estimated_cost",
+            "description",
+            "summary",
         )
     )
 
@@ -1030,7 +1368,7 @@ def _looks_like_timeline_item(item: Any) -> bool:
 def _timeline_day_count(timeline: Any) -> int:
     normalized = timeline
     if isinstance(normalized, dict):
-        normalized = _first_non_empty(normalized, "days", "timeline", "schedule", "itinerary", "timeline_days")
+        normalized = _first_non_empty(normalized, "days", "timeline", "schedule", "itinerary", "timeline_items", "timeline_days")
     if isinstance(normalized, list):
         return len(normalized)
     return 0
@@ -1049,6 +1387,12 @@ def _normalize_agent_time(value: Any, fallback_date: str) -> str:
     if fallback_date:
         return f"{fallback_date}T09:00:00+08:00"
     return ""
+
+
+def _default_timeline_time(day_date: str, item_index: int, *, end: bool) -> str:
+    hour = min(9 + item_index, 21)
+    minute = 45 if end else 0
+    return f"{day_date}T{hour:02d}:{minute:02d}:00+08:00"
 
 
 def _fallback_timeline_for_option(option: dict[str, Any], currency: str) -> list[dict[str, Any]]:
@@ -1233,13 +1577,260 @@ def _normalize_readiness_items(items: Any) -> list[dict[str, Any]]:
             {
                 "id": item.get("id") or f"readiness_{index}",
                 "title": item.get("title") or f"Readiness item {index}",
-                "priority": item.get("priority") or "medium",
-                "status": item.get("status") or "pending",
+                "priority": _normalize_priority(item.get("priority")),
+                "status": _normalize_readiness_status(item.get("status")),
                 "steps": item.get("steps") or [],
                 "helpful_links": item.get("helpful_links") or [],
             }
         )
     return normalized
+
+
+def _normalize_source_metadata(metadata: Any) -> dict[str, Any]:
+    if not isinstance(metadata, dict):
+        metadata = {}
+    normalized = dict(metadata)
+    original_source = normalized.get("source")
+    source = str(original_source or "agent_estimate").strip()
+    if source not in {"rag", "external_api", "agent_estimate", "advisor_confirmed"}:
+        normalized["original_source"] = source
+        source = "agent_estimate"
+    normalized["source"] = source
+    normalized["confidence_level"] = _normalize_confidence_level(normalized.get("confidence_level"))
+    normalized["data_status"] = _normalize_data_status(normalized.get("data_status"))
+    return normalized
+
+
+def _normalize_audit_report(audit_report: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(audit_report)
+    normalized["metadata"] = _normalize_source_metadata(normalized.get("metadata"))
+    normalized["checks"] = _normalize_audit_checks(normalized.get("checks"))
+    normalized["blocking_issues"] = _normalize_audit_checks(normalized.get("blocking_issues"))
+    normalized["warnings"] = _normalize_audit_checks(normalized.get("warnings"))
+    normalized["audit_status"] = _normalize_option_audit_status(
+        normalized.get("audit_status"),
+        normalized["checks"],
+        normalized["blocking_issues"],
+        normalized["warnings"],
+    )
+    return normalized
+
+
+def _normalize_audit_summary(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, list):
+        return {"summary_items": _string_list(value)}
+    if isinstance(value, str) and value.strip():
+        return {"summary": value.strip()}
+    return {}
+
+
+def _normalize_option_audit_status(
+    value: Any,
+    checks: list[dict[str, Any]],
+    blocking_issues: list[dict[str, Any]],
+    warnings: list[dict[str, Any]],
+) -> str:
+    status = str(value or "").strip().lower()
+    aliases = {
+        "pass": "passed",
+        "ok": "passed",
+        "warn": "passed_with_warnings",
+        "warning": "passed_with_warnings",
+        "blocked": "needs_confirmation",
+        "missing": "needs_confirmation",
+    }
+    status = aliases.get(status, status)
+    if status in {"passed", "passed_with_warnings", "needs_confirmation", "failed"}:
+        return status
+    if blocking_issues or any(check.get("status") in {"fail", "needs_confirmation"} for check in checks):
+        return "needs_confirmation"
+    if warnings or any(check.get("status") == "warn" for check in checks):
+        return "passed_with_warnings"
+    if checks:
+        return "passed"
+    return "needs_confirmation"
+
+
+def _normalize_audit_checks(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    normalized = []
+    for index, check in enumerate(value, start=1):
+        if isinstance(check, str):
+            check = {"finding": check}
+        if not isinstance(check, dict):
+            continue
+        item = dict(check)
+        item["check_id"] = str(item.get("check_id") or f"audit_check_{index}")
+        item["category"] = _normalize_audit_category(item.get("category"))
+        item["status"] = _normalize_audit_status(item.get("status"))
+        item["finding"] = str(item.get("finding") or item.get("message") or "Audit check requires review.")
+        item["evidence"] = _string_list(item.get("evidence"))
+        item["suggested_action"] = str(
+            item.get("suggested_action")
+            or item.get("action")
+            or "Review this item before booking non-refundable travel."
+        )
+        normalized.append(item)
+    return normalized
+
+
+def _normalize_audit_category(value: Any) -> str:
+    category = str(value or "source_freshness").strip().lower()
+    aliases = {
+        "hospital": "hospital_source",
+        "contact": "hospital_contact",
+        "billing": "service_billing",
+        "service": "service_billing",
+        "flight": "flight_price",
+        "hotel": "hotel_price",
+        "medical": "medical_cost",
+        "insurance": "insurance_source",
+        "math": "cost_math",
+        "freshness": "source_freshness",
+        "timeline": "itinerary_consistency",
+        "itinerary": "itinerary_consistency",
+    }
+    category = aliases.get(category, category)
+    allowed = {
+        "hospital_source",
+        "hospital_contact",
+        "service_billing",
+        "flight_price",
+        "hotel_price",
+        "medical_cost",
+        "insurance_source",
+        "cost_math",
+        "source_freshness",
+        "itinerary_consistency",
+    }
+    return category if category in allowed else "source_freshness"
+
+
+def _normalize_audit_status(value: Any) -> str:
+    status = str(value or "needs_confirmation").strip().lower()
+    aliases = {
+        "passed": "pass",
+        "ok": "pass",
+        "warning": "warn",
+        "blocked": "fail",
+        "missing": "needs_confirmation",
+        "unknown": "needs_confirmation",
+    }
+    status = aliases.get(status, status)
+    if status in {"pass", "warn", "fail", "needs_confirmation"}:
+        return status
+    return "needs_confirmation"
+
+
+def _normalize_timeline_details(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, list):
+        return {"notes": _string_list(value)}
+    if isinstance(value, str) and value.strip():
+        return {"note": value.strip()}
+    return {}
+
+
+def _string_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if item is not None and str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item) for item in value if item is not None and str(item).strip()]
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    return [str(value)]
+
+
+def _normalize_timeline_category(value: Any) -> str:
+    category = str(value or "readiness").strip().lower()
+    aliases = {
+        "airport_transfer": "transport",
+        "transfer": "transport",
+        "appointment": "medical",
+        "consultation": "medical",
+        "registration": "medical",
+        "procedure": "medical",
+        "checkup": "medical",
+        "accommodation": "hotel",
+        "lodging": "hotel",
+        "dining": "meal",
+        "food": "meal",
+        "prep": "readiness",
+        "preparation": "readiness",
+    }
+    category = aliases.get(category, category)
+    if category in {"flight", "hotel", "medical", "transport", "meal", "tourism", "readiness"}:
+        return category
+    return "readiness"
+
+
+def _normalize_confidence_level(value: Any) -> str:
+    confidence = str(value or "medium").strip().lower()
+    aliases = {
+        "med": "medium",
+        "moderate": "medium",
+        "estimated": "medium",
+        "representative": "medium",
+        "confirmed": "high",
+        "official": "high",
+        "uncertain": "low",
+        "needs_confirmation": "low",
+    }
+    confidence = aliases.get(confidence, confidence)
+    if confidence in {"high", "medium", "low"}:
+        return confidence
+    return "medium"
+
+
+def _normalize_data_status(value: Any) -> str:
+    status = str(value or "estimated").strip().lower()
+    aliases = {
+        "live": "real_time",
+        "realtime": "real_time",
+        "real-time": "real_time",
+        "representative": "estimated",
+        "planning_estimate": "estimated",
+        "official": "needs_confirmation",
+        "unverified": "needs_confirmation",
+        "unknown": "needs_confirmation",
+        "tbd": "needs_confirmation",
+    }
+    status = aliases.get(status, status)
+    if status in {"real_time", "estimated", "stale", "needs_confirmation"}:
+        return status
+    return "estimated"
+
+
+def _normalize_priority(value: Any) -> str:
+    priority = str(value or "medium").strip().lower()
+    if priority in {"low", "medium", "high"}:
+        return priority
+    if priority in {"urgent", "critical", "blocking"}:
+        return "high"
+    return "medium"
+
+
+def _normalize_readiness_status(value: Any) -> str:
+    status = str(value or "pending").strip().lower()
+    aliases = {
+        "todo": "pending",
+        "to_do": "pending",
+        "not_started": "pending",
+        "needs_confirmation": "blocked",
+        "waiting": "blocked",
+        "done": "complete",
+        "completed": "complete",
+    }
+    status = aliases.get(status, status)
+    if status in {"pending", "in_progress", "complete", "blocked"}:
+        return status
+    return "pending"
 
 
 def _normalize_money(value: Any, currency: str) -> dict[str, Any]:

@@ -534,7 +534,7 @@ def get_hospital_visit_protocol(
     hospital_name: str,
     medical_purpose: str,
     procedure_subtype: str | None = None,
-    program_details: dict[str, Any] | None = None,
+    program_details: str | None = None,
 ) -> dict[str, Any]:
     """Return detailed in-hospital visit steps for timeline generation.
 
@@ -579,7 +579,7 @@ def get_hospital_visit_protocol(
             "next_verification_step": seed_source.get("next_verification_step"),
         }
     subtype = procedure_subtype or "not_sure"
-    details = program_details or {}
+    details = str(program_details or "")
     doctor_by_purpose = {
         "eye_surgery": {
             "name": None,

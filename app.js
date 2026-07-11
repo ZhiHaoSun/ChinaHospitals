@@ -94,10 +94,7 @@ const fallbackOptions = [
     target_hospital: "Shanghai International Medical Center - International Patient Service",
     medical_purpose: "eye_surgery",
     procedure_subtype: "smile_pro",
-    program_details: {
-      currentPrescription: "-4.50 both eyes, mild astigmatism",
-      contactLensUsage: "soft_lenses",
-    },
+    program_details: "Current prescription: -4.50 both eyes, mild astigmatism; contact lens usage: soft lenses",
     recommendation_reason: "Sample data showing detailed international hospital workflow, doctor assignment, and insurance document steps.",
     required_days: 4,
     flight: {
@@ -542,6 +539,19 @@ function setStatus(message, type = "info") {
   banner.hidden = !message;
   banner.textContent = message || "";
   banner.dataset.type = type;
+}
+
+function plannerErrorMessage(error) {
+  if (!error) return "The planner failed to generate a report.";
+  const message = error.message || error.detail || "The planner failed to generate a report.";
+  const validationErrors = Array.isArray(error.validation_errors) ? error.validation_errors : [];
+  if (!validationErrors.length) return message;
+  const details = validationErrors
+    .slice(0, 4)
+    .map((item) => `${item.path || "report"}: ${item.message || item.type || "invalid value"}`)
+    .join("; ");
+  const suffix = validationErrors.length > 4 ? `; +${validationErrors.length - 4} more` : "";
+  return `${message} ${details}${suffix}`;
 }
 
 function delay(ms) {
@@ -1036,8 +1046,7 @@ function clientFallbackTimeline(option) {
     direct_billing_status: serviceBilling.direct_billing_status || "unknown",
     suggested_doctor_name: doctorName,
     suggested_doctor_specialty: doctorSpecialty,
-    suggested_doctor_request:
-      doctor.request_note || "Request the international clinic to assign or confirm the responsible specialist before final payment.",
+    suggested_doctor_request: doctor.request_note || "Confirm the responsible care team, appointment route, billing desk, and claim-document process before payment.",
     hospital_steps: steps,
   });
   const item = (category, title, dayIndex, startTime, endTime, location, extra = {}) => {
@@ -1148,16 +1157,125 @@ function hasTimelineHospitalDetails(item) {
   const details = item.details || {};
   return Boolean(
     details.registration_email ||
-      details.suggested_doctor_name ||
-      details.suggested_doctor_specialty ||
+      details.appointment_phone ||
+      details.wechat_or_portal_route ||
+      details.registration_desk ||
+      details.service_billing_status ||
+      meaningfulDoctorLine(details) ||
       details.hospital_steps?.length
   );
+}
+
+function normalizedText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isGenericDoctorText(value) {
+  const text = normalizedText(value);
+  return (
+    !text ||
+    text === "relevant specialist for selected medical program" ||
+    text === "assigned specialist to confirm" ||
+    text === "responsible specialist" ||
+    text.includes("selected medical program")
+  );
+}
+
+function isGenericDoctorRequest(value) {
+  const text = normalizedText(value);
+  return (
+    !text ||
+    text.includes("assign or confirm the responsible specialist before final payment") ||
+    text.includes("assign or confirm the responsible specialist")
+  );
+}
+
+function meaningfulDoctorLine(details) {
+  const parts = [details.suggested_doctor_name, details.suggested_doctor_specialty].filter(
+    (value) => !isGenericDoctorText(value)
+  );
+  return parts.join(" · ");
+}
+
+function purposeSpecialistLabel(option) {
+  const purpose = option?.medical_purpose || option?.profile?.medical_purpose;
+  const subtype = (option?.procedure_subtype || "").replaceAll("_", " ");
+  const labels = {
+    eye_surgery: subtype && subtype !== "not sure"
+      ? `Ophthalmology / refractive surgery team (${subtype})`
+      : "Ophthalmology / refractive surgery team",
+    dental_care: subtype && subtype !== "not sure"
+      ? `Stomatology / dental implant team (${subtype})`
+      : "Stomatology / dental implant team",
+    health_checkup: subtype && subtype !== "not sure"
+      ? `Health management screening team (${subtype})`
+      : "Health management screening team",
+    car_t_blood_cancer: subtype && subtype !== "not sure"
+      ? `Hematology-oncology / cellular therapy team (${subtype})`
+      : "Hematology-oncology / cellular therapy team",
+  };
+  return labels[purpose] || "International clinic care team";
+}
+
+function careTeamForTimelineItem(item, option, doctor) {
+  const title = normalizedText(item.title);
+  const specificDoctor = [doctor.name, doctor.specialty].filter((value) => !isGenericDoctorText(value)).join(" · ");
+  if (specificDoctor && (title.includes("doctor") || title.includes("consult") || title.includes("procedure") || title.includes("follow-up"))) {
+    return specificDoctor;
+  }
+  if (title.includes("pre-registration") || title.includes("email") || title.includes("appointment")) {
+    return "International patient services / appointment desk";
+  }
+  if (title.includes("registration") || title.includes("file")) {
+    return "Registration desk, interpreter support, and billing counter";
+  }
+  if (title.includes("diagnostic") || title.includes("exam") || title.includes("test") || title.includes("nurse")) {
+    return `${purposeSpecialistLabel(option)} and nursing intake`;
+  }
+  if (title.includes("procedure") || title.includes("treatment") || title.includes("surgery")) {
+    return purposeSpecialistLabel(option);
+  }
+  if (title.includes("discharge") || title.includes("claim") || title.includes("invoice") || title.includes("document")) {
+    return "Nursing discharge desk, pharmacy, and billing documentation";
+  }
+  if (title.includes("follow-up") || title.includes("review")) {
+    return "Follow-up clinic and responsible specialist";
+  }
+  return purposeSpecialistLabel(option);
+}
+
+function nextConfirmationForTimelineItem(item, option) {
+  const title = normalizedText(item.title);
+  const hospital = option?.target_hospital || "the hospital";
+  if (title.includes("pre-registration") || title.includes("email") || title.includes("appointment")) {
+    return "Confirm the official appointment route before sending passport details or medical records.";
+  }
+  if (title.includes("registration") || title.includes("file")) {
+    return "Confirm passport, payment method, invoice name, interpreter support, and outpatient profile requirements.";
+  }
+  if (title.includes("diagnostic") || title.includes("exam") || title.includes("test") || title.includes("nurse")) {
+    return "Confirm which prior records to bring and whether same-day results are available for treatment decisions.";
+  }
+  if (title.includes("doctor") || title.includes("consult") || title.includes("eligibility")) {
+    return "Ask the international clinic to name the responsible specialist and confirm final eligibility before payment.";
+  }
+  if (title.includes("procedure") || title.includes("treatment") || title.includes("surgery")) {
+    return "Proceed only after final consent, responsible specialist, price, deposit, and pre-authorization are confirmed.";
+  }
+  if (title.includes("discharge") || title.includes("claim") || title.includes("invoice") || title.includes("document")) {
+    return "Collect itemized invoices, receipts, medical report, diagnosis certificate, prescriptions, and insurer claim forms.";
+  }
+  if (title.includes("follow-up") || title.includes("review")) {
+    return "Confirm warning signs, medication plan, remote follow-up route, and return-travel fitness.";
+  }
+  return `Confirm timing, location, documents, payment expectations, and contact route with ${hospital}.`;
 }
 
 function hospitalDetailTemplate(item, option) {
   const protocol = option?.hospital_visit_protocol || fallbackOptions[0]?.hospital_visit_protocol || {};
   const contact = protocol.registration_contact || {};
   const doctor = protocol.suggested_doctor || {};
+  const serviceBilling = option?.hospital_visit_protocol?.service_billing || {};
   const title = (item.title || "").toLowerCase();
   let hospitalSteps = [
     "Confirm the international desk appointment, registration channel, and required documents.",
@@ -1209,12 +1327,13 @@ function hospitalDetailTemplate(item, option) {
     appointment_phone: contact.appointment_phone || "",
     main_phone: contact.main_phone || "",
     wechat_or_portal_route: contact.wechat_or_portal_route || "",
-    service_billing_status: option.hospital_visit_protocol?.service_billing?.service_billing_status || "needs_confirmation",
-    direct_billing_status: option.hospital_visit_protocol?.service_billing?.direct_billing_status || "unknown",
-    suggested_doctor_name: doctor.name || "",
-    suggested_doctor_specialty: doctor.specialty || "Relevant specialist for selected medical program",
-    suggested_doctor_request:
-      doctor.request_note || "Request the international clinic to assign or confirm the responsible specialist before final payment.",
+    service_billing_status: serviceBilling.service_billing_status || "needs_confirmation",
+    direct_billing_status: serviceBilling.direct_billing_status || "unknown",
+    suggested_doctor_name: isGenericDoctorText(doctor.name) ? "" : doctor.name || "",
+    suggested_doctor_specialty: careTeamForTimelineItem(item, option, doctor),
+    suggested_doctor_request: !isGenericDoctorRequest(doctor.request_note)
+      ? doctor.request_note
+      : nextConfirmationForTimelineItem(item, option),
     hospital_steps: hospitalSteps,
   };
 }
@@ -1235,14 +1354,33 @@ function timelineDaysForDisplay(days, option) {
   }));
 }
 
+function timelineItemCount(days) {
+  return (days || []).reduce((count, day) => count + (Array.isArray(day.items) ? day.items.length : 0), 0);
+}
+
 function renderTimelineDetails(item) {
   const details = item.details || {};
   if (!hasTimelineHospitalDetails(item)) return "";
 
-  const doctorLine = [details.suggested_doctor_name, details.suggested_doctor_specialty].filter(Boolean).join(" · ");
+  const doctorLine = meaningfulDoctorLine(details) || (!isGenericDoctorText(details.suggested_doctor_specialty) ? details.suggested_doctor_specialty : "");
+  const appointmentRoute = [
+    details.registration_desk,
+    details.appointment_phone ? `Phone: ${details.appointment_phone}` : "",
+    details.wechat_or_portal_route ? `WeChat/portal: ${details.wechat_or_portal_route}` : "",
+  ].filter(Boolean).join(" · ");
+  const billingLine = [
+    details.service_billing_status ? `Billing: ${details.service_billing_status.replaceAll("_", " ")}` : "",
+    details.direct_billing_status ? `Direct billing: ${details.direct_billing_status.replaceAll("_", " ")}` : "",
+  ].filter(Boolean).join(" · ");
+  const nextConfirmation = !isGenericDoctorRequest(details.suggested_doctor_request) ? details.suggested_doctor_request : "";
   const status = details.registration_email_status ? ` (${details.registration_email_status.replaceAll("_", " ")})` : "";
   return `
     <div class="timeline-details">
+      ${
+        appointmentRoute
+          ? `<div><span class="material-symbols-outlined">support_agent</span><b>Appointment route</b><p>${escapeHtml(appointmentRoute)}</p></div>`
+          : ""
+      }
       ${
         details.registration_email
           ? `<div><span class="material-symbols-outlined">alternate_email</span><b>Registration email</b><p>${escapeHtml(details.registration_email)}${escapeHtml(status)}</p></div>`
@@ -1250,12 +1388,17 @@ function renderTimelineDetails(item) {
       }
       ${
         doctorLine
-          ? `<div><span class="material-symbols-outlined">stethoscope</span><b>Suggested doctor</b><p>${escapeHtml(doctorLine)}</p></div>`
+          ? `<div><span class="material-symbols-outlined">stethoscope</span><b>Care team</b><p>${escapeHtml(doctorLine)}</p></div>`
           : ""
       }
       ${
-        details.suggested_doctor_request
-          ? `<div><span class="material-symbols-outlined">assignment_ind</span><b>Doctor request</b><p>${escapeHtml(details.suggested_doctor_request)}</p></div>`
+        billingLine
+          ? `<div><span class="material-symbols-outlined">receipt_long</span><b>Billing status</b><p>${escapeHtml(billingLine)}</p></div>`
+          : ""
+      }
+      ${
+        nextConfirmation
+          ? `<div><span class="material-symbols-outlined">assignment_ind</span><b>Next confirmation</b><p>${escapeHtml(nextConfirmation)}</p></div>`
           : ""
       }
       ${
@@ -1387,7 +1530,7 @@ function renderPlan() {
   const option = selectedOption();
   const endpointDays = Array.isArray(state.timeline?.days) ? state.timeline.days : [];
   const optionDays = Array.isArray(option?.timeline) ? option.timeline : [];
-  const rawTimelineDays = endpointDays.length ? endpointDays : optionDays;
+  const rawTimelineDays = timelineItemCount(endpointDays) ? endpointDays : timelineItemCount(optionDays) ? optionDays : [];
   const displaySourceDays = rawTimelineDays.length
     ? rawTimelineDays
     : option
@@ -1683,12 +1826,15 @@ function renderProgramDetails() {
 }
 
 function collectProgramDetails() {
-  const details = {};
+  const details = [];
   document.querySelectorAll("[data-program-detail]").forEach((field) => {
     const value = field.value?.trim?.() ?? field.value;
-    if (value) details[field.dataset.programDetail] = value;
+    if (value) {
+      const label = field.dataset.programDetail.replaceAll("_", " ");
+      details.push(`${label}: ${value}`);
+    }
   });
-  return details;
+  return details.join("; ");
 }
 
 function collectAnswers() {
@@ -1792,7 +1938,7 @@ async function generateOptions() {
     const generated = plannerBackend === "adk" ? (await Promise.all([reportRequest, delay(1800)]))[0] : await reportRequest;
 
     if (generated.status === "failed" || generated.report?.status === "failed" || generated.report?.error) {
-      const detail = generated.report?.error?.message || generated.report?.error?.detail || "The planner failed to generate a report.";
+      const detail = plannerErrorMessage(generated.report?.error || generated.error);
       throw new Error(detail);
     }
     const generatedOptions = generated.report.city_options || [];

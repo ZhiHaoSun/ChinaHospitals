@@ -30,7 +30,8 @@ class LocalPlannerService:
     """Generate API-compatible medical travel plans without network calls."""
 
     def generate_report(self, profile_draft: dict[str, Any], request: dict[str, Any]) -> dict[str, Any]:
-        profile = profile_draft["profile"]
+        profile = dict(profile_draft["profile"])
+        profile["program_details"] = _program_details_text(profile.get("program_details"))
         medical_purpose = profile["medical_purpose"]
         procedure_subtype = profile.get("procedure_subtype") or "not_sure"
         departure_city = profile["departure_city"]
@@ -220,7 +221,7 @@ class LocalPlannerService:
             hospital,
             profile["medical_purpose"],
             profile.get("procedure_subtype"),
-            profile.get("program_details"),
+            profile.get("program_details") or "",
         )
         insurance["estimated_premium"]["currency"] = currency
         total_cost = costs["total"]["amount"] + insurance["estimated_premium"]["amount"]
@@ -253,7 +254,7 @@ class LocalPlannerService:
             "target_hospital": hospital,
             "medical_purpose": profile["medical_purpose"],
             "procedure_subtype": profile.get("procedure_subtype"),
-            "program_details": profile.get("program_details", {}),
+            "program_details": profile.get("program_details") or "",
             "recommendation_reason": _recommendation_reason(strategy_id, city, candidate),
             "required_days": required_days,
             "start_date": start_date.isoformat(),
@@ -508,7 +509,7 @@ def _protocol_details(protocol: dict[str, Any], step_key: str) -> dict[str, Any]
         "suggested_doctor_specialty": doctor.get("specialty"),
         "suggested_doctor_request": doctor.get("request_note"),
         "hospital_steps": protocol.get("in_hospital_steps", {}).get(step_key, []),
-        "program_details": protocol.get("program_details", {}),
+        "program_details": protocol.get("program_details") or "",
     }
 
 
@@ -570,6 +571,22 @@ def _duration_to_days(value: str | None, fallback: int) -> int:
         "not_sure": fallback,
     }
     return mapping.get(value or "", fallback)
+
+
+def _program_details_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        return "; ".join(
+            f"{str(key).replace('_', ' ')}: {value_part}"
+            for key, value_part in value.items()
+            if value_part not in (None, "")
+        )
+    if isinstance(value, list):
+        return "; ".join(str(item) for item in value if item not in (None, ""))
+    return str(value)
 
 
 def _money(payload: dict[str, Any], currency: str) -> dict[str, Any]:
