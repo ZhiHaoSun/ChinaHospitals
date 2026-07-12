@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from typing import Any, Literal
 from io import BytesIO
 import os
@@ -1285,10 +1286,10 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
                 "items": [
                     {
                         "category": "medical" if any(keyword in str(item.get("event", "")).lower() for keyword in ("hospital", "registration", "diagnostic", "procedure", "follow-up", "consultation")) else "readiness",
-                        "title": item.get("event") or item.get("title") or item.get("name") or "Plan item",
+                        "title": _timeline_title_text(item.get("event") or item.get("title") or item.get("name"), item),
                         "start_time": _normalize_agent_time(item.get("time"), date_value),
                         "end_time": _normalize_agent_time(item.get("time"), date_value),
-                        "location_name": item.get("location_name") or item.get("location"),
+                        "location_name": _timeline_text(item.get("location_name") or item.get("location")),
                         "details": _normalize_timeline_details(item.get("details")),
                         "estimated_cost": _normalize_money(item["estimated_cost"], currency)
                         if item.get("estimated_cost") is not None
@@ -1314,7 +1315,11 @@ def _normalize_timeline(timeline: Any, currency: str) -> list[dict[str, Any]]:
             item = dict(item)
             item.setdefault("item_id", f"tli_agent_{index}_{len(items) + 1}")
             item.setdefault("category", "readiness")
-            item.setdefault("title", item.get("event") or item.get("name") or "Plan item")
+            item["title"] = _timeline_title_text(item.get("title") or item.get("event") or item.get("name"), item)
+            if item.get("location_name") is not None or item.get("location") is not None:
+                item["location_name"] = _timeline_text(item.get("location_name") or item.get("location"))
+            if item.get("address") is not None:
+                item["address"] = _timeline_text(item.get("address"))
             if item.get("time") and not item.get("start_time"):
                 item["start_time"] = _normalize_agent_time(item.get("time"), day_date)
             if not item.get("start_time"):
@@ -1770,6 +1775,57 @@ def _normalize_timeline_details(value: Any) -> dict[str, Any]:
     if isinstance(value, str) and value.strip():
         return {"note": value.strip()}
     return {}
+
+
+def _timeline_title_text(value: Any, item: dict[str, Any] | None = None) -> str:
+    item = item or {}
+    structured = _structured_timeline_value(value)
+    if isinstance(structured, dict):
+        for key in ("title", "event", "name", "activity", "description", "summary"):
+            nested = structured.get(key)
+            if nested and not isinstance(_structured_timeline_value(nested), dict):
+                return _timeline_text(nested)
+        if structured.get("flight_number"):
+            parts = ["Flight", structured.get("flight_number")]
+            if structured.get("arrival_time"):
+                parts.append(f"arrives {structured['arrival_time']}")
+            return " ".join(str(part) for part in parts if part)
+        if structured.get("appointment_time") or structured.get("appointment_phone") or structured.get("registration_email"):
+            return "Appointment details"
+        return f"{_humanize_key(item.get('category') or 'Plan')} details"
+    text = _timeline_text(structured or value)
+    return text or "Plan item"
+
+
+def _timeline_text(value: Any) -> str:
+    structured = _structured_timeline_value(value)
+    if structured is None:
+        return ""
+    if isinstance(structured, dict):
+        return " · ".join(
+            f"{_humanize_key(key)}: {_timeline_text(nested_value)}"
+            for key, nested_value in structured.items()
+            if _timeline_text(nested_value)
+        )
+    if isinstance(structured, (list, tuple, set)):
+        return "; ".join(text for text in (_timeline_text(item) for item in structured) if text)
+    return str(structured).strip()
+
+
+def _structured_timeline_value(value: Any) -> Any:
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith(("{", "[")):
+            try:
+                return ast.literal_eval(text)
+            except (SyntaxError, ValueError):
+                return value
+        return value
+    return value
+
+
+def _humanize_key(value: Any) -> str:
+    return str(value or "").replace("_", " ").replace("-", " ").title()
 
 
 def _string_list(value: Any) -> list[str]:

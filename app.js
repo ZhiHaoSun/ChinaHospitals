@@ -1035,6 +1035,58 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function parseStructuredString(value) {
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!/^[{[]/.test(text)) return null;
+  try {
+    return JSON.parse(text);
+  } catch (_error) {
+    try {
+      return JSON.parse(
+        text
+          .replaceAll("None", "null")
+          .replaceAll("True", "true")
+          .replaceAll("False", "false")
+          .replace(/'/g, '"')
+      );
+    } catch (_fallbackError) {
+      return null;
+    }
+  }
+}
+
+function structuredValue(value) {
+  const parsed = parseStructuredString(value);
+  return parsed || value;
+}
+
+function isObjectValue(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function humanizeKey(key) {
+  return String(key || "")
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function compactStructuredValue(value) {
+  const parsed = structuredValue(value);
+  if (parsed === null || parsed === undefined || parsed === "") return "";
+  if (Array.isArray(parsed)) {
+    return parsed.map(compactStructuredValue).filter(Boolean).join("; ");
+  }
+  if (isObjectValue(parsed)) {
+    return Object.entries(parsed)
+      .filter(([, nestedValue]) => nestedValue !== null && nestedValue !== undefined && String(nestedValue).trim())
+      .map(([key, nestedValue]) => `${humanizeKey(key)}: ${compactStructuredValue(nestedValue)}`)
+      .join(" · ");
+  }
+  return String(parsed);
+}
+
 function textDate(value) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
@@ -1206,8 +1258,40 @@ function hasTimelineHospitalDetails(item) {
   );
 }
 
+function hasAnyTimelineDetails(item) {
+  const details = item?.details;
+  if (!isObjectValue(details)) return false;
+  return Object.values(details).some((value) => compactStructuredValue(value));
+}
+
+function isHospitalTimelineCandidate(item) {
+  if (item.category !== "medical") return false;
+  const title = normalizedText(timelineItemTitle(item));
+  return [
+    "hospital",
+    "clinic",
+    "appointment",
+    "registration",
+    "pre-registration",
+    "outpatient",
+    "diagnostic",
+    "exam",
+    "test",
+    "consult",
+    "doctor",
+    "procedure",
+    "treatment",
+    "surgery",
+    "discharge",
+    "claim",
+    "invoice",
+    "follow-up",
+    "review",
+  ].some((keyword) => title.includes(keyword));
+}
+
 function normalizedText(value) {
-  return String(value || "").trim().toLowerCase();
+  return compactStructuredValue(value).trim().toLowerCase();
 }
 
 function isGenericDoctorText(value) {
@@ -1382,7 +1466,7 @@ function timelineDaysForDisplay(days, option) {
   return (days || []).map((day) => ({
     ...day,
     items: (day.items || []).map((item) => {
-      if (!["medical", "readiness"].includes(item.category) || hasTimelineHospitalDetails(item)) return item;
+      if (!isHospitalTimelineCandidate(item) || hasTimelineHospitalDetails(item) || hasAnyTimelineDetails(item)) return item;
       return {
         ...item,
         details: {
@@ -1400,7 +1484,7 @@ function timelineItemCount(days) {
 
 function renderTimelineDetails(item) {
   const details = item.details || {};
-  if (!hasTimelineHospitalDetails(item)) return "";
+  if (!hasTimelineHospitalDetails(item) && !hasAnyTimelineDetails(item)) return "";
 
   const doctorLine = meaningfulDoctorLine(details) || (!isGenericDoctorText(details.suggested_doctor_specialty) ? details.suggested_doctor_specialty : "");
   const appointmentRoute = [
@@ -1414,8 +1498,32 @@ function renderTimelineDetails(item) {
   ].filter(Boolean).join(" · ");
   const nextConfirmation = !isGenericDoctorRequest(details.suggested_doctor_request) ? details.suggested_doctor_request : "";
   const status = details.registration_email_status ? ` (${details.registration_email_status.replaceAll("_", " ")})` : "";
+  const consumedKeys = new Set([
+    "registration_desk",
+    "appointment_phone",
+    "wechat_or_portal_route",
+    "registration_email",
+    "registration_email_status",
+    "suggested_doctor_name",
+    "suggested_doctor_specialty",
+    "service_billing_status",
+    "direct_billing_status",
+    "suggested_doctor_request",
+    "hospital_steps",
+  ]);
+  const structuredRows = Object.entries(details)
+    .filter(([key, value]) => !consumedKeys.has(key) && compactStructuredValue(value))
+    .map(([key, value]) => `
+      <div>
+        <span class="material-symbols-outlined">${timelineDetailIcon(key)}</span>
+        <b>${escapeHtml(humanizeKey(key))}</b>
+        <p>${escapeHtml(compactStructuredValue(value))}</p>
+      </div>
+    `)
+    .join("");
   return `
     <div class="timeline-details">
+      ${structuredRows}
       ${
         appointmentRoute
           ? `<div><span class="material-symbols-outlined">support_agent</span><b>Appointment route</b><p>${escapeHtml(appointmentRoute)}</p></div>`
@@ -1448,6 +1556,36 @@ function renderTimelineDetails(item) {
       }
     </div>
   `;
+}
+
+function timelineDetailIcon(key) {
+  const text = normalizedText(key);
+  if (text.includes("flight")) return "flight";
+  if (text.includes("hotel")) return "hotel";
+  if (text.includes("phone") || text.includes("contact")) return "call";
+  if (text.includes("email")) return "alternate_email";
+  if (text.includes("doctor") || text.includes("specialist") || text.includes("team")) return "stethoscope";
+  if (text.includes("billing") || text.includes("cost") || text.includes("payment")) return "receipt_long";
+  if (text.includes("document") || text.includes("record")) return "description";
+  return "notes";
+}
+
+function timelineItemTitle(item) {
+  const value = structuredValue(item?.title || item?.event || item?.name || "Plan item");
+  if (isObjectValue(value)) {
+    const directTitle = value.title || value.event || value.name || value.activity || value.description || value.summary;
+    if (directTitle && !isObjectValue(structuredValue(directTitle))) return compactStructuredValue(directTitle);
+    if (value.flight_number) {
+      return ["Flight", value.flight_number, value.arrival_time ? `arrives ${value.arrival_time}` : ""].filter(Boolean).join(" ");
+    }
+    if (value.appointment_time || value.appointment_phone || value.registration_email) return "Appointment details";
+    return `${humanizeKey(item?.category || "Plan")} details`;
+  }
+  return compactStructuredValue(value) || "Plan item";
+}
+
+function timelineLocationText(value) {
+  return compactStructuredValue(value);
 }
 
 function riskCount(option) {
@@ -1642,8 +1780,8 @@ function renderTimeline(days) {
     .map(
       (day) => `
         <article class="day-card">
-          <h2>Day ${day.day}: ${day.title}</h2>
-          <p>${textDate(day.date)}</p>
+          <h2>Day ${escapeHtml(day.day)}: ${escapeHtml(compactStructuredValue(day.title) || `Day ${day.day}`)}</h2>
+          <p>${escapeHtml(textDate(day.date))}</p>
           <div class="timeline-list">
             ${(day.items || [])
               .map(
@@ -1652,11 +1790,11 @@ function renderTimeline(days) {
                     <span class="node-icon material-symbols-outlined">${iconForCategory(item.category)}</span>
                     <div class="node-card ${item.hard_constraint ? "scheduled" : ""}">
                       <div class="node-top">
-                        <strong>${item.title}</strong>
+                        <strong>${escapeHtml(timelineItemTitle(item))}</strong>
                         <time>${timeRange(item)}</time>
                       </div>
-                      <p>${item.location_name || ""}</p>
-                      ${item.address ? `<p>${item.address}</p>` : ""}
+                      ${timelineLocationText(item.location_name) ? `<p>${escapeHtml(timelineLocationText(item.location_name))}</p>` : ""}
+                      ${timelineLocationText(item.address) ? `<p>${escapeHtml(timelineLocationText(item.address))}</p>` : ""}
                       ${renderTimelineDetails(item)}
                       <div class="node-tags">
                         ${item.estimated_cost ? `<span>Est. ${money(item.estimated_cost)}</span>` : ""}

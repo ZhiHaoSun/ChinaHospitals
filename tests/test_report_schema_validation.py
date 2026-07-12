@@ -337,6 +337,53 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertGreater(len(insurance["suggestions"]), 0)
         self.assertIn("travel_insurance", option["cost_breakdown"])
 
+    def test_timeline_object_strings_are_normalized_to_readable_text(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "city_options": [
+                {
+                    "option_id": "opt_structured_timeline",
+                    "city": "Guangzhou",
+                    "recommendation_label": "Structured timeline fixture",
+                    "target_hospital": "Concord Medical Center",
+                    "required_days": 2,
+                    "flight": {"estimated_cost": {"amount": 420, "currency": "SGD"}},
+                    "hotel": {"nightly_rate": {"amount": 120, "currency": "SGD"}, "nights": 2},
+                    "cost_breakdown": {
+                        "medical": {"amount": 2500, "currency": "SGD"},
+                        "flight": {"amount": 420, "currency": "SGD"},
+                        "hotel": {"amount": 240, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 3160, "currency": "SGD"},
+                    "timeline": [
+                        {
+                            "day": 1,
+                            "date": "2026-09-01",
+                            "title": "Arrival",
+                            "items": [
+                                {
+                                    "category": "flight",
+                                    "title": "{'flight_number': 'SQ850', 'arrival_time': '13:30'}",
+                                    "location_name": {"arrival_airport": "CAN", "terminal": "T2"},
+                                    "details": {"flight_number": "SQ850", "arrival_time": "13:30"},
+                                }
+                            ],
+                        }
+                    ],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_structured_timeline")
+
+        item = normalized["city_options"][0]["timeline"][0]["items"][0]
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(item["title"], "Flight SQ850 arrives 13:30")
+        self.assertEqual(item["location_name"], "Arrival Airport: CAN · Terminal: T2")
+        self.assertEqual(item["details"]["flight_number"], "SQ850")
+
     def test_lookup_guidance_returns_official_seed_sources_and_billing_fields(self) -> None:
         guidance = lookup_china_hospital_contact_guidance(
             "Guangdong Provincial People's Hospital International Clinic",
