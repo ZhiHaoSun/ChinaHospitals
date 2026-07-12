@@ -31,6 +31,44 @@ The deployed Vercel interface has been hardened for serverless behavior. Since V
 
 The multi-agent system is currently working. It includes staged progress for profile normalization, medical rules, parallel city planning, hospital contact lookup, travel and budget estimation, insurance review, timeline construction, source/cost audit, and report synthesis.
 
+## Hackathon Positioning
+
+MedTour AI is designed as an AI-native product, not a static travel directory. The prototype demonstrates how multiple specialized agents can turn vague patient intent into a structured, auditable medical travel plan across clinical, operational, financial, and travel domains.
+
+For hackathon evaluation, the project highlights:
+
+- **Working product surface:** deployed Vercel demo, local UI, FastAPI backend, report generation, comparison view, plan timeline, readiness checklist, and PDF export.
+- **AI-native workflow:** agent orchestration for profile normalization, medical rules, city planning, hospital contact lookup, insurance review, timeline generation, and source/cost audit.
+- **Schema-first reliability:** Pydantic contracts validate generated reports before the UI renders them, reducing brittle LLM output failures.
+- **Business relevance:** the app targets high-friction, high-value medical travel decisions where users need cost clarity, verified hospital routes, insurance/billing checks, and operational confidence.
+- **Practical deployment learning:** Vercel serverless statelessness is handled with browser-side plan snapshots, keeping the deployed demo usable even when in-memory report state is unavailable.
+
+## Business Value
+
+MedTour AI addresses a real market gap: patients often compare overseas care because local care can be expensive, slow, or administratively confusing. Singapore-based users may compare China options for dental implants, refractive eye surgery, executive health screening, or oncology second opinions. American users may face opaque pricing, deductibles, out-of-network billing, and surprise costs. In both cases, raw procedure price is not enough; users need a full trip-level budget and a trustworthy path to the right hospital department.
+
+The business value is strongest where planning complexity blocks conversion. A user may be interested in China care but abandon the process because hospital emails, international departments, WeChat routes, billing desks, deposits, insurance documents, flights, hotels, and recovery timelines are fragmented. MedTour AI packages these moving parts into a clear plan with source confidence and missing-confirmation warnings.
+
+For partners, the product can become a structured lead-generation and conversion layer:
+
+- Hospitals and international departments receive better-qualified patient inquiries.
+- Medical travel advisors receive structured intake, budget, timeline, and risk context before the first call.
+- Insurers or brokers can surface policy limitations and claim-document needs earlier.
+- Travel partners can attach relevant flights, hotels, transport, and recovery-friendly services to a medically constrained itinerary.
+
+## Revenue Model
+
+The project can support multiple revenue streams as it matures:
+
+- **Advisor handoff fee:** charge a fixed fee or commission when a user requests human assistance for hospital confirmation, booking, translation, or payment preparation.
+- **Qualified lead fee:** hospitals, clinics, or medical travel agencies pay for verified, consent-based leads with structured medical purpose, travel window, budget, and readiness status.
+- **Concierge planning package:** users pay for premium services such as official appointment confirmation, international department contact, document checklist review, interpreter coordination, and post-trip follow-up planning.
+- **B2B SaaS dashboard:** advisors or hospital international offices pay for a dashboard that manages AI-generated plans, patient status, confirmation tasks, and source audit trails.
+- **Affiliate or referral revenue:** travel insurance, hotels, transport, eSIM, translation, and recovery-support services can provide referral revenue when integrated transparently.
+- **Enterprise API:** partners can embed the planner into health benefit platforms, insurer portals, or medical tourism marketplaces.
+
+The near-term monetization path is advisor-assisted conversion: use the AI plan as a high-quality intake and decision-support layer, then monetize the handoff when users need official confirmation or booking support.
+
 ## Tech Stack
 
 ### Frontend
