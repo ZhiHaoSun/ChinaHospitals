@@ -8,8 +8,11 @@ from medtour_ai.api.main import CreateReportRequest, _generate_report, _normaliz
 from medtour_ai.agents.schemas import IntakeAnswers
 from medtour_ai.agents.tools import (
     audit_city_option_sources_and_costs,
+    estimate_trip_costs,
+    get_city_cost_profile,
     get_hospital_visit_protocol,
     lookup_china_hospital_contact_guidance,
+    search_hotels,
 )
 from medtour_ai.services.planner import LocalPlannerService
 
@@ -40,6 +43,21 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(normalized["status"], "ready")
         self.assertEqual(normalized["report_id"], "report_test")
         self.assertGreater(len(normalized["city_options"]), 0)
+        first_option = normalized["city_options"][0]
+        breakdown_total = sum(item["amount"] for item in first_option["cost_breakdown"].values())
+        self.assertEqual(first_option["total_estimated_cost"]["amount"], breakdown_total)
+
+    def test_city_cost_breakdowns_use_city_specific_assumptions(self) -> None:
+        shanghai = estimate_trip_costs("eye_surgery", "Shanghai", nights=3, budget_tier="balanced")
+        guangzhou = estimate_trip_costs("eye_surgery", "Guangzhou", nights=3, budget_tier="balanced")
+        beijing_hotel = search_hotels("Beijing", "Peking Union Medical College Hospital International Medical Services")["hotels"][0]
+        shenzhen_profile = get_city_cost_profile("Shenzhen")
+
+        self.assertEqual(shanghai["hotel"]["nightly_rate"], 190)
+        self.assertEqual(guangzhou["hotel"]["nightly_rate"], 145)
+        self.assertGreater(shanghai["meals"]["amount"], guangzhou["meals"]["amount"])
+        self.assertEqual(beijing_hotel["nightly_rate_sgd"], 185)
+        self.assertEqual(shenzhen_profile["arrival_transfer_sgd"], 42)
 
     def test_adk_connection_error_falls_back_to_local_planner(self) -> None:
         request = CreateReportRequest(profile_draft_id="draft_test", planner_backend="adk")

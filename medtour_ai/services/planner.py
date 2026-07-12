@@ -17,6 +17,7 @@ from medtour_ai.agents.tools import (
     estimate_flights,
     estimate_trip_costs,
     get_alipay_international_setup,
+    get_city_cost_profile,
     get_hospital_insurance_policy,
     get_hospital_visit_protocol,
     get_visa_entry_guidance,
@@ -224,8 +225,8 @@ class LocalPlannerService:
             profile.get("program_details") or "",
         )
         insurance["estimated_premium"]["currency"] = currency
-        total_cost = costs["total"]["amount"] + insurance["estimated_premium"]["amount"]
-        estimated_net_savings = max(costs["estimated_net_savings"]["amount"] - insurance["estimated_premium"]["amount"], 0)
+        total_cost = costs["total"]["amount"] + flight_payload["estimated_cost_sgd"] + insurance["estimated_premium"]["amount"]
+        estimated_net_savings = max(costs["home_country_benchmark"]["amount"] - total_cost, 0)
 
         flight = {
             "airline": flight_payload["airline"],
@@ -318,6 +319,13 @@ def _build_timeline(
     tourism_intensity: str,
 ) -> list[dict[str, Any]]:
     timeline = []
+    city_costs = get_city_cost_profile(city)
+    airport_transfer_cost = {"amount": city_costs["arrival_transfer_sgd"], "currency": "SGD"}
+    daily_meal_cost = {"amount": city_costs["daily_meals_sgd"], "currency": "SGD"}
+    activity_cost = {
+        "amount": max(city_costs["daily_meals_sgd"], city_costs["daily_transport_sgd"] * 2),
+        "currency": "SGD",
+    }
     for offset in range(days):
         current_date = start_date + timedelta(days=offset)
         day_no = offset + 1
@@ -327,7 +335,7 @@ def _build_timeline(
             items.extend(
                 [
                     _item("flight", "Arrival flight", current_date, time(8, 0), time(13, 30), flight["arrival_airport"], estimated_cost=flight["estimated_cost"], details={"flight": flight}),
-                    _item("transport", "Airport transfer to hotel", current_date, time(14, 0), time(15, 0), city, estimated_cost={"amount": 35, "currency": "SGD"}),
+                    _item("transport", "Airport transfer to hotel", current_date, time(14, 0), time(15, 0), city, estimated_cost=airport_transfer_cost),
                     _item("hotel", "Hotel check-in", current_date, time(15, 30), time(16, 0), hotel["name"], address=hotel["address"], details={"hotel": hotel}),
                 ]
             )
@@ -453,7 +461,7 @@ def _build_timeline(
                 items.extend(
                     [
                         _item("hotel", "Hotel check-out", current_date, time(11, 30), time(12, 0), hotel["name"]),
-                        _item("transport", "Transfer to airport", current_date, time(13, 0), time(14, 0), city, estimated_cost={"amount": 35, "currency": "SGD"}),
+                        _item("transport", "Transfer to airport", current_date, time(13, 0), time(14, 0), city, estimated_cost=airport_transfer_cost),
                         _item("flight", "Return flight", current_date, time(16, 0), time(21, 30), flight["arrival_airport"], estimated_cost=flight["estimated_cost"]),
                     ]
                 )
@@ -461,16 +469,16 @@ def _build_timeline(
             items.extend(
                 [
                     _item("hotel", "Hotel check-out", current_date, time(10, 30), time(11, 0), hotel["name"]),
-                    _item("transport", "Transfer to airport", current_date, time(12, 0), time(13, 0), city, estimated_cost={"amount": 35, "currency": "SGD"}),
+                    _item("transport", "Transfer to airport", current_date, time(12, 0), time(13, 0), city, estimated_cost=airport_transfer_cost),
                     _item("flight", "Return flight", current_date, time(15, 30), time(21, 0), flight["arrival_airport"], estimated_cost=flight["estimated_cost"]),
                 ]
             )
         else:
             tourism_title = "Light recovery-friendly sightseeing" if tourism_intensity == "light" else "Flexible city activity block"
-            items.append(_item("tourism", tourism_title, current_date, time(10, 30), time(13, 0), city, estimated_cost={"amount": 45, "currency": "SGD"}))
+            items.append(_item("tourism", tourism_title, current_date, time(10, 30), time(13, 0), city, estimated_cost=activity_cost))
 
         if day_no not in (days,) and day_no >= 2:
-            items.append(_item("meal", "Recovery-friendly meals", current_date, time(18, 0), time(19, 0), city, estimated_cost={"amount": 45, "currency": "SGD"}))
+            items.append(_item("meal", "Recovery-friendly meals", current_date, time(18, 0), time(19, 0), city, estimated_cost=daily_meal_cost))
 
         timeline.append(
             {

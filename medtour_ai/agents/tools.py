@@ -111,6 +111,37 @@ CITY_HOTEL_DATA: dict[str, dict[str, Any]] = {
     },
 }
 
+CITY_COST_PROFILE: dict[str, dict[str, Any]] = {
+    "Shanghai": {
+        "hotel_nightly_sgd": {"budget": 125, "balanced": 190, "premium": 340},
+        "arrival_transfer_sgd": 48,
+        "daily_transport_sgd": 24,
+        "daily_meals_sgd": 58,
+        "visa_and_payment_setup_sgd": 90,
+    },
+    "Guangzhou": {
+        "hotel_nightly_sgd": {"budget": 90, "balanced": 145, "premium": 285},
+        "arrival_transfer_sgd": 35,
+        "daily_transport_sgd": 18,
+        "daily_meals_sgd": 42,
+        "visa_and_payment_setup_sgd": 80,
+    },
+    "Beijing": {
+        "hotel_nightly_sgd": {"budget": 120, "balanced": 185, "premium": 330},
+        "arrival_transfer_sgd": 52,
+        "daily_transport_sgd": 25,
+        "daily_meals_sgd": 55,
+        "visa_and_payment_setup_sgd": 90,
+    },
+    "Shenzhen": {
+        "hotel_nightly_sgd": {"budget": 115, "balanced": 175, "premium": 320},
+        "arrival_transfer_sgd": 42,
+        "daily_transport_sgd": 22,
+        "daily_meals_sgd": 50,
+        "visa_and_payment_setup_sgd": 85,
+    },
+}
+
 CHINA_HOSPITAL_CONTACT_LOOKUP_SKILL: dict[str, Any] = {
     "skill_name": "lookup-china-hospital-contacts",
     "skill_path": "skills/lookup-china-hospital-contacts/SKILL.md",
@@ -713,7 +744,9 @@ def estimate_flights(departure_city: str, destination_city: str, date_hint: str 
 def search_hotels(destination_city: str, hospital_name: str, budget_tier: str = "balanced") -> dict[str, Any]:
     """Return foreigner-friendly hotel estimates near the hospital."""
 
-    nightly = {"budget": 95, "balanced": 165, "premium": 310}.get(budget_tier, 165)
+    cost_profile = _city_cost_profile(destination_city)
+    nightly_rates = cost_profile["hotel_nightly_sgd"]
+    nightly = nightly_rates.get(budget_tier, nightly_rates["balanced"])
     hotel = CITY_HOTEL_DATA.get(
         destination_city,
         {
@@ -747,11 +780,13 @@ def estimate_trip_costs(
     """Return itemized cost estimates in SGD."""
 
     data = CITY_MEDICAL_DATA.get(destination_city, CITY_MEDICAL_DATA["Shanghai"])
+    cost_profile = _city_cost_profile(destination_city)
     medical_low, medical_high = data["medical_cost_sgd"].get(medical_purpose, (1000, 3000))
-    hotel_rate = {"budget": 95, "balanced": 165, "premium": 310}.get(budget_tier, 165)
-    local_transport = 120 + nights * 18
-    meals = nights * 45
-    visa_and_payment = 80
+    hotel_rates = cost_profile["hotel_nightly_sgd"]
+    hotel_rate = hotel_rates.get(budget_tier, hotel_rates["balanced"])
+    local_transport = cost_profile["arrival_transfer_sgd"] + nights * cost_profile["daily_transport_sgd"]
+    meals = nights * cost_profile["daily_meals_sgd"]
+    visa_and_payment = cost_profile["visa_and_payment_setup_sgd"]
     medical_mid = round((medical_low + medical_high) / 2)
     total = medical_mid + hotel_rate * nights + local_transport + meals + visa_and_payment
     home_benchmark = singapore_budget_estimate_sgd(medical_purpose)
@@ -765,6 +800,20 @@ def estimate_trip_costs(
         "total": {"amount": total},
         "home_country_benchmark": home_benchmark,
         "estimated_net_savings": {"amount": max(home_benchmark["amount"] - total, 0)},
+    }
+
+
+def _city_cost_profile(destination_city: str) -> dict[str, Any]:
+    return CITY_COST_PROFILE.get(destination_city, CITY_COST_PROFILE["Shanghai"])
+
+
+def get_city_cost_profile(destination_city: str) -> dict[str, Any]:
+    """Return curated city-level non-medical cost assumptions for UI/test plans."""
+
+    profile = _city_cost_profile(destination_city)
+    return {
+        **profile,
+        "hotel_nightly_sgd": dict(profile["hotel_nightly_sgd"]),
     }
 
 

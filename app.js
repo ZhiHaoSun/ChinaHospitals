@@ -1,5 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const APP_BUILD_ID = "20260712-vercel-stateless-plan";
+const APP_BUILD_ID = "20260712-city-costs";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -151,28 +151,28 @@ const fallbackOptions = [
       arrival_airport: "CAN",
       departure_time: "2026-08-12T08:00:00+08:00",
       arrival_time: "2026-08-12T13:30:00+08:00",
-      estimated_cost: { amount: 520, currency: "SGD" },
+      estimated_cost: { amount: 430, currency: "SGD" },
     },
     hotel: {
       name: previewHotelName,
       address: previewHotelAddress,
-      nightly_rate: { amount: 165, currency: "SGD" },
+      nightly_rate: { amount: 145, currency: "SGD" },
       nights: 3,
       distance_to_hospital: "Same Yuexiu medical district; confirm live route before booking",
       foreign_guest_eligible: true,
     },
     cost_breakdown: {
-      medical: { amount: 3900, low: 3200, high: 4600, currency: "SGD" },
-      flight: { amount: 520, currency: "SGD" },
-      hotel: { amount: 495, currency: "SGD" },
-      local_transport: { amount: 160, currency: "SGD" },
-      meals: { amount: 135, currency: "SGD" },
+      medical: { amount: 3500, low: 2800, high: 4200, currency: "SGD" },
+      flight: { amount: 430, currency: "SGD" },
+      hotel: { amount: 435, nightly_rate: 145, nights: 3, currency: "SGD" },
+      local_transport: { amount: 89, currency: "SGD" },
+      meals: { amount: 126, currency: "SGD" },
       visa_and_payment_setup: { amount: 80, currency: "SGD" },
       travel_insurance: { amount: 95, currency: "SGD" },
     },
-    total_estimated_cost: { amount: 5385, currency: "SGD" },
-    home_country_benchmark: { amount: 6200, currency: "SGD" },
-    estimated_net_savings: { amount: 815, currency: "SGD" },
+    total_estimated_cost: { amount: 4755, currency: "SGD" },
+    home_country_benchmark: { amount: 6500, currency: "SGD" },
+    estimated_net_savings: { amount: 1745, currency: "SGD" },
     hospital_visit_protocol: {
       registration_contact: {
         desk: previewHospitalDesk,
@@ -217,7 +217,7 @@ const fallbackOptions = [
             start_time: "2026-08-12T08:00:00+08:00",
             end_time: "2026-08-12T13:30:00+08:00",
             location_name: "CAN",
-            estimated_cost: { amount: 520, currency: "SGD" },
+            estimated_cost: { amount: 430, currency: "SGD" },
             confidence_level: "medium",
             details: {},
           },
@@ -357,7 +357,7 @@ const fallbackOptions = [
             start_time: "2026-08-14T09:30:00+08:00",
             end_time: "2026-08-14T12:00:00+08:00",
             location_name: previewHospitalName,
-            estimated_cost: { amount: 3900, currency: "SGD" },
+            estimated_cost: { amount: 3500, currency: "SGD" },
             hard_constraint: true,
             confidence_level: "medium",
             details: {
