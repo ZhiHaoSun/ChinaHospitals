@@ -1,5 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const APP_BUILD_ID = "20260712-source-record-layout";
+const APP_BUILD_ID = "20260712-vercel-stateless-plan";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -611,6 +611,11 @@ function plannerErrorMessage(error) {
   return `${message} ${details}${suffix}`;
 }
 
+function isMissingBackendReportError(error) {
+  const message = String(error?.message || error || "");
+  return message.includes("404") && message.includes("report_id not found");
+}
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -627,6 +632,34 @@ function setPlannerBackend(backend) {
     button.classList.toggle("selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
+}
+
+function setAgentBackendAvailable(available) {
+  const agentButton = document.querySelector('[data-planner-backend="adk"]');
+  if (!agentButton) return;
+  agentButton.disabled = !available;
+  agentButton.title = available
+    ? "Use the multi-agent planner"
+    : "Agent planner is not configured on this deployment";
+}
+
+async function loadPlannerConfig() {
+  try {
+    const config = await api("/api/v1/planner/config");
+    const adkAvailable = Boolean(config.adk_available);
+    setAgentBackendAvailable(adkAvailable);
+    if (!adkAvailable && state.plannerBackend === "adk") {
+      setPlannerBackend("local");
+      persistState();
+      setStatus("Agent planner is not configured on this deployment. Local planner selected.", "info");
+      return;
+    }
+    if (!state.generationAttempted && ["local", "adk"].includes(config.default_backend)) {
+      setPlannerBackend(config.default_backend);
+    }
+  } catch (error) {
+    console.warn("Planner config unavailable", error);
+  }
 }
 
 function clearAgentProgressTimers() {
@@ -1267,6 +1300,59 @@ function clientFallbackTimeline(option) {
       ],
     },
   ];
+}
+
+function clientReadinessFromOption(option) {
+  const items = (option?.readiness_items || option?.readiness_summary || [])
+    .map((item, index) => {
+      if (typeof item === "string") {
+        return {
+          id: `readiness_${index + 1}`,
+          title: item,
+          priority: "medium",
+          status: "pending",
+          steps: [item],
+          helpful_links: [],
+        };
+      }
+      return {
+        id: item.id || `readiness_${index + 1}`,
+        title: item.title || item.label || `Readiness item ${index + 1}`,
+        priority: item.priority || "medium",
+        status: item.status || "pending",
+        steps: Array.isArray(item.steps) ? item.steps : item.note ? [item.note] : [],
+        helpful_links: item.helpful_links || [],
+      };
+    });
+  const completed = items.filter((item) => item.status === "complete");
+  const highRisk = items.filter((item) => item.priority === "high" && item.status !== "complete");
+  return {
+    option_id: option?.option_id || null,
+    completion_percent: items.length ? Math.round((completed.length / items.length) * 100) : 0,
+    completed_count: completed.length,
+    total_count: items.length,
+    high_risk_items: highRisk,
+    sections: [{ title: "Pre-trip readiness", items }],
+  };
+}
+
+function useClientPlanSnapshot(option) {
+  if (!option) return;
+  const optionDays = Array.isArray(option.timeline) ? option.timeline : [];
+  const days = timelineItemCount(optionDays) ? optionDays : clientFallbackTimeline(option);
+  state.timeline = {
+    option_id: option.option_id,
+    timeline_version_id: option.timeline_version_id || "client_snapshot",
+    days,
+  };
+  state.costs = {
+    option_id: option.option_id,
+    currency: "SGD",
+    total: option.total_estimated_cost,
+    categories: option.cost_breakdown || {},
+    benchmark: { net_savings: savingsForDisplay(option) },
+  };
+  state.readiness = clientReadinessFromOption(option);
 }
 
 function iconForCategory(category) {
@@ -2516,6 +2602,7 @@ async function generateOptions() {
     state.report = generated.report;
     state.options = generatedOptions;
     state.selectedOptionId = generated.report.recommended_option_id || state.options[0]?.option_id || null;
+    useClientPlanSnapshot(selectedOption());
     persistState();
     renderCities();
     if (plannerBackend === "adk") {
@@ -2539,28 +2626,49 @@ async function generateOptions() {
 }
 
 async function selectOption(optionId) {
-  if (!state.reportId || !optionId) {
+  if (!optionId) {
     setStatus("Generate options before selecting a plan.", "error");
     return;
   }
+  const option = (state.options.length ? state.options : fallbackOptions).find((item) => item.option_id === optionId);
+  if (!option) {
+    setStatus("Selected plan was not found in the generated options.", "error");
+    return;
+  }
   if (optionId === state.selectedOptionId && state.timeline && state.costs && state.readiness) {
+    renderPlan();
+    renderReadiness();
     showRoute("plan");
     return;
   }
+  let backendReportMissing = false;
   try {
-    await api(`/api/v1/reports/${state.reportId}/options/${optionId}/select`, { method: "POST" });
+    if (state.reportId) {
+      await api(`/api/v1/reports/${state.reportId}/options/${optionId}/select`, { method: "POST" });
+    }
+  } catch (error) {
+    if (!isMissingBackendReportError(error)) throw error;
+    backendReportMissing = true;
+  }
+  try {
     state.selectedOptionId = optionId;
     state.timeline = null;
     state.costs = null;
     state.readiness = null;
+    useClientPlanSnapshot(option);
     renderPlan();
     renderReadiness();
-    await loadSelectedPlan();
+    if (!backendReportMissing && state.reportId) {
+      await loadSelectedPlan();
+    }
     persistState();
     renderCities();
     renderPlan();
     renderReadiness();
     showRoute("plan");
+    if (backendReportMissing) {
+      setStatus("Opened timeline from the generated plan snapshot. Backend report storage was not available on this Vercel request.", "info");
+    }
   } catch (error) {
     console.error(error);
     setStatus(`Could not select plan: ${error.message}`, "error");
@@ -2568,21 +2676,32 @@ async function selectOption(optionId) {
 }
 
 async function selectComparisonOption(optionId) {
-  if (!state.reportId || !optionId) {
+  if (!optionId) {
     setStatus("Generate options before selecting a plan.", "error");
+    return;
+  }
+  const option = (state.options.length ? state.options : fallbackOptions).find((item) => item.option_id === optionId);
+  if (!option) {
+    setStatus("Selected city was not found in the generated options.", "error");
     return;
   }
   try {
     if (optionId !== state.selectedOptionId) {
-      await api(`/api/v1/reports/${state.reportId}/options/${optionId}/select`, { method: "POST" });
+      if (state.reportId) {
+        try {
+          await api(`/api/v1/reports/${state.reportId}/options/${optionId}/select`, { method: "POST" });
+        } catch (error) {
+          if (!isMissingBackendReportError(error)) throw error;
+        }
+      }
       state.selectedOptionId = optionId;
       state.timeline = null;
       state.costs = null;
       state.readiness = null;
+      useClientPlanSnapshot(option);
       persistState();
     }
     renderCities();
-    const option = selectedOption();
     setStatus(`${option?.city || "City"} selected. Tap View Timeline to open the detailed plan.`, "success");
   } catch (error) {
     console.error(error);
@@ -2592,14 +2711,19 @@ async function selectComparisonOption(optionId) {
 
 async function loadSelectedPlan() {
   if (!state.reportId || !state.selectedOptionId) return;
-  const [timeline, costs, readiness] = await Promise.all([
-    api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/timeline`),
-    api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/costs`),
-    api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/readiness`),
-  ]);
-  state.timeline = timeline;
-  state.costs = costs;
-  state.readiness = readiness;
+  try {
+    const [timeline, costs, readiness] = await Promise.all([
+      api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/timeline`),
+      api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/costs`),
+      api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/readiness`),
+    ]);
+    state.timeline = timeline;
+    state.costs = costs;
+    state.readiness = readiness;
+  } catch (error) {
+    if (!isMissingBackendReportError(error)) throw error;
+    useClientPlanSnapshot(selectedOption());
+  }
 }
 
 async function regenerateTimeline() {
@@ -2713,7 +2837,32 @@ async function downloadPdfResponse(response, fallbackFilename) {
 }
 
 async function updateReadiness(itemId, checked) {
-  if (!state.reportId || !state.selectedOptionId) return;
+  if (!state.selectedOptionId) return;
+  const applyClientReadinessUpdate = () => {
+    const sections = state.readiness?.sections || [];
+    sections.forEach((section) => {
+      (section.items || []).forEach((item) => {
+        if (item.id === itemId) item.status = checked ? "complete" : "pending";
+      });
+    });
+    const items = sections.flatMap((section) => section.items || []);
+    const completed = items.filter((item) => item.status === "complete");
+    const highRisk = items.filter((item) => item.priority === "high" && item.status !== "complete");
+    state.readiness = {
+      ...state.readiness,
+      completion_percent: items.length ? Math.round((completed.length / items.length) * 100) : 0,
+      completed_count: completed.length,
+      total_count: items.length,
+      high_risk_items: highRisk,
+      sections,
+    };
+    persistState();
+    renderReadiness();
+  };
+  if (!state.reportId) {
+    applyClientReadinessUpdate();
+    return;
+  }
   try {
     await api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/readiness/items/${itemId}`, {
       method: "PATCH",
@@ -2725,6 +2874,11 @@ async function updateReadiness(itemId, checked) {
     state.readiness = await api(`/api/v1/reports/${state.reportId}/options/${state.selectedOptionId}/readiness`);
     renderReadiness();
   } catch (error) {
+    if (isMissingBackendReportError(error)) {
+      applyClientReadinessUpdate();
+      setStatus("Updated readiness locally for this plan snapshot.", "info");
+      return;
+    }
     console.error(error);
     setStatus(`Could not update readiness: ${error.message}`, "error");
   }
@@ -2850,25 +3004,12 @@ function bindInteractions() {
 
     const openPlanButton = event.target.closest("[data-open-plan-option-id]");
     if (openPlanButton) {
-      if (!state.reportId) {
-        state.selectedOptionId = openPlanButton.dataset.openPlanOptionId;
-        renderCities();
-        renderPlan();
-        showRoute("plan");
-        return;
-      }
       selectOption(openPlanButton.dataset.openPlanOptionId);
       return;
     }
 
     const compareCard = event.target.closest(".city-card[data-compare-option-id]");
     if (compareCard) {
-      if (!state.reportId) {
-        state.selectedOptionId = compareCard.dataset.compareOptionId;
-        renderCities();
-        renderPlan();
-        return;
-      }
       selectComparisonOption(compareCard.dataset.compareOptionId);
       return;
     }
@@ -2933,6 +3074,7 @@ function bindInteractions() {
 
 restoreState();
 setPlannerBackend(state.plannerBackend || "adk");
+loadPlannerConfig();
 renderAgentProgress();
 renderProgramDetails();
 renderCities();

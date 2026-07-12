@@ -753,7 +753,9 @@ def _normalize_generated_report(
         "audit_summary": _normalize_audit_summary(report.get("audit_summary")),
         "disclaimers": _string_list(report.get("disclaimers", [])),
         "assumptions": _string_list(report.get("assumptions", [])),
-        "planner_backend": request.planner_backend,
+        "planner_backend": report.get("planner_backend") or request.planner_backend,
+        "requested_planner_backend": report.get("requested_planner_backend"),
+        "planner_fallback": report.get("planner_fallback"),
         "agent_session_id": raw.get("session_id"),
         "agent_events": raw.get("events", []),
     }
@@ -2215,14 +2217,47 @@ async def _generate_report(draft: dict[str, Any], request: CreateReportRequest) 
     if request.planner_backend == "local":
         return local_planner.generate_report(draft, request.model_dump())
 
-    runner = _get_adk_runner()
-    return await runner.generate_report(
-        {
-            "profile_draft_id": request.profile_draft_id,
-            "answers": draft["profile"],
-            "generation_request": request.model_dump(),
-        }
+    try:
+        runner = _get_adk_runner()
+        return await runner.generate_report(
+            {
+                "profile_draft_id": request.profile_draft_id,
+                "answers": draft["profile"],
+                "generation_request": request.model_dump(),
+            }
+        )
+    except Exception as exc:
+        if not _env_flag("ADK_FALLBACK_TO_LOCAL", default=True):
+            raise
+        return _local_planner_fallback_report(draft, request, exc)
+
+
+def _local_planner_fallback_report(
+    draft: dict[str, Any],
+    request: CreateReportRequest,
+    exc: Exception,
+) -> dict[str, Any]:
+    report = local_planner.generate_report(draft, {**request.model_dump(), "planner_backend": "local"})
+    warning = (
+        "Agent planner was unavailable in this deployment, so this report used the local deterministic planner. "
+        "Confirm hospital contacts, registration route, billing, and prices before booking."
     )
+    report["disclaimers"] = [*_string_list(report.get("disclaimers", [])), warning]
+    report["planner_backend"] = "local"
+    report["requested_planner_backend"] = "adk"
+    report["planner_fallback"] = {
+        "from": "adk",
+        "to": "local",
+        "reason": str(exc) or exc.__class__.__name__,
+    }
+    return report
+
+
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off"}
 
 
 async def _regenerate_timeline(

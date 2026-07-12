@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import unittest
+from unittest.mock import patch
 
-from medtour_ai.api.main import CreateReportRequest, _normalize_generated_report
+from medtour_ai.api.main import CreateReportRequest, _generate_report, _normalize_generated_report
 from medtour_ai.agents.schemas import IntakeAnswers
 from medtour_ai.agents.tools import (
     audit_city_option_sources_and_costs,
@@ -38,6 +40,20 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(normalized["status"], "ready")
         self.assertEqual(normalized["report_id"], "report_test")
         self.assertGreater(len(normalized["city_options"]), 0)
+
+    def test_adk_connection_error_falls_back_to_local_planner(self) -> None:
+        request = CreateReportRequest(profile_draft_id="draft_test", planner_backend="adk")
+
+        with patch("medtour_ai.api.main._get_adk_runner", side_effect=RuntimeError("OpenAIException - Connection error.")):
+            raw = asyncio.run(_generate_report(self.draft, request))
+
+        normalized = _normalize_generated_report(raw, self.draft, request, "report_fallback")
+
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(normalized["planner_backend"], "local")
+        self.assertEqual(normalized["requested_planner_backend"], "adk")
+        self.assertGreater(len(normalized["city_options"]), 0)
+        self.assertTrue(any("local deterministic planner" in item for item in normalized["disclaimers"]))
 
     def test_program_details_normalizes_to_plain_string(self) -> None:
         answers = IntakeAnswers.model_validate(
