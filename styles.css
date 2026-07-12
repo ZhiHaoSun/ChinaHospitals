@@ -1005,14 +1005,14 @@ label,
 
 .plan-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 280px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
 }
 
 .side-nav {
   border-right: 1px solid var(--border);
   background: var(--surface);
-  padding: 34px 30px;
+  padding: 30px 24px;
 }
 
 .side-back-button {
@@ -1119,7 +1119,7 @@ label,
 }
 
 .plan-content {
-  padding: 60px;
+  padding: clamp(24px, 3vw, 48px);
 }
 
 .plan-header {
@@ -1144,8 +1144,8 @@ label,
 
 .timeline-cost-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 370px;
-  gap: 32px;
+  grid-template-columns: minmax(560px, 1fr) minmax(280px, 300px);
+  gap: 24px;
   align-items: start;
 }
 
@@ -1153,6 +1153,7 @@ label,
   display: grid;
   gap: 20px;
   align-self: start;
+  min-width: 0;
 }
 
 .timeline-days {
@@ -1374,7 +1375,8 @@ label,
 
 .cost-card,
 .insurance-card {
-  padding: 28px;
+  min-width: 0;
+  padding: 24px;
   height: fit-content;
 }
 
@@ -1383,6 +1385,11 @@ label,
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.cost-card-top {
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .cost-card h2 {
@@ -1403,6 +1410,7 @@ label,
 }
 
 .insurance-card-top span {
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px 8px;
@@ -1410,6 +1418,7 @@ label,
   background: var(--primary-soft);
   font-size: 13px;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .insurance-lines {
@@ -1467,8 +1476,9 @@ label,
 
 .total-cost {
   display: block;
-  font-size: 52px;
+  font-size: clamp(36px, 3.4vw, 48px);
   margin: 26px 0 0;
+  overflow-wrap: anywhere;
 }
 
 .cost-lines {
@@ -1682,6 +1692,12 @@ label,
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 18px 28px;
+}
+
+@media (max-width: 1220px) {
+  .timeline-cost-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 1000px) {

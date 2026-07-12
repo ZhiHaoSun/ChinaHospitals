@@ -1,5 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const APP_BUILD_ID = "20260712-key-term-search-links";
+const APP_BUILD_ID = "20260712-plan-layout-fix";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -2186,7 +2186,7 @@ function renderInsuranceCard(option) {
   card.innerHTML = `
     <div class="insurance-card-top">
       <h2>Insurance Policy</h2>
-      <span>${escapeHtml(policy.policy_status || "needs review")}</span>
+      <span>${escapeHtml(humanizeKey(policy.policy_status || "needs review"))}</span>
     </div>
     <p>${escapeHtml(policy.summary)}</p>
     <dl class="insurance-lines">
