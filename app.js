@@ -1722,6 +1722,24 @@ function renderInsuranceCard(option) {
     `;
     return;
   }
+  const profileHolder = state.report?.profile?.current_insurance_holder;
+  const provider = policy.provider_policy || {};
+  const hospitalPolicy = policy.hospital_policy || {};
+  const currentHolder = policy.current_holder || profileHolder || "Not provided";
+  const providerName = provider.display_name || currentHolder;
+  const preauthLabel = hospitalPolicy.preauthorization_required ? "Required or likely required" : "Not flagged";
+  const suggestionItems = listHtml(policy.suggestions);
+  const claimDocItems = listHtml(hospitalPolicy.claim_documents || provider.claim_documents);
+  const providerFocusItems = listHtml(provider.policy_lookup_focus);
+  const providerQuestionItems = listHtml(provider.preauthorization_questions);
+  const riskFlagItems = listHtml([...(hospitalPolicy.common_exclusions || []), ...(provider.risk_flags || [])]);
+  const linkItems = (policy.helpful_links || [])
+    .map((link) => {
+      const title = escapeHtml(link.title || link.url || "Reference");
+      const url = escapeHtml(link.url || "#");
+      return `<li><a href="${url}" target="_blank" rel="noreferrer">${title}</a></li>`;
+    })
+    .join("");
 
   card.innerHTML = `
     <div class="insurance-card-top">
@@ -1730,16 +1748,42 @@ function renderInsuranceCard(option) {
     </div>
     <p>${escapeHtml(policy.summary)}</p>
     <dl class="insurance-lines">
-      <div><dt>Current holder</dt><dd>${escapeHtml(policy.current_holder || "Not provided")}</dd></div>
+      <div><dt>Current holder</dt><dd>${escapeHtml(currentHolder)}</dd></div>
+      <div><dt>Provider guidance</dt><dd>${escapeHtml(providerName)}${provider.matched ? " match" : " lookup needed"}</dd></div>
       <div><dt>Hospital billing</dt><dd>${escapeHtml(policy.hospital_policy?.direct_billing || "Confirm with hospital")}</dd></div>
+      <div><dt>Pre-authorization</dt><dd>${escapeHtml(preauthLabel)}</dd></div>
+      <div><dt>Direct billing assumption</dt><dd>${escapeHtml(provider.direct_billing_assumption || "Assume self-pay first until insurer and hospital confirm otherwise.")}</dd></div>
       <div><dt>Estimated premium</dt><dd>${money(policy.estimated_premium)}</dd></div>
     </dl>
     <div class="insurance-section">
-      <strong>Suggestions</strong>
-      <ul>${(policy.suggestions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <strong>Provider checklist</strong>
+      ${providerFocusItems || "<p>Ask for insurer name, issuing country, plan type, member services contact, and policy territory.</p>"}
     </div>
+    <div class="insurance-section">
+      <strong>Pre-authorization questions</strong>
+      ${providerQuestionItems || "<p>Confirm overseas planned-care coverage, direct billing, reimbursement route, and claim limits before payment.</p>"}
+    </div>
+    <div class="insurance-section">
+      <strong>Claim documents</strong>
+      ${claimDocItems || "<p>Collect itemized invoice, official receipt, diagnosis or medical report, prescriptions, and claim forms.</p>"}
+    </div>
+    <div class="insurance-section">
+      <strong>Risks and exclusions</strong>
+      ${riskFlagItems || "<p>Coverage exclusions, pre-existing conditions, and missing pre-authorization must be checked with the insurer.</p>"}
+    </div>
+    <div class="insurance-section">
+      <strong>Suggestions</strong>
+      ${suggestionItems || "<p>Confirm coverage, payment route, invoices, and claim documents with your insurer and the hospital.</p>"}
+    </div>
+    ${linkItems ? `<div class="insurance-section"><strong>Helpful links</strong><ul class="insurance-links">${linkItems}</ul></div>` : ""}
     <p class="info-callout">Insurance terms vary by policy. Confirm coverage, exclusions, pre-authorization, and claim documents with your insurer and the hospital before booking.</p>
   `;
+}
+
+function listHtml(items) {
+  const values = (items || []).filter((item) => item !== null && item !== undefined && String(item).trim());
+  if (!values.length) return "";
+  return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 }
 
 function renderReadiness() {

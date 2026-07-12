@@ -295,6 +295,48 @@ class ReportSchemaValidationTests(unittest.TestCase):
             ["Singapore resident paying out of pocket unless insurance confirms coverage."],
         )
 
+    def test_missing_insurance_policy_uses_profile_holder_for_fallback_detail(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "city_options": [
+                {
+                    "option_id": "opt_missing_insurance",
+                    "city": "Guangzhou",
+                    "recommendation_label": "Missing insurance fixture",
+                    "target_hospital": "Concord Medical Center",
+                    "required_days": 3,
+                    "flight": {"estimated_cost": {"amount": 420, "currency": "SGD"}},
+                    "hotel": {"nightly_rate": {"amount": 120, "currency": "SGD"}, "nights": 3},
+                    "cost_breakdown": {
+                        "medical": {"amount": 2500, "currency": "SGD"},
+                        "flight": {"amount": 420, "currency": "SGD"},
+                        "hotel": {"amount": 360, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 3280, "currency": "SGD"},
+                    "timeline": [
+                        {
+                            "day": 1,
+                            "date": "2026-09-01",
+                            "title": "Arrival",
+                            "items": ["International registration check"],
+                        }
+                    ],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_missing_insurance")
+
+        option = normalized["city_options"][0]
+        insurance = option["insurance_policy"]
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(insurance["current_holder"], "AIA")
+        self.assertEqual(insurance["provider_policy"]["display_name"], "AIA")
+        self.assertGreater(len(insurance["suggestions"]), 0)
+        self.assertIn("travel_insurance", option["cost_breakdown"])
+
     def test_lookup_guidance_returns_official_seed_sources_and_billing_fields(self) -> None:
         guidance = lookup_china_hospital_contact_guidance(
             "Guangdong Provincial People's Hospital International Clinic",

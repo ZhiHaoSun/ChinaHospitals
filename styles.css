@@ -1148,6 +1148,12 @@ label,
   gap: 32px;
 }
 
+.plan-side-column {
+  display: grid;
+  gap: 20px;
+  align-self: start;
+}
+
 .timeline-days {
   display: grid;
   gap: 40px;
@@ -1282,10 +1288,6 @@ label,
   height: fit-content;
 }
 
-.insurance-card {
-  grid-column: 2;
-}
-
 .cost-card-top,
 .cost-lines div {
   display: flex;
@@ -1349,6 +1351,11 @@ label,
 
 .insurance-section li {
   margin-bottom: 8px;
+}
+
+.insurance-links a {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .currency-tabs {
@@ -1619,10 +1626,6 @@ label,
   .side-nav {
     border-right: 0;
     border-bottom: 1px solid var(--border);
-  }
-
-  .insurance-card {
-    grid-column: auto;
   }
 
   .side-nav nav {

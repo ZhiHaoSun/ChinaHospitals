@@ -26,6 +26,7 @@ load_dotenv()
 
 from medtour_ai.agents.schemas import GeneratedReport, IntakeAnswers
 from medtour_ai.agents.config import get_settings
+from medtour_ai.agents.tools import get_hospital_insurance_policy
 from medtour_ai.services.singapore_benchmarks import singapore_budget_estimate_sgd
 from medtour_ai.services.adk_runner import AdkPlannerRunner
 from medtour_ai.services.auth_store import TRUSTED_SESSION_DAYS, InMemoryAuthStore
@@ -903,11 +904,30 @@ def _normalize_insurance_policy(
     insurance: dict[str, Any],
     option: dict[str, Any],
     currency: str,
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    normalized = dict(insurance)
+    profile = profile or {}
+    hospital_name = option.get("target_hospital") or insurance.get("hospital_name") or "Hospital to confirm"
+    medical_purpose = insurance.get("medical_purpose") or option.get("medical_purpose") or profile.get("medical_purpose")
+    holder = str(
+        insurance.get("current_holder")
+        or insurance.get("current_insurance_holder")
+        or insurance.get("insurance_holder")
+        or profile.get("current_insurance_holder")
+        or ""
+    ).strip()
+    fallback = get_hospital_insurance_policy(
+        hospital_name,
+        holder or None,
+        medical_purpose,
+        profile.get("nationality"),
+        option.get("required_days"),
+    )
+    normalized = {**fallback, **insurance}
     hospital_name = option.get("target_hospital") or normalized.get("hospital_name") or "Hospital to confirm"
     normalized["hospital_name"] = hospital_name
-    normalized["medical_purpose"] = normalized.get("medical_purpose") or option.get("medical_purpose")
+    normalized["current_holder"] = holder or normalized.get("current_holder")
+    normalized["medical_purpose"] = normalized.get("medical_purpose") or option.get("medical_purpose") or profile.get("medical_purpose")
     normalized["policy_status"] = str(
         normalized.get("policy_status")
         or normalized.get("coverage_status")
@@ -922,11 +942,13 @@ def _normalize_insurance_policy(
     hospital_policy = normalized.get("hospital_policy")
     if not isinstance(hospital_policy, dict):
         hospital_policy = {}
+    fallback_hospital_policy = fallback.get("hospital_policy") if isinstance(fallback.get("hospital_policy"), dict) else {}
+    hospital_policy = {**fallback_hospital_policy, **hospital_policy}
     normalized["hospital_policy"] = {
         "direct_billing": str(
-            hospital_policy.get("direct_billing")
-            or normalized.get("direct_billing")
+            normalized.get("direct_billing")
             or normalized.get("direct_billing_status")
+            or hospital_policy.get("direct_billing")
             or "unknown"
         ),
         "preauthorization_required": bool(
@@ -939,10 +961,16 @@ def _normalize_insurance_policy(
         ),
         "common_exclusions": _string_list(hospital_policy.get("common_exclusions") or normalized.get("common_exclusions") or []),
     }
-    normalized["provider_policy"] = normalized.get("provider_policy") if isinstance(normalized.get("provider_policy"), dict) else {}
+    provider_policy = normalized.get("provider_policy")
+    normalized["provider_policy"] = provider_policy if isinstance(provider_policy, dict) else fallback.get("provider_policy", {})
     normalized["estimated_premium"] = _normalize_money(normalized.get("estimated_premium") or 0, currency)
-    normalized["suggestions"] = _string_list(normalized.get("suggestions") or normalized.get("next_steps") or [])
-    normalized["helpful_links"] = normalized.get("helpful_links") if isinstance(normalized.get("helpful_links"), list) else []
+    suggestions = [
+        *_string_list(insurance.get("suggestions") or insurance.get("next_steps") or []),
+        *_string_list(fallback.get("suggestions") or []),
+    ]
+    normalized["suggestions"] = list(dict.fromkeys(suggestions))
+    helpful_links = normalized.get("helpful_links")
+    normalized["helpful_links"] = helpful_links if isinstance(helpful_links, list) else fallback.get("helpful_links", [])
     normalized["metadata"] = _normalize_source_metadata(normalized.get("metadata"))
     return normalized
 
@@ -1065,10 +1093,9 @@ def _normalize_city_option(
             },
         )
     insurance = option.get("insurance_policy")
-    if isinstance(insurance, dict):
-        insurance = _normalize_insurance_policy(insurance, normalized, currency)
-        normalized["insurance_policy"] = insurance
-        normalized["cost_breakdown"].setdefault("travel_insurance", insurance["estimated_premium"])
+    insurance = _normalize_insurance_policy(insurance if isinstance(insurance, dict) else {}, normalized, currency, profile)
+    normalized["insurance_policy"] = insurance
+    normalized["cost_breakdown"].setdefault("travel_insurance", insurance["estimated_premium"])
     total = option.get("total_estimated_cost") or option.get("total_estimated_cost_sgd")
     if not total and normalized["cost_breakdown"]:
         total = {
