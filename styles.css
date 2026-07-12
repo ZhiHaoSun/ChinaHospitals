@@ -1333,16 +1333,26 @@ label,
 }
 
 .timeline-detail-source-row {
-  grid-template-columns: 22px 88px minmax(0, 1fr);
+  grid-template-columns: 22px minmax(0, 1fr);
+}
+
+.timeline-detail-source-row > b {
+  grid-column: 2;
+}
+
+.timeline-detail-source-row > p {
+  grid-column: 1 / -1;
 }
 
 .timeline-source-list {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .timeline-source-card {
   display: grid;
+  min-width: 0;
   gap: 3px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1364,6 +1374,11 @@ label,
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
+  min-width: 0;
+}
+
+.timeline-source-links a {
+  overflow-wrap: anywhere;
 }
 
 .node-tags {

@@ -1,5 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const APP_BUILD_ID = "20260712-plan-layout-fix";
+const APP_BUILD_ID = "20260712-source-record-layout";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -1654,6 +1654,7 @@ function friendlyTimelineDetailLabel(key) {
     contact_lookup_seed_sources: "Source leads",
     seed_official_sources: "Source leads",
     source_records: "Source links",
+    contact_source_records: "Contact source records",
   };
   return labels[key] || humanizeKey(key);
 }
@@ -1687,7 +1688,14 @@ function timelineDetailValueHtml(key, value) {
 }
 
 function isSourceLeadKey(key) {
-  return ["contact_lookup_seed_sources", "seed_official_sources", "source_records"].includes(String(key || ""));
+  return [
+    "contact_lookup_seed_sources",
+    "seed_official_sources",
+    "source_records",
+    "contact_source_records",
+    "hospital_source_records",
+    "official_source_records",
+  ].includes(String(key || ""));
 }
 
 function sourceLeadListHtml(value) {
@@ -1695,6 +1703,7 @@ function sourceLeadListHtml(value) {
   const cards = sources
     .filter(isObjectValue)
     .map((source) => {
+      if (isStandaloneSourceRecord(source)) return sourceRecordCardHtml(source);
       const title = source.hospital || source.title || source.international_department_name || source.url || "Official source";
       const department = source.international_department_name || source.hospital_chinese || "";
       const contactBits = [
@@ -1728,6 +1737,37 @@ function sourceLeadListHtml(value) {
     .join("");
   if (cards) return `<span class="timeline-source-list">${cards}</span>`;
   return flightSearchLinks(compactStructuredValue(value));
+}
+
+function isStandaloneSourceRecord(source) {
+  return Boolean(source?.url || source?.title) &&
+    !source.hospital &&
+    !source.hospital_chinese &&
+    !source.international_department_name &&
+    !source.registration_email &&
+    !source.appointment_phone &&
+    !source.wechat_or_portal_route &&
+    !Array.isArray(source.source_records);
+}
+
+function sourceRecordCardHtml(source) {
+  const title = source.title || source.url || "Official page";
+  const titleHtml = source.url
+    ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(title)}</a>`
+    : escapeHtml(title);
+  const meta = [
+    source.source_type ? humanizeKey(source.source_type) : "",
+    Array.isArray(source.fields_verified) && source.fields_verified.length
+      ? `Verified: ${source.fields_verified.map(humanizeKey).join(", ")}`
+      : "",
+    source.date_checked ? `Checked ${source.date_checked}` : "",
+  ].filter(Boolean);
+  return `
+    <span class="timeline-source-card timeline-source-record-card">
+      <strong>${titleHtml}</strong>
+      ${meta.length ? `<span>${meta.map(escapeHtml).join(" · ")}</span>` : ""}
+    </span>
+  `;
 }
 
 function splitTimelineDetailText(text) {
