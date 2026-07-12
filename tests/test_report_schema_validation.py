@@ -84,7 +84,7 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(normalized["status"], "failed")
         self.assertEqual(normalized["error"]["code"], "REPORT_SCHEMA_VALIDATION_FAILED")
         self.assertTrue(
-            any(error["path"].endswith(".flight") for error in normalized["error"]["validation_errors"])
+            any(error["path"].endswith(".hotel") for error in normalized["error"]["validation_errors"])
         )
 
     def test_agent_style_partial_travel_output_is_normalized_before_validation(self) -> None:
@@ -336,6 +336,45 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(insurance["provider_policy"]["display_name"], "AIA")
         self.assertGreater(len(insurance["suggestions"]), 0)
         self.assertIn("travel_insurance", option["cost_breakdown"])
+
+    def test_missing_flight_uses_representative_flight_fallback(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "city_options": [
+                {
+                    "option_id": "opt_missing_flight",
+                    "city": "Guangzhou",
+                    "recommendation_label": "Missing flight fixture",
+                    "target_hospital": "Concord Medical Center",
+                    "required_days": 3,
+                    "hotel": {"nightly_rate": {"amount": 120, "currency": "SGD"}, "nights": 3},
+                    "cost_breakdown": {
+                        "medical": {"amount": 2500, "currency": "SGD"},
+                        "hotel": {"amount": 360, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 2860, "currency": "SGD"},
+                    "timeline": [
+                        {
+                            "day": 1,
+                            "date": "2026-09-01",
+                            "title": "Arrival",
+                            "items": ["International registration check"],
+                        }
+                    ],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_missing_flight")
+
+        option = normalized["city_options"][0]
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(option["flight"]["flight_number"], "SQ850")
+        self.assertEqual(option["flight"]["departure_airport"], "SIN")
+        self.assertEqual(option["flight"]["arrival_airport"], "CAN")
+        self.assertEqual(option["cost_breakdown"]["flight"]["source"], "representative_flight_fallback")
 
     def test_timeline_object_strings_are_normalized_to_readable_text(self) -> None:
         raw = {

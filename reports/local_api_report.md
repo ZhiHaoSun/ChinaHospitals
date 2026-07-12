@@ -1,7 +1,7 @@
 # MedTour AI Local API Test Report
 
-Report ID: `rep_d9d83ad6b6904d0da6ad4193512d485a`
-Operation ID: `op_d01ae0b7695b4d7eaf8a98c67b25ecb2`
+Report ID: `rep_b12ebd9a9d6147958b71a021216527d3`
+Operation ID: `op_f66009ab1ce148eba42227c7231942bf`
 Status: `ready`
 Generated options: `4`
 
@@ -22,48 +22,48 @@ Generated options: `4`
 - Option ID: `opt_shanghai_best_overall`
 - Hospital: Shanghai International Medical Center
 - Required days: 6
-- Total estimated cost: SGD 6,840
-- Estimated net savings: SGD 2,599
+- Total estimated cost: SGD 5,335
+- Estimated net savings: SGD 865
 - Flight: SQ830 from SIN to PVG, arrives 2026-08-12T13:30:00+08:00
-- Hotel: Shanghai Medical District Hotel, No. 1188 Fangdian Road, Pudong, Shanghai
+- Hotel: Holiday Inn Shanghai Pudong Kangqiao, No. 1088 Xiuyan Road, Pudong New Area, Shanghai
 - Nightly hotel rate: SGD 165 for 5 nights
-- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Some medical suitability details still need user confirmation.
+- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Insurance coverage and hospital billing policy require insurer confirmation before booking.; Some medical suitability details still need user confirmation.
 
 ### Lowest Total Cost: Guangzhou
 
 - Option ID: `opt_guangzhou_lowest_cost`
 - Hospital: Guangdong Provincial People's Hospital International Clinic
 - Required days: 6
-- Total estimated cost: SGD 5,790
-- Estimated net savings: SGD 2,200
+- Total estimated cost: SGD 4,935
+- Estimated net savings: SGD 1,265
 - Flight: SQ850 from SIN to CAN, arrives 2026-08-12T13:30:00+08:00
-- Hotel: Guangzhou Medical District Hotel, No. 106 Zhongshan 2nd Road, Yuexiu, Guangzhou
+- Hotel: The Garden Hotel Guangzhou, 368 Huanshi Dong Road, Yuexiu District, Guangzhou
 - Nightly hotel rate: SGD 165 for 5 nights
-- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Some medical suitability details still need user confirmation.
+- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Insurance coverage and hospital billing policy require insurer confirmation before booking.; Some medical suitability details still need user confirmation.
 
 ### Shortest Trip: Beijing
 
 - Option ID: `opt_beijing_shortest_trip`
 - Hospital: Peking Union Medical College Hospital International Medical Services
 - Required days: 6
-- Total estimated cost: SGD 7,090
-- Estimated net savings: SGD 2,694
+- Total estimated cost: SGD 5,685
+- Estimated net savings: SGD 515
 - Flight: SQ802 from SIN to PEK, arrives 2026-08-12T13:30:00+08:00
-- Hotel: Beijing Medical District Hotel, No. 1 Shuaifuyuan, Dongcheng, Beijing
+- Hotel: Sunworld Dynasty Hotel Beijing Wangfujing, 50 Wangfujing Avenue, Dongcheng District, Beijing
 - Nightly hotel rate: SGD 165 for 5 nights
-- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Some medical suitability details still need user confirmation.
+- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Insurance coverage and hospital billing policy require insurer confirmation before booking.; Some medical suitability details still need user confirmation.
 
 ### Strongest Medical Resources: Shenzhen
 
 - Option ID: `opt_shenzhen_medical_strength`
 - Hospital: University of Hong Kong-Shenzhen Hospital International Medical Center
 - Required days: 6
-- Total estimated cost: SGD 6,090
-- Estimated net savings: SGD 2,314
+- Total estimated cost: SGD 5,135
+- Estimated net savings: SGD 1,065
 - Flight: ZH9024 from SIN to SZX, arrives 2026-08-12T13:30:00+08:00
-- Hotel: Shenzhen Medical District Hotel, No. 1 Haiyuan 1st Road, Futian, Shenzhen
+- Hotel: The Langham Shenzhen, 7888 Shennan Boulevard, Futian District, Shenzhen
 - Nightly hotel rate: SGD 165 for 5 nights
-- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Some medical suitability details still need user confirmation.
+- Key risks: Final treatment eligibility depends on in-person clinician assessment.; Flight and hotel prices are estimates until live booking confirmation.; Insurance coverage and hospital billing policy require insurer confirmation before booking.; Some medical suitability details still need user confirmation.
 
 ## Selected Plan Detail
 
@@ -71,13 +71,14 @@ Selected option: `opt_shanghai_best_overall` (Shanghai)
 
 ### Cost Breakdown
 
-- Medical: SGD 5,500 (range 4,200-6,800)
+- Medical: SGD 3,900 (range 3,200-4,600)
 - Flight: SGD 520
 - Hotel: SGD 825
 - Local Transport: SGD 210
 - Meals: SGD 225
 - Visa And Payment Setup: SGD 80
-- Total: SGD 6,840
+- Travel Insurance: SGD 95
+- Total: SGD 5,335
 
 ### Original Timeline
 
@@ -85,24 +86,28 @@ Selected option: `opt_shanghai_best_overall` (Shanghai)
 
 - 08:00-13:30: Arrival flight at PVG, cost SGD 520
 - 14:00-15:00: Airport transfer to hotel at Shanghai, cost SGD 35
-- 15:30-16:00: Hotel check-in at Shanghai Medical District Hotel
+- 15:30-16:00: Hotel check-in at Holiday Inn Shanghai Pudong Kangqiao
 
 #### Day 2: Pre-treatment Evaluation (2026-08-13)
 
-- 09:00-11:30: Pre-treatment examination at Shanghai International Medical Center [medical constraint]
-- 14:00-15:30: Doctor review and eligibility confirmation at Shanghai International Medical Center [medical constraint]
+- 08:30-09:00: International desk registration and outpatient file setup at Shanghai International Medical Center [medical constraint]
+- 09:00-09:30: Nurse intake, consent forms, and payment/pre-auth check at Shanghai International Medical Center [medical constraint]
+- 09:30-11:30: Diagnostics and program-specific tests at Shanghai International Medical Center [medical constraint]
+- 14:00-15:30: Suggested doctor consultation and eligibility confirmation at Shanghai International Medical Center [medical constraint]
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 3: Core Medical Appointment (2026-08-14)
 
+- 08:45-09:30: Final consent, deposit, and treatment-room preparation at Shanghai International Medical Center [medical constraint]
 - 09:30-12:00: Procedure or core medical appointment at Shanghai International Medical Center [medical constraint]
-- 14:00-18:00: Rest window near hospital at Shanghai Medical District Hotel [medical constraint]
+- 12:00-12:45: Medication, discharge briefing, and claim documents at Shanghai International Medical Center [medical constraint]
+- 14:00-18:00: Rest window near hospital at Holiday Inn Shanghai Pudong Kangqiao [medical constraint]
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 4: Follow-up Review (2026-08-15)
 
-- 09:30-10:30: Follow-up review at Shanghai International Medical Center [medical constraint]
-- 11:00-11:30: Confirm return fitness and documents at Shanghai International Medical Center
+- 09:30-10:30: Follow-up review with assigned doctor or international clinic at Shanghai International Medical Center [medical constraint]
+- 11:00-11:30: Confirm return fitness, invoices, and insurance documents at Shanghai International Medical Center
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 5: Recovery and Light City Time (2026-08-16)
@@ -112,14 +117,14 @@ Selected option: `opt_shanghai_best_overall` (Shanghai)
 
 #### Day 6: Return Travel (2026-08-17)
 
-- 10:30-11:00: Hotel check-out at Shanghai Medical District Hotel
+- 10:30-11:00: Hotel check-out at Holiday Inn Shanghai Pudong Kangqiao
 - 12:00-13:00: Transfer to airport at Shanghai, cost SGD 35
 - 15:30-21:00: Return flight at PVG, cost SGD 520
 
 
 ### Regenerated Timeline
 
-- New timeline version: `tlv_462d21c7bda7424f84e97a6e88165cdb`
+- New timeline version: `tlv_d8bd57bc1b114b1f9f2966b31675f4e7`
 - Accept status: `accepted`
 - Changes: Stay length changed from 6 to 8 days.; Flight preference applied: avoid_red_eye.; Hotel tier preference applied: balanced.
 
@@ -127,24 +132,28 @@ Selected option: `opt_shanghai_best_overall` (Shanghai)
 
 - 08:00-13:30: Arrival flight at PVG, cost SGD 520
 - 14:00-15:00: Airport transfer to hotel at Shanghai, cost SGD 35
-- 15:30-16:00: Hotel check-in at Shanghai Medical District Hotel
+- 15:30-16:00: Hotel check-in at Holiday Inn Shanghai Pudong Kangqiao
 
 #### Day 2: Pre-treatment Evaluation (2026-08-13)
 
-- 09:00-11:30: Pre-treatment examination at Shanghai International Medical Center [medical constraint]
-- 14:00-15:30: Doctor review and eligibility confirmation at Shanghai International Medical Center [medical constraint]
+- 08:30-09:00: International desk registration and outpatient file setup at Shanghai International Medical Center [medical constraint]
+- 09:00-09:30: Nurse intake, consent forms, and payment/pre-auth check at Shanghai International Medical Center [medical constraint]
+- 09:30-11:30: Diagnostics and program-specific tests at Shanghai International Medical Center [medical constraint]
+- 14:00-15:30: Suggested doctor consultation and eligibility confirmation at Shanghai International Medical Center [medical constraint]
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 3: Core Medical Appointment (2026-08-14)
 
+- 08:45-09:30: Final consent, deposit, and treatment-room preparation at Shanghai International Medical Center [medical constraint]
 - 09:30-12:00: Procedure or core medical appointment at Shanghai International Medical Center [medical constraint]
-- 14:00-18:00: Rest window near hospital at Shanghai Medical District Hotel [medical constraint]
+- 12:00-12:45: Medication, discharge briefing, and claim documents at Shanghai International Medical Center [medical constraint]
+- 14:00-18:00: Rest window near hospital at Holiday Inn Shanghai Pudong Kangqiao [medical constraint]
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 4: Follow-up Review (2026-08-15)
 
-- 09:30-10:30: Follow-up review at Shanghai International Medical Center [medical constraint]
-- 11:00-11:30: Confirm return fitness and documents at Shanghai International Medical Center
+- 09:30-10:30: Follow-up review with assigned doctor or international clinic at Shanghai International Medical Center [medical constraint]
+- 11:00-11:30: Confirm return fitness, invoices, and insurance documents at Shanghai International Medical Center
 - 18:00-19:00: Recovery-friendly meals at Shanghai, cost SGD 45
 
 #### Day 5: Recovery and Light City Time (2026-08-16)
@@ -164,7 +173,7 @@ Selected option: `opt_shanghai_best_overall` (Shanghai)
 
 #### Day 8: Return Travel (2026-08-19)
 
-- 10:30-11:00: Hotel check-out at Shanghai Medical District Hotel
+- 10:30-11:00: Hotel check-out at Holiday Inn Shanghai Pudong Kangqiao
 - 12:00-13:00: Transfer to airport at Shanghai, cost SGD 35
 - 15:30-21:00: Return flight at PVG, cost SGD 520
 
@@ -195,9 +204,23 @@ Updated item: `alipay_setup` -> `complete`
 - Steps: Confirm appointment date and department.; Ask whether translator or international desk support is available.; Prepare prior test reports and medication list if relevant.
 - Links: None
 
+### Confirm insurance coverage and hospital claim requirements
+
+- Priority: high
+- Status: pending
+- Steps: Add your current insurance holder so the advisor can check policy-specific requirements.; Ask your insurer whether planned overseas treatment in Mainland China is covered before booking.; Request written pre-authorization or guarantee-of-payment instructions for the selected hospital.; Confirm whether outpatient treatment, follow-up visits, and complications are covered.; Keep itemized invoices, medical reports, prescriptions, receipts, and discharge or visit summaries.
+- Links: None
+
+### Verify sources and live prices before booking
+
+- Priority: high
+- Status: pending
+- Steps: Review hospital source, international department, appointment contact, and insurance handling.; Re-check flight fare for exact route, date, cabin, baggage, and refund rules.; Re-check hotel nightly rate, subtotal, taxes, cancellation policy, and foreign-guest eligibility.; Reconcile total estimate against itemized medical, travel, hotel, insurance, and local costs.; Resolve 2 blocking audit items and review 3 warnings before any non-refundable booking.
+- Links: None
+
 ## Advisor Handoff
 
-- Lead ID: `lead_f742b49f5d214d60ae4133e81794b31a`
+- Lead ID: `lead_15a64b6cbcff4fa6b00585056132bec9`
 - Lead status: `new`
 
 ## Disclaimers
@@ -205,3 +228,4 @@ Updated item: `alipay_setup` -> `complete`
 - This plan is for travel and budgeting support only and is not medical diagnosis.
 - Procedure eligibility, final price, and appointment availability must be confirmed by the hospital or licensed clinician.
 - Visa and entry policies can change; verify official sources before booking non-refundable travel.
+- Insurance coverage, direct billing, and reimbursement eligibility must be confirmed by the insurer and hospital.

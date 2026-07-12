@@ -27,7 +27,7 @@ load_dotenv()
 
 from medtour_ai.agents.schemas import GeneratedReport, IntakeAnswers
 from medtour_ai.agents.config import get_settings
-from medtour_ai.agents.tools import get_hospital_insurance_policy
+from medtour_ai.agents.tools import estimate_flights, get_hospital_insurance_policy
 from medtour_ai.services.singapore_benchmarks import singapore_budget_estimate_sgd
 from medtour_ai.services.adk_runner import AdkPlannerRunner
 from medtour_ai.services.auth_store import TRUSTED_SESSION_DAYS, InMemoryAuthStore
@@ -1079,7 +1079,7 @@ def _normalize_city_option(
         key: _normalize_money(value, currency)
         for key, value in (option.get("cost_breakdown") or {}).items()
     }
-    flight = _normalize_flight(option, normalized, currency)
+    flight = _normalize_flight(option, normalized, currency, profile)
     if flight:
         normalized["flight"] = flight
         normalized["cost_breakdown"].setdefault("flight", flight["estimated_cost"])
@@ -1137,7 +1137,9 @@ def _normalize_flight(
     option: dict[str, Any],
     normalized: dict[str, Any],
     currency: str,
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
+    profile = profile or {}
     source = _first_non_empty(
         option,
         "flight",
@@ -1149,11 +1151,11 @@ def _normalize_flight(
     )
     cost_breakdown = normalized.get("cost_breakdown") or {}
     cost_hint = _first_non_empty(cost_breakdown, "flight", "airfare", "air_ticket", "travel")
+    used_fallback_source = False
     if not isinstance(source, dict):
-        if cost_hint is None:
-            return None
-        source = {}
-    cost = _normalize_money(
+        source = _fallback_flight_source(option, normalized, profile)
+        used_fallback_source = True
+    cost_source = cost_hint if used_fallback_source and cost_hint is not None else (
         _first_present(
             source,
             "estimated_cost",
@@ -1162,7 +1164,10 @@ def _normalize_flight(
             "price",
             "fare",
         )
-        or cost_hint,
+        or cost_hint
+    )
+    cost = _normalize_money(
+        cost_source,
         currency,
     )
     return {
@@ -1189,6 +1194,39 @@ def _normalize_flight(
             or ""
         ),
         "estimated_cost": cost,
+    }
+
+
+def _fallback_flight_source(
+    option: dict[str, Any],
+    normalized: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    departure_city = str(
+        profile.get("departure_city")
+        or option.get("departure_city")
+        or normalized.get("departure_city")
+        or "Singapore"
+    )
+    destination_city = str(normalized.get("city") or option.get("city") or "Shanghai")
+    date_range = profile.get("date_range") if isinstance(profile.get("date_range"), dict) else {}
+    date_hint = str(option.get("start_date") or date_range.get("start") or "")
+    try:
+        recommended = estimate_flights(departure_city, destination_city, date_hint or None).get("recommended", {})
+    except Exception:
+        recommended = {}
+    return {
+        "airline": recommended.get("airline") or "Airline to confirm",
+        "flight_number": recommended.get("flight_number") or "Flight number to confirm",
+        "departure_airport": recommended.get("departure_airport") or departure_city,
+        "arrival_airport": recommended.get("arrival_airport") or destination_city,
+        "departure_time": recommended.get("departure_time") or "",
+        "arrival_time": recommended.get("arrival_time") or "",
+        "estimated_cost": {
+            "amount": recommended.get("estimated_cost_sgd") or 0,
+            "currency": "SGD",
+            "source": "representative_flight_fallback",
+        },
     }
 
 

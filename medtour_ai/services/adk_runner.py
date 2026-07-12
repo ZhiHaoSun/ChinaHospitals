@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ast
 import json
+import re
 from typing import Any
 from uuid import uuid4
 
@@ -140,6 +142,11 @@ class AdkPlannerRunner:
 
 def _parse_json_text(text: str) -> Any:
     cleaned = text.strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as original_error:
+        last_error = original_error
+
     if cleaned.startswith("```"):
         lines = cleaned.splitlines()
         if lines and lines[0].strip().startswith("```"):
@@ -147,7 +154,36 @@ def _parse_json_text(text: str) -> Any:
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         cleaned = "\n".join(lines).strip()
-    return json.loads(cleaned)
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as fenced_error:
+            last_error = fenced_error
+
+    for fenced_match in re.finditer(r"```(?:json)?\s*(.*?)```", text, flags=re.IGNORECASE | re.DOTALL):
+        candidate = fenced_match.group(1).strip()
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError as fenced_error:
+            last_error = fenced_error
+
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(cleaned):
+        if char not in "[{":
+            continue
+        candidate = cleaned[index:]
+        try:
+            parsed, _end = decoder.raw_decode(candidate)
+            return parsed
+        except json.JSONDecodeError as extract_error:
+            last_error = extract_error
+        try:
+            parsed = ast.literal_eval(candidate)
+        except (SyntaxError, ValueError):
+            continue
+        if isinstance(parsed, (dict, list)):
+            return parsed
+
+    raise last_error
 
 
 def _event_text(event: Any) -> str:

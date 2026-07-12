@@ -88,6 +88,29 @@ CITY_MEDICAL_DATA: dict[str, dict[str, Any]] = {
     },
 }
 
+CITY_HOTEL_DATA: dict[str, dict[str, Any]] = {
+    "Shanghai": {
+        "name": "Holiday Inn Shanghai Pudong Kangqiao",
+        "address": "No. 1088 Xiuyan Road, Pudong New Area, Shanghai",
+        "distance_to_hospital": "Kangqiao/Pudong area; confirm live route before booking",
+    },
+    "Guangzhou": {
+        "name": "The Garden Hotel Guangzhou",
+        "address": "368 Huanshi Dong Road, Yuexiu District, Guangzhou",
+        "distance_to_hospital": "Same Yuexiu medical district; confirm live route before booking",
+    },
+    "Beijing": {
+        "name": "Sunworld Dynasty Hotel Beijing Wangfujing",
+        "address": "50 Wangfujing Avenue, Dongcheng District, Beijing",
+        "distance_to_hospital": "Wangfujing/Dongcheng area near PUMCH; confirm live route before booking",
+    },
+    "Shenzhen": {
+        "name": "The Langham Shenzhen",
+        "address": "7888 Shennan Boulevard, Futian District, Shenzhen",
+        "distance_to_hospital": "Futian District; confirm live route before booking",
+    },
+}
+
 CHINA_HOSPITAL_CONTACT_LOOKUP_SKILL: dict[str, Any] = {
     "skill_name": "lookup-china-hospital-contacts",
     "skill_path": "skills/lookup-china-hospital-contacts/SKILL.md",
@@ -691,21 +714,23 @@ def search_hotels(destination_city: str, hospital_name: str, budget_tier: str = 
     """Return foreigner-friendly hotel estimates near the hospital."""
 
     nightly = {"budget": 95, "balanced": 165, "premium": 310}.get(budget_tier, 165)
-    addresses = {
-        "Shanghai": "No. 1188 Fangdian Road, Pudong, Shanghai",
-        "Guangzhou": "No. 106 Zhongshan 2nd Road, Yuexiu, Guangzhou",
-        "Beijing": "No. 1 Shuaifuyuan, Dongcheng, Beijing",
-        "Shenzhen": "No. 1 Haiyuan 1st Road, Futian, Shenzhen",
-    }
+    hotel = CITY_HOTEL_DATA.get(
+        destination_city,
+        {
+            "name": "Hotel to confirm",
+            "address": "Central medical district",
+            "distance_to_hospital": "Route to confirm before booking",
+        },
+    )
     return {
         "city": destination_city,
         "hospital_name": hospital_name,
         "hotels": [
             {
-                "name": f"{destination_city} Medical District Hotel",
-                "address": addresses.get(destination_city, "Central medical district"),
+                "name": hotel["name"],
+                "address": hotel["address"],
                 "nightly_rate_sgd": nightly,
-                "distance_to_hospital": "10-20 min by car",
+                "distance_to_hospital": hotel["distance_to_hospital"],
                 "foreign_guest_eligible": True,
                 "cancellation_policy": "Free cancellation until 48 hours before check-in",
             }

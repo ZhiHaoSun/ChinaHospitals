@@ -1,5 +1,5 @@
 const routes = ["intake", "agent-progress", "compare", "plan", "readiness"];
-const APP_BUILD_ID = "20260702-smile-pro-costs";
+const APP_BUILD_ID = "20260712-key-term-search-links";
 const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 const API_BASE_URL = window.MEDTOUR_API_BASE_URL || (isLocalHost ? "http://127.0.0.1:8000" : "");
 const RMB_PER_SGD = 5.35;
@@ -113,32 +113,52 @@ const agentProgressSteps = [
   },
 ];
 
+const agentProgressDwellMs = {
+  profile: 2600,
+  medical: 4200,
+  parallel: 4400,
+  "hospital-contact": 3800,
+  "travel-costs": 3200,
+  insurance: 2800,
+  timeline: 2600,
+  audit: 2400,
+  synthesis: 1800,
+};
+
+const previewHospitalName = "Guangdong Provincial People's Hospital - Concord Medical Center";
+const previewHospitalDesk = "Concord Medical Center international patient registration desk";
+const previewRegistrationEmail = "gdcmc@yahoo.cn";
+const previewRegistrationEmailStatus = "official_general_email";
+const previewAppointmentPhone = "(+8620) 83874283; (+8620) 87374289-8991";
+const previewHotelName = "The Garden Hotel Guangzhou";
+const previewHotelAddress = "368 Huanshi Dong Road, Yuexiu District, Guangzhou";
+
 const fallbackOptions = [
   {
-    option_id: "sample_shanghai",
-    city: "Shanghai",
-    recommendation_label: "Sample International Plan",
-    target_hospital: "Shanghai International Medical Center - International Patient Service",
+    option_id: "preview_guangzhou",
+    city: "Guangzhou",
+    recommendation_label: "Preview International Plan",
+    target_hospital: previewHospitalName,
     medical_purpose: "eye_surgery",
     procedure_subtype: "smile_pro",
     program_details: "Current prescription: -4.50 both eyes, mild astigmatism; contact lens usage: soft lenses",
-    recommendation_reason: "Sample data showing detailed international hospital workflow, doctor assignment, and insurance document steps.",
+    recommendation_reason: "Preview showing the international hospital workflow, doctor assignment, and insurance document steps.",
     required_days: 4,
     flight: {
       airline: "Singapore Airlines",
-      flight_number: "SQ830",
+      flight_number: "SQ850",
       departure_airport: "SIN",
-      arrival_airport: "PVG",
+      arrival_airport: "CAN",
       departure_time: "2026-08-12T08:00:00+08:00",
       arrival_time: "2026-08-12T13:30:00+08:00",
       estimated_cost: { amount: 520, currency: "SGD" },
     },
     hotel: {
-      name: "Shanghai Medical District Hotel",
-      address: "Pudong medical district, Shanghai",
+      name: previewHotelName,
+      address: previewHotelAddress,
       nightly_rate: { amount: 165, currency: "SGD" },
       nights: 3,
-      distance_to_hospital: "10-20 min by car",
+      distance_to_hospital: "Same Yuexiu medical district; confirm live route before booking",
       foreign_guest_eligible: true,
     },
     cost_breakdown: {
@@ -155,9 +175,10 @@ const fallbackOptions = [
     estimated_net_savings: { amount: 815, currency: "SGD" },
     hospital_visit_protocol: {
       registration_contact: {
-        desk: "International patient registration desk",
-        email: "",
-        email_status: "needs_confirmation",
+        desk: previewHospitalDesk,
+        email: previewRegistrationEmail,
+        email_status: previewRegistrationEmailStatus,
+        appointment_phone: previewAppointmentPhone,
       },
       suggested_doctor: {
         name: "",
@@ -167,10 +188,10 @@ const fallbackOptions = [
     },
     insurance_policy: {
       current_holder: "AIA",
-      hospital_name: "Shanghai International Medical Center - International Patient Service",
+      hospital_name: previewHospitalName,
       medical_purpose: "eye_surgery",
       policy_status: "needs_insurer_confirmation",
-      summary: "Sample policy review. Confirm pre-authorization, direct billing, and reimbursement documents before booking.",
+      summary: "Preview policy review. Confirm pre-authorization, direct billing, and reimbursement documents before booking.",
       hospital_policy: {
         direct_billing: "Limited international direct billing may be available only after insurer pre-authorization.",
         preauthorization_required: true,
@@ -192,10 +213,10 @@ const fallbackOptions = [
         items: [
           {
             category: "flight",
-            title: "Arrival flight",
+            title: "Arrival flight SQ850",
             start_time: "2026-08-12T08:00:00+08:00",
             end_time: "2026-08-12T13:30:00+08:00",
-            location_name: "PVG",
+            location_name: "CAN",
             estimated_cost: { amount: 520, currency: "SGD" },
             confidence_level: "medium",
             details: {},
@@ -205,8 +226,8 @@ const fallbackOptions = [
             title: "Hotel check-in",
             start_time: "2026-08-12T15:30:00+08:00",
             end_time: "2026-08-12T16:00:00+08:00",
-            location_name: "Shanghai Medical District Hotel",
-            address: "Pudong medical district, Shanghai",
+            location_name: previewHotelName,
+            address: previewHotelAddress,
             confidence_level: "medium",
             details: {},
           },
@@ -215,13 +236,14 @@ const fallbackOptions = [
             title: "International desk pre-registration email check",
             start_time: "2026-08-12T16:30:00+08:00",
             end_time: "2026-08-12T17:15:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_desk: "International patient registration desk",
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_desk: previewHospitalDesk,
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               suggested_doctor_request: "Request the International Patient Service team to assign or confirm a senior refractive-surgery consultant before deposit payment.",
@@ -244,13 +266,14 @@ const fallbackOptions = [
             title: "International desk registration and outpatient file setup",
             start_time: "2026-08-13T08:30:00+08:00",
             end_time: "2026-08-13T09:00:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_desk: "International patient registration desk",
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_desk: previewHospitalDesk,
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               suggested_doctor_request: "Request the International Patient Service team to assign or confirm a senior refractive-surgery consultant before deposit payment.",
@@ -265,12 +288,13 @@ const fallbackOptions = [
             title: "Diagnostics and refractive-surgery suitability tests",
             start_time: "2026-08-13T09:30:00+08:00",
             end_time: "2026-08-13T11:30:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
@@ -284,12 +308,13 @@ const fallbackOptions = [
             title: "Suggested doctor consultation and eligibility confirmation",
             start_time: "2026-08-13T14:00:00+08:00",
             end_time: "2026-08-13T15:30:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               suggested_doctor_request: "Ask the international clinic to assign or confirm the operating surgeon before final payment.",
@@ -311,12 +336,13 @@ const fallbackOptions = [
             title: "Final consent, deposit, and treatment-room preparation",
             start_time: "2026-08-14T08:45:00+08:00",
             end_time: "2026-08-14T09:30:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
@@ -330,13 +356,14 @@ const fallbackOptions = [
             title: "SMILE Pro procedure window",
             start_time: "2026-08-14T09:30:00+08:00",
             end_time: "2026-08-14T12:00:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             estimated_cost: { amount: 3900, currency: "SGD" },
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
@@ -350,12 +377,13 @@ const fallbackOptions = [
             title: "Medication, discharge briefing, and claim documents",
             start_time: "2026-08-14T12:00:00+08:00",
             end_time: "2026-08-14T12:45:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
@@ -376,12 +404,13 @@ const fallbackOptions = [
             title: "Follow-up review with assigned doctor or international clinic",
             start_time: "2026-08-15T09:30:00+08:00",
             end_time: "2026-08-15T10:30:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             hard_constraint: true,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               suggested_doctor_name: "",
               suggested_doctor_specialty: "Cornea and refractive surgery consultant",
               hospital_steps: [
@@ -395,11 +424,12 @@ const fallbackOptions = [
             title: "Confirm return fitness, invoices, and insurance documents",
             start_time: "2026-08-15T11:00:00+08:00",
             end_time: "2026-08-15T11:30:00+08:00",
-            location_name: "Shanghai International Medical Center - International Patient Service",
+            location_name: previewHospitalName,
             confidence_level: "medium",
             details: {
-              registration_email: "",
-              registration_email_status: "needs_confirmation",
+              registration_email: previewRegistrationEmail,
+              registration_email_status: previewRegistrationEmailStatus,
+              appointment_phone: previewAppointmentPhone,
               hospital_steps: [
                 "Verify all claim documents are stamped or digitally valid.",
                 "Confirm whether translated reports are required by the insurer.",
@@ -633,9 +663,11 @@ function activateAgentStep(stepId, message) {
 
 function startAgentProgressSimulation(startIndex = 1) {
   clearAgentProgressTimers();
+  let nextDelay = agentProgressDwellMs[agentProgressSteps[startIndex - 1]?.id] || 2400;
   agentProgressSteps.slice(startIndex).forEach((step, index) => {
-    const timer = setTimeout(() => activateAgentStep(step.id), 900 + index * 1250);
+    const timer = setTimeout(() => activateAgentStep(step.id), nextDelay);
     agentProgressTimers.push(timer);
+    nextDelay += agentProgressDwellMs[step.id] || Math.max(1800, 2600 - index * 150);
   });
 }
 
@@ -1087,6 +1119,10 @@ function compactStructuredValue(value) {
   return String(parsed);
 }
 
+function isMoneyObject(value) {
+  return isObjectValue(value) && value.amount !== undefined && value.currency;
+}
+
 function textDate(value) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
@@ -1482,7 +1518,7 @@ function timelineItemCount(days) {
   return (days || []).reduce((count, day) => count + (Array.isArray(day.items) ? day.items.length : 0), 0);
 }
 
-function renderTimelineDetails(item) {
+function renderTimelineDetails(item, option, day) {
   const details = item.details || {};
   if (!hasTimelineHospitalDetails(item) && !hasAnyTimelineDetails(item)) return "";
 
@@ -1498,6 +1534,9 @@ function renderTimelineDetails(item) {
   ].filter(Boolean).join(" · ");
   const nextConfirmation = !isGenericDoctorRequest(details.suggested_doctor_request) ? details.suggested_doctor_request : "";
   const status = details.registration_email_status ? ` (${details.registration_email_status.replaceAll("_", " ")})` : "";
+  const registrationEmailHref = details.registration_email
+    ? registrationEmailMailto(details.registration_email, { option, item, day, details })
+    : "";
   const consumedKeys = new Set([
     "registration_desk",
     "appointment_phone",
@@ -1511,51 +1550,238 @@ function renderTimelineDetails(item) {
     "suggested_doctor_request",
     "hospital_steps",
   ]);
-  const structuredRows = Object.entries(details)
-    .filter(([key, value]) => !consumedKeys.has(key) && compactStructuredValue(value))
-    .map(([key, value]) => `
-      <div>
-        <span class="material-symbols-outlined">${timelineDetailIcon(key)}</span>
-        <b>${escapeHtml(humanizeKey(key))}</b>
-        <p>${escapeHtml(compactStructuredValue(value))}</p>
-      </div>
-    `)
-    .join("");
+  const structuredRows = timelineDetailRows(details, consumedKeys);
   return `
     <div class="timeline-details">
       ${structuredRows}
       ${
         appointmentRoute
-          ? `<div><span class="material-symbols-outlined">support_agent</span><b>Appointment route</b><p>${escapeHtml(appointmentRoute)}</p></div>`
+          ? timelineDetailRowHtml("support_agent", "Appointment", appointmentRoute)
           : ""
       }
       ${
         details.registration_email
-          ? `<div><span class="material-symbols-outlined">alternate_email</span><b>Registration email</b><p>${escapeHtml(details.registration_email)}${escapeHtml(status)}</p></div>`
+          ? `<div class="timeline-detail-row"><span class="material-symbols-outlined">alternate_email</span><b>Email</b><p><a href="${escapeHtml(registrationEmailHref)}">${escapeHtml(details.registration_email)}</a>${escapeHtml(status)}</p></div>`
           : ""
       }
       ${
         doctorLine
-          ? `<div><span class="material-symbols-outlined">stethoscope</span><b>Care team</b><p>${escapeHtml(doctorLine)}</p></div>`
+          ? timelineDetailRowHtml("stethoscope", "Care team", doctorLine)
           : ""
       }
       ${
         billingLine
-          ? `<div><span class="material-symbols-outlined">receipt_long</span><b>Billing status</b><p>${escapeHtml(billingLine)}</p></div>`
+          ? timelineDetailRowHtml("receipt_long", "Billing", billingLine)
           : ""
       }
       ${
         nextConfirmation
-          ? `<div><span class="material-symbols-outlined">assignment_ind</span><b>Next confirmation</b><p>${escapeHtml(nextConfirmation)}</p></div>`
+          ? timelineDetailRowHtml("assignment_ind", "Confirm next", nextConfirmation)
           : ""
       }
       ${
         details.hospital_steps?.length
-          ? `<ul>${details.hospital_steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ul>`
+          ? `<div class="timeline-detail-row timeline-detail-steps"><span class="material-symbols-outlined">checklist</span><b>Before you go</b><ul>${details.hospital_steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ul></div>`
           : ""
       }
     </div>
   `;
+}
+
+function timelineDetailRows(details, consumedKeys) {
+  return Object.entries(details)
+    .filter(([key, value]) => !consumedKeys.has(key) && !isTechnicalTimelineDetailKey(key) && compactStructuredValue(value))
+    .map(([key, value]) => {
+      const label = friendlyTimelineDetailLabel(key);
+      const valueHtml = timelineDetailValueHtml(key, value);
+      if (!valueHtml) return "";
+      const rowClass = isSourceLeadKey(key) ? " timeline-detail-source-row" : "";
+      return `<div class="timeline-detail-row${rowClass}"><span class="material-symbols-outlined">${timelineDetailIcon(key)}</span><b>${escapeHtml(label)}</b><p>${valueHtml}</p></div>`;
+    })
+    .join("");
+}
+
+function timelineDetailRowHtml(icon, label, value) {
+  return `<div class="timeline-detail-row"><span class="material-symbols-outlined">${icon}</span><b>${escapeHtml(label)}</b><p>${flightSearchLinks(value)}</p></div>`;
+}
+
+function isTechnicalTimelineDetailKey(key) {
+  const normalized = String(key || "").toLowerCase();
+  return [
+    "id",
+    "item_id",
+    "option_id",
+    "report_id",
+    "category",
+    "confidence_level",
+    "metadata",
+    "source",
+    "source_updated_at",
+    "generated_at",
+    "data_status",
+    "schema",
+    "raw_output",
+    "validation_errors",
+    "contact_lookup_skill",
+    "contact_lookup_skill_path",
+    "contact_lookup_source_registry",
+    "contact_lookup_required_fields",
+    "contact_lookup_audit_requirements",
+  ].includes(normalized) || normalized.endsWith("_id") || normalized.endsWith("_status");
+}
+
+function friendlyTimelineDetailLabel(key) {
+  const labels = {
+    flight: "Flight",
+    flight_number: "Flight",
+    airline: "Airline",
+    departure_airport: "From",
+    arrival_airport: "To",
+    departure_time: "Departure",
+    arrival_time: "Arrival",
+    hotel: "Hotel",
+    documents: "Documents",
+    claim_documents: "Claim documents",
+    notes: "Notes",
+    note: "Note",
+    cost: "Cost",
+    estimated_cost: "Cost",
+    payment: "Payment",
+    appointment_time: "Appointment time",
+    contact: "Contact",
+    phone: "Phone",
+    address: "Address",
+    contact_lookup_seed_sources: "Source leads",
+    seed_official_sources: "Source leads",
+    source_records: "Source links",
+  };
+  return labels[key] || humanizeKey(key);
+}
+
+function timelineDetailValueHtml(key, value) {
+  const parsed = structuredValue(value);
+  if (parsed === null || parsed === undefined || parsed === "") return "";
+  if (isSourceLeadKey(key)) return sourceLeadListHtml(parsed);
+  if (isMoneyObject(parsed)) return escapeHtml(money(parsed));
+  if (Array.isArray(parsed)) {
+    const items = parsed.map(compactStructuredValue).filter(Boolean);
+    if (!items.length) return "";
+    return `<ul class="timeline-detail-mini-list">${items.map((item) => `<li>${flightSearchLinks(item)}</li>`).join("")}</ul>`;
+  }
+  if (isObjectValue(parsed)) {
+    const chips = Object.entries(parsed)
+      .filter(([nestedKey, nestedValue]) => !isTechnicalTimelineDetailKey(nestedKey) && compactStructuredValue(nestedValue))
+      .map(([nestedKey, nestedValue]) => {
+        const nestedLabel = friendlyTimelineDetailLabel(nestedKey);
+        const nestedText = isMoneyObject(nestedValue) ? money(nestedValue) : compactStructuredValue(nestedValue);
+        return `<span class="timeline-detail-chip"><b>${escapeHtml(nestedLabel)}</b>${flightSearchLinks(nestedText)}</span>`;
+      });
+    return chips.length ? `<span class="timeline-detail-chipset">${chips.join("")}</span>` : "";
+  }
+  const text = compactStructuredValue(parsed);
+  const sentenceParts = splitTimelineDetailText(text);
+  if (sentenceParts.length > 1) {
+    return `<ul class="timeline-detail-mini-list">${sentenceParts.map((part) => `<li>${flightSearchLinks(part)}</li>`).join("")}</ul>`;
+  }
+  return flightSearchLinks(text);
+}
+
+function isSourceLeadKey(key) {
+  return ["contact_lookup_seed_sources", "seed_official_sources", "source_records"].includes(String(key || ""));
+}
+
+function sourceLeadListHtml(value) {
+  const sources = Array.isArray(value) ? value : [value];
+  const cards = sources
+    .filter(isObjectValue)
+    .map((source) => {
+      const title = source.hospital || source.title || source.international_department_name || source.url || "Official source";
+      const department = source.international_department_name || source.hospital_chinese || "";
+      const contactBits = [
+        source.registration_email ? `Email: ${source.registration_email}` : "",
+        source.appointment_phone ? `Phone: ${source.appointment_phone}` : "",
+        source.wechat_or_portal_route ? `Portal: ${source.wechat_or_portal_route}` : "",
+      ].filter(Boolean);
+      const records = Array.isArray(source.source_records) ? source.source_records : [];
+      const recordLinks = records
+        .slice(0, 3)
+        .map((record) => {
+          const linkTitle = record.title || record.url || "Official page";
+          return record.url
+            ? `<a href="${escapeHtml(record.url)}" target="_blank" rel="noreferrer">${escapeHtml(linkTitle)}</a>`
+            : escapeHtml(linkTitle);
+        });
+      const directUrl = source.url
+        ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.title || source.url)}</a>`
+        : "";
+      const links = [...(directUrl ? [directUrl] : []), ...recordLinks];
+      return `
+        <span class="timeline-source-card">
+          <strong>${googleSearchAnchor(title, `${title} international department`)}</strong>
+          ${department && department !== title ? `<em>${escapeHtml(department)}</em>` : ""}
+          ${contactBits.length ? `<span>${contactBits.map(escapeHtml).join(" · ")}</span>` : ""}
+          ${source.date_checked ? `<span>Checked ${escapeHtml(source.date_checked)}</span>` : ""}
+          ${links.length ? `<span class="timeline-source-links">${links.join("")}</span>` : ""}
+        </span>
+      `;
+    })
+    .join("");
+  if (cards) return `<span class="timeline-source-list">${cards}</span>`;
+  return flightSearchLinks(compactStructuredValue(value));
+}
+
+function splitTimelineDetailText(text) {
+  const cleaned = String(text || "").trim();
+  if (cleaned.length < 150) return [cleaned].filter(Boolean);
+  return cleaned
+    .split(/(?<=[.!?])\s+|;\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function registrationEmailMailto(email, { option, item, day, details }) {
+  const profile = state.report?.profile || {};
+  const medicalPurpose = humanizeKey(profile.medical_purpose || option?.medical_purpose || "medical care");
+  const procedureSubtype = humanizeKey(profile.procedure_subtype || option?.procedure_subtype || "to confirm");
+  const preferredDate = option?.start_date || day?.date || item?.start_time?.slice(0, 10) || "to confirm";
+  const subject = `International patient registration request - ${medicalPurpose} - ${option?.city || "China"}`;
+  const bodyLines = [
+    "Dear International Patient Services Team,",
+    "",
+    `I am writing to request appointment and registration guidance for international patient care at ${option?.target_hospital || "your hospital"}.`,
+    "",
+    "Patient and trip information:",
+    `- Medical purpose: ${medicalPurpose}`,
+    `- Procedure/subtype: ${procedureSubtype}`,
+    `- Program details: ${profile.program_details || option?.program_details || "to confirm"}`,
+    `- Passport/nationality: ${profile.nationality || "to confirm"}`,
+    `- Residence/departure city: ${[profile.residence_country, profile.departure_city].filter(Boolean).join(" / ") || "to confirm"}`,
+    `- Preferred travel or appointment date: ${preferredDate}`,
+    `- Current insurance holder: ${profile.current_insurance_holder || "not provided"}`,
+    `- Traveler count: ${profile.traveler_count || 1}`,
+    "",
+    "Selected plan context:",
+    `- City: ${option?.city || "to confirm"}`,
+    `- Hospital: ${option?.target_hospital || "to confirm"}`,
+    `- Timeline item: ${timelineItemTitle(item)}`,
+    details.appointment_phone ? `- Appointment phone shown in plan: ${details.appointment_phone}` : null,
+    details.wechat_or_portal_route ? `- WeChat/portal route shown in plan: ${details.wechat_or_portal_route}` : null,
+    details.service_billing_status ? `- Service billing status shown in plan: ${details.service_billing_status}` : null,
+    "",
+    "Could you please confirm:",
+    "1. Whether this is the correct official registration channel for international patients.",
+    "2. Which documents are required before an appointment can be confirmed.",
+    "3. The earliest suitable appointment date and the responsible department or specialist team.",
+    "4. Whether a deposit, pre-authorization, direct billing, or self-pay process applies.",
+    "5. Whether English-language assistance or interpreter support is available.",
+    "",
+    "For privacy, I will send passport details and medical records only after you confirm the official hospital channel and required document list.",
+    "",
+    "Kind regards,",
+  ].filter((line) => line !== null);
+  const recipient = String(email || "").split(/[;,]/)[0].trim();
+  const body = bodyLines.join("\n");
+  return `mailto:${encodeURI(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function timelineDetailIcon(key) {
@@ -1584,9 +1810,87 @@ function timelineItemTitle(item) {
   return compactStructuredValue(value) || "Plan item";
 }
 
+function flightSearchLinks(value) {
+  const text = String(value || "");
+  const flightNumberPattern = /\b(?=[A-Z0-9]{2}\d{2,4}\b)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{2}\d{2,4}\b/gi;
+  let cursor = 0;
+  let html = "";
+  for (const match of text.matchAll(flightNumberPattern)) {
+    const flightNumber = match[0].toUpperCase();
+    html += escapeHtml(text.slice(cursor, match.index));
+    html += googleSearchAnchor(match[0], flightNumber);
+    cursor = match.index + match[0].length;
+  }
+  html += escapeHtml(text.slice(cursor));
+  return html;
+}
+
+function googleSearchHref(query) {
+  return `https://www.google.com/search?q=${encodeURIComponent(String(query || "").trim())}`;
+}
+
+function googleSearchAnchor(label, query = label) {
+  const text = compactStructuredValue(label);
+  if (!text) return "";
+  return `<a href="${escapeHtml(googleSearchHref(query || text))}" target="_blank" rel="noreferrer">${escapeHtml(text)}</a>`;
+}
+
 function timelineLocationText(value) {
   return compactStructuredValue(value);
 }
+
+function timelineLocationHtml(item, option) {
+  const text = timelineLocationText(item?.location_name);
+  if (!text) return "";
+  if (!shouldLinkTimelinePlace(item, text)) return flightSearchLinks(text);
+  return googleSearchAnchor(text, googlePlaceSearchQuery(text, item, option));
+}
+
+function timelineAddressHtml(item, option) {
+  const text = timelineLocationText(item?.address);
+  if (!text) return "";
+  if (!shouldLinkTimelinePlace(item, text)) return escapeHtml(text);
+  return googleSearchAnchor(text, googlePlaceSearchQuery(text, item, option));
+}
+
+function shouldLinkTimelinePlace(item, text) {
+  const category = String(item?.category || "").toLowerCase();
+  const normalized = normalizedText(text);
+  return (
+    category === "hotel" ||
+    category === "medical" ||
+    normalized.includes("hospital") ||
+    normalized.includes("clinic") ||
+    normalized.includes("hotel") ||
+    normalized.includes("medical center")
+  );
+}
+
+function googlePlaceSearchQuery(text, item, option) {
+  const category = String(item?.category || "").toLowerCase();
+  const qualifiers = [
+    text,
+    option?.city,
+    category === "hotel" ? "hotel" : "",
+    category === "medical" ? "international department hospital" : "",
+  ].filter(Boolean);
+  return qualifiers.join(" ");
+}
+
+function hotelSearchLinks(option) {
+  if (!option?.hotel?.name) return "-";
+  const hotel = option.hotel;
+  const linkedName = googleSearchAnchor(hotel.name, `${hotel.name} ${option.city || ""} hotel`);
+  return [linkedName, hotel.distance_to_hospital ? escapeHtml(hotel.distance_to_hospital) : ""].filter(Boolean).join(", ");
+}
+
+function flightSummaryLinks(option) {
+  if (!option?.flight) return "-";
+  const flightNumber = option.flight.flight_number || "";
+  const arrival = option.flight.arrival_airport || "";
+  return [flightNumber ? flightSearchLinks(flightNumber) : "", arrival ? `to ${escapeHtml(arrival)}` : ""].filter(Boolean).join(" ");
+}
+
 
 function riskCount(option) {
   const count = option.key_risks?.length || 0;
@@ -1689,8 +1993,8 @@ function renderAnalysisTable() {
     <div class="section-row">Medical & Travel</div>
     ${row("Hospital", options.map((option) => option.target_hospital))}
     ${row("Duration", options.map((option) => `${option.required_days || "-"} days`))}
-    ${row("Flight", options.map((option) => option.flight ? `${option.flight.flight_number} to ${option.flight.arrival_airport}` : "-"))}
-    ${row("Hotel", options.map((option) => option.hotel ? `${option.hotel.name}, ${option.hotel.distance_to_hospital}` : "-"))}
+    ${row("Flight", options.map((option) => flightSummaryLinks(option)))}
+    ${row("Hotel", options.map((option) => hotelSearchLinks(option)))}
     <div class="section-row">Costs</div>
     ${row("Medical estimate", options.map((option) => money(option.cost_breakdown?.medical)))}
     ${row("Insurance estimate", options.map((option) => money(option.cost_breakdown?.travel_insurance || option.insurance_policy?.estimated_premium)))}
@@ -1725,7 +2029,7 @@ function renderPlan() {
     ? `Detailed schedule for your care journey in ${option.city}.`
     : "Generate options to render a detailed schedule.";
   renderPlanCitySwitcher(option);
-  renderTimeline(timelineDays);
+  renderTimeline(timelineDays, option || fallbackOptions[0]);
   renderCostCard(state.costs, option);
   renderInsuranceCard(option);
 }
@@ -1770,7 +2074,7 @@ function renderPlanCitySwitcher(activeOption) {
   `;
 }
 
-function renderTimeline(days) {
+function renderTimeline(days, option) {
   const timeline = document.querySelector("#timelineDays");
   if (!days.length) {
     timeline.innerHTML = `<article class="day-card"><h2>No timeline yet</h2><p>Generate options and select a city plan.</p></article>`;
@@ -1790,12 +2094,12 @@ function renderTimeline(days) {
                     <span class="node-icon material-symbols-outlined">${iconForCategory(item.category)}</span>
                     <div class="node-card ${item.hard_constraint ? "scheduled" : ""}">
                       <div class="node-top">
-                        <strong>${escapeHtml(timelineItemTitle(item))}</strong>
+                        <strong>${flightSearchLinks(timelineItemTitle(item))}</strong>
                         <time>${timeRange(item)}</time>
                       </div>
-                      ${timelineLocationText(item.location_name) ? `<p>${escapeHtml(timelineLocationText(item.location_name))}</p>` : ""}
-                      ${timelineLocationText(item.address) ? `<p>${escapeHtml(timelineLocationText(item.address))}</p>` : ""}
-                      ${renderTimelineDetails(item)}
+                      ${timelineLocationText(item.location_name) ? `<p>${timelineLocationHtml(item, option)}</p>` : ""}
+                      ${timelineLocationText(item.address) ? `<p>${timelineAddressHtml(item, option)}</p>` : ""}
+                      ${renderTimelineDetails(item, option, day)}
                       <div class="node-tags">
                         ${item.estimated_cost ? `<span>Est. ${money(item.estimated_cost)}</span>` : ""}
                         <span>${item.confidence_level || "medium"} confidence</span>
