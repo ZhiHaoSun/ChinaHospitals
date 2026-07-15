@@ -1248,9 +1248,7 @@ def _normalize_hotel(
     cost_breakdown = normalized.get("cost_breakdown") or {}
     cost_hint = _first_non_empty(cost_breakdown, "hotel", "lodging", "accommodation")
     if not isinstance(source, dict):
-        if cost_hint is None:
-            return None
-        source = {}
+        source = {"name": str(source).strip()} if source not in (None, "") else {}
     nights = int(_safe_float(_first_present(source, "nights", "night_count") or max(normalized.get("required_days", 0) - 1, 1)))
     nightly_rate_raw = _first_present(
         source,

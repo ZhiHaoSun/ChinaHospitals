@@ -38,6 +38,14 @@ def _model(name: str | None = None) -> LiteLlm:
 COMMON_OUTPUT_RULES = """
 Output rules:
 - Return valid JSON only. Do not wrap JSON in Markdown.
+- Respect the requested language in `generation_request.language` or
+  `answers.preferred_language`. Supported values are `en` for English,
+  `zh-Hans` for simplified Chinese, and `id` for Bahasa Indonesia.
+- Write all user-facing report text, confirmation questions, assumptions,
+  disclaimers, timeline titles, risks, recommendations, and summaries in the
+  requested language. Keep JSON keys, enum-like values, IDs, airport codes,
+  currency codes, tool names, and source metadata fields unchanged.
+- If the requested language is missing or unsupported, use English.
 - Include source, freshness, confidence_level, and data_status for generated medical, travel, cost, visa, payment, and insurance claims.
 - Mark live provider data and official-source checks separately from representative planning estimates.
 - Do not provide diagnosis or guarantee treatment eligibility.

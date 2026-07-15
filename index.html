@@ -22,10 +22,6 @@
         <a href="#plan" data-route="plan">Cost Estimates</a>
       </nav>
       <div class="nav-actions">
-        <button class="ghost desktop-only" type="button">
-          <span class="material-symbols-outlined">language</span>
-          Language/Currency
-        </button>
         <button class="outline-button auth-button" type="button" id="loginButton">Log in</button>
         <button class="primary-button" type="button" data-route="intake">Plan Trip</button>
       </div>
@@ -51,104 +47,119 @@
       <section class="view active" id="view-intake" aria-labelledby="intake-title">
         <div class="center-shell intake-shell">
           <div class="intro-copy">
-            <h1 id="intake-title">Plan Your Medical Journey</h1>
-            <p>Let us help you find the best destinations, clinics, and travel options tailored to your needs.</p>
+            <h1 id="intake-title" data-i18n="intake.title">Plan Your Medical Journey</h1>
+            <p data-i18n="intake.subtitle">Let us help you find the best destinations, clinics, and travel options tailored to your needs.</p>
           </div>
 
           <form class="form-card" id="plannerForm">
+            <section class="form-section language-section">
+              <h2 data-i18n="intake.language.title">Language</h2>
+              <label class="language-field">
+                <span data-i18n="intake.language.label">Preferred language</span>
+                <span class="input-shell">
+                  <span class="material-symbols-outlined">language</span>
+                  <select id="languageSelect" aria-label="Preferred language" data-i18n-attr="aria-label:intake.language.label">
+                    <option value="en">English</option>
+                    <option value="zh-Hans">简体中文</option>
+                    <option value="id">Bahasa Indonesia</option>
+                  </select>
+                </span>
+              </label>
+            </section>
+
             <section class="form-section">
-              <h2>What is your medical need?</h2>
+              <h2 data-i18n="intake.medicalNeed.title">What is your medical need?</h2>
               <div class="option-grid four">
                 <button class="choice-card selected" type="button" data-choice-group="need" data-value="eye_surgery">
                   <span class="material-symbols-outlined">visibility</span>
-                  <strong>Eye Surgery</strong>
+                  <strong data-i18n="intake.medicalNeed.eye_surgery">Eye Surgery</strong>
                 </button>
                 <button class="choice-card" type="button" data-choice-group="need" data-value="dental_care">
                   <span class="material-symbols-outlined">dentistry</span>
-                  <strong>Dental Implants</strong>
+                  <strong data-i18n="intake.medicalNeed.dental_care">Dental Implants</strong>
                 </button>
                 <button class="choice-card" type="button" data-choice-group="need" data-value="health_checkup">
                   <span class="material-symbols-outlined">monitor_heart</span>
-                  <strong>Health Checkups</strong>
+                  <strong data-i18n="intake.medicalNeed.health_checkup">Health Checkups</strong>
                 </button>
                 <button class="choice-card" type="button" data-choice-group="need" data-value="car_t_blood_cancer">
                   <span class="material-symbols-outlined">bloodtype</span>
-                  <strong>CAR-T Blood Cancer</strong>
+                  <strong data-i18n="intake.medicalNeed.car_t_blood_cancer">CAR-T Blood Cancer</strong>
                 </button>
               </div>
               <div class="program-details" id="programDetails" aria-live="polite"></div>
             </section>
 
             <section class="form-section">
-              <h2>Where are you traveling from?</h2>
+              <h2 data-i18n="intake.origin.title">Where are you traveling from?</h2>
               <div class="field-grid">
                 <label>
-                  <span>Nationality / Residence</span>
+                  <span data-i18n="intake.origin.nationality">Nationality / Residence</span>
                   <span class="input-shell">
                     <span class="material-symbols-outlined">public</span>
-                    <input id="nationalityInput" value="Singapore" aria-label="Nationality or residence" />
+                    <input id="nationalityInput" value="Singapore" aria-label="Nationality or residence" data-i18n-attr="aria-label:intake.origin.nationalityAria" />
                   </span>
                 </label>
                 <label>
-                  <span>Departure City</span>
+                  <span data-i18n="intake.origin.departureCity">Departure City</span>
                   <span class="input-shell">
                     <span class="material-symbols-outlined">flight_takeoff</span>
-                    <input id="departureCityInput" value="Singapore" aria-label="Departure city" />
+                    <input id="departureCityInput" value="Singapore" aria-label="Departure city" data-i18n-attr="aria-label:intake.origin.departureCity" />
                   </span>
                 </label>
                 <label>
-                  <span>Current Insurance Holder</span>
+                  <span data-i18n="intake.origin.insuranceHolder">Current Insurance Holder</span>
                   <span class="input-shell">
                     <span class="material-symbols-outlined">health_and_safety</span>
-                    <input id="insuranceHolderInput" value="" placeholder="e.g. AIA, Prudential, Cigna" aria-label="Current insurance holder" />
+                    <input id="insuranceHolderInput" value="" placeholder="e.g. AIA, Prudential, Cigna" aria-label="Current insurance holder" data-i18n-attr="placeholder:intake.origin.insurancePlaceholder;aria-label:intake.origin.insuranceHolder" />
                   </span>
                 </label>
               </div>
             </section>
 
             <section class="form-section">
-              <h2>When do you plan to travel?</h2>
+              <h2 data-i18n="intake.travelDates.title">When do you plan to travel?</h2>
               <label class="date-field">
-                <span>Estimated Dates</span>
+                <span data-i18n="intake.travelDates.estimatedDates">Estimated Dates</span>
                 <span class="input-shell">
                   <span class="material-symbols-outlined">calendar_month</span>
-                  <input id="dateRangeInput" value="Aug 12 - Aug 18, 2026" aria-label="Estimated date range" />
+                  <input id="dateRangeInput" value="Aug 12 - Aug 18, 2026" aria-label="Estimated date range" data-i18n-attr="aria-label:intake.travelDates.estimatedDates" />
                 </span>
               </label>
               <div class="chip-group" aria-label="Estimated duration">
-                <span class="field-caption">Estimated Duration</span>
-                <button class="chip" type="button" data-duration="3_4_days">3-4 days</button>
-                <button class="chip selected" type="button" data-duration="5_7_days">5-7 days</button>
-                <button class="chip" type="button" data-duration="8_plus_days">8+ days</button>
+                <span class="field-caption" data-i18n="intake.travelDates.duration">Estimated Duration</span>
+                <button class="chip" type="button" data-duration="3_4_days" data-i18n="intake.travelDates.duration_3_4">3-4 days</button>
+                <button class="chip selected" type="button" data-duration="5_7_days" data-i18n="intake.travelDates.duration_5_7">5-7 days</button>
+                <button class="chip" type="button" data-duration="8_plus_days" data-i18n="intake.travelDates.duration_8_plus">8+ days</button>
               </div>
             </section>
 
             <section class="form-section">
-              <h2>Preferences & Flexibility</h2>
+              <h2 data-i18n="intake.preferences.title">Preferences & Flexibility</h2>
               <div class="toggle-card">
                 <div>
-                  <strong>Winter Travel</strong>
-                  <p>I prefer traveling during winter months.</p>
+                  <strong data-i18n="intake.preferences.winterTitle">Winter Travel</strong>
+                  <p data-i18n="intake.preferences.winterBody">I prefer traveling during winter months.</p>
                 </div>
-                <button class="switch on" type="button" id="winterSwitch" aria-label="Winter travel enabled"></button>
+                <button class="switch on" type="button" id="winterSwitch" aria-label="Winter travel enabled" data-i18n-attr="aria-label:intake.preferences.winterAria"></button>
               </div>
               <div class="toggle-card">
                 <div>
-                  <strong>Off-Season Flexibility</strong>
-                  <p>I'm flexible to travel during off-peak seasons for better rates.</p>
+                  <strong data-i18n="intake.preferences.offSeasonTitle">Off-Season Flexibility</strong>
+                  <p data-i18n="intake.preferences.offSeasonBody">I'm flexible to travel during off-peak seasons for better rates.</p>
                 </div>
-                <button class="switch" type="button" id="offSeasonSwitch" aria-label="Off season disabled"></button>
+                <button class="switch" type="button" id="offSeasonSwitch" aria-label="Off season disabled" data-i18n-attr="aria-label:intake.preferences.offSeasonAria"></button>
               </div>
             </section>
 
             <div class="form-actions">
               <div class="planner-backend-control" aria-label="Planner backend">
-                <button class="selected" type="button" data-planner-backend="adk">Agents</button>
-                <button type="button" data-planner-backend="local">Local</button>
+                <button class="selected" type="button" data-planner-backend="adk" data-i18n="intake.actions.agents">Agents</button>
+                <button type="button" data-planner-backend="local" data-i18n="intake.actions.local">Local</button>
               </div>
-              <button class="ghost-link" type="button">Save Draft</button>
+              <button class="ghost-link" type="button" data-i18n="intake.actions.saveDraft">Save Draft</button>
               <button class="primary-button large" type="button" id="generateOptionsButton">
-                <span class="button-label">Generate Options</span>
+                <span class="button-label" data-i18n="intake.actions.generate">Generate Options</span>
                 <span class="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>
@@ -162,14 +173,14 @@
             <div>
               <span class="city-label">
                 <span class="material-symbols-outlined">auto_awesome</span>
-                Multi-Agent System
+                <span data-i18n="agentProgress.label">Multi-Agent System</span>
               </span>
-              <h1 id="agent-progress-title">Generating Care Plans</h1>
+              <h1 id="agent-progress-title" data-i18n="agentProgress.title">Generating Care Plans</h1>
               <p id="agentProgressSubtitle">The agents are coordinating your profile, hospitals, insurance, travel, and timeline details.</p>
             </div>
             <div class="agent-progress-meter" aria-label="Agent generation progress">
               <strong id="agentProgressPercent">0%</strong>
-              <span>Complete</span>
+              <span data-i18n="agentProgress.complete">Complete</span>
             </div>
           </header>
 
@@ -182,7 +193,7 @@
             <aside class="agent-live-panel">
               <span class="material-symbols-outlined">psychology</span>
               <div>
-                <h2>Current Agent Work</h2>
+                <h2 data-i18n="agentProgress.currentWork">Current Agent Work</h2>
                 <p id="agentProgressMessage">Waiting to start.</p>
               </div>
             </aside>
@@ -193,23 +204,23 @@
       <section class="view" id="view-compare" aria-labelledby="compare-title">
         <div class="page-shell">
           <div class="breadcrumbs">
-            <span>Cost Estimates</span>
+            <span data-i18n="compare.breadcrumb.costEstimates">Cost Estimates</span>
             <span class="material-symbols-outlined">chevron_right</span>
-            <span>Ophthalmology</span>
+            <span data-i18n="compare.breadcrumb.specialty">Ophthalmology</span>
             <span class="material-symbols-outlined">chevron_right</span>
             <strong>SMILE Pro</strong>
           </div>
           <div class="compare-header">
             <div>
-              <h1 id="compare-title">Multi-City Comparison</h1>
-              <p>
+              <h1 id="compare-title" data-i18n="compare.title">Multi-City Comparison</h1>
+              <p data-i18n="compare.subtitle">
                 Based on your profile and travel preferences, we analyzed top medical centers across China. Prices include
                 estimated hospital fees, flights from Singapore, hotels, and local accommodations.
               </p>
             </div>
             <button class="outline-button icon-left" type="button">
               <span class="material-symbols-outlined">tune</span>
-              Adjust Parameters
+              <span data-i18n="compare.adjust">Adjust Parameters</span>
             </button>
           </div>
 
@@ -217,8 +228,8 @@
           <div class="city-cards" id="cityCards"></div>
 
           <section class="analysis-section">
-            <h2>Side-by-Side Analysis</h2>
-            <div class="analysis-table" id="analysisTable" role="table" aria-label="City plan comparison">
+            <h2 data-i18n="compare.analysisTitle">Side-by-Side Analysis</h2>
+            <div class="analysis-table" id="analysisTable" role="table" aria-label="City plan comparison" data-i18n-attr="aria-label:compare.tableAria">
               <div class="row header">
                 <div>Metric</div>
                 <div>Shanghai ★</div>
@@ -274,32 +285,32 @@
           <aside class="side-nav">
             <button class="outline-button icon-left side-back-button" type="button" data-route="compare">
               <span class="material-symbols-outlined">arrow_back</span>
-              Compare Cities
+              <span data-i18n="plan.backCompare">Compare Cities</span>
             </button>
-            <h2 id="sidePlanCity">Selected Plan</h2>
-            <p id="sidePlanSubtitle">Generate options to choose a city.</p>
+            <h2 id="sidePlanCity" data-i18n="plan.selectedPlan">Selected Plan</h2>
+            <p id="sidePlanSubtitle" data-i18n="plan.chooseCity">Generate options to choose a city.</p>
             <div class="plan-city-switcher" id="planCitySwitcher" aria-label="City plan options"></div>
             <nav>
-              <a href="#plan" class="side-link"><span class="material-symbols-outlined">overview</span>Plan Summary</a>
-              <a href="#plan" class="side-link"><span class="material-symbols-outlined">medical_services</span>Medical Plan</a>
-              <a href="#plan" class="side-link active"><span class="material-symbols-outlined">timeline</span>Timeline</a>
-              <a href="#plan" class="side-link"><span class="material-symbols-outlined">payments</span>Cost Breakdown</a>
-              <a href="#readiness" class="side-link" data-route="readiness"><span class="material-symbols-outlined">check_circle</span>Readiness</a>
+              <a href="#plan" class="side-link"><span class="material-symbols-outlined">overview</span><span data-i18n="plan.navSummary">Plan Summary</span></a>
+              <a href="#plan" class="side-link"><span class="material-symbols-outlined">medical_services</span><span data-i18n="plan.navMedical">Medical Plan</span></a>
+              <a href="#plan" class="side-link active"><span class="material-symbols-outlined">timeline</span><span data-i18n="plan.navTimeline">Timeline</span></a>
+              <a href="#plan" class="side-link"><span class="material-symbols-outlined">payments</span><span data-i18n="plan.navCosts">Cost Breakdown</span></a>
+              <a href="#readiness" class="side-link" data-route="readiness"><span class="material-symbols-outlined">check_circle</span><span data-i18n="plan.navReadiness">Readiness</span></a>
             </nav>
           </aside>
 
           <div class="plan-content">
             <div class="plan-header">
               <div>
-                <h1 id="plan-title">Itinerary Timeline</h1>
-                <p id="planSubtitle">Detailed schedule for your selected care journey.</p>
+                <h1 id="plan-title" data-i18n="plan.title">Itinerary Timeline</h1>
+                <p id="planSubtitle" data-i18n="plan.subtitleDefault">Detailed schedule for your selected care journey.</p>
               </div>
               <div class="plan-actions">
                 <button class="outline-button icon-left" type="button" id="exportPdfButton">
                   <span class="material-symbols-outlined">download</span>
-                  <span class="button-label">Export PDF</span>
+                  <span class="button-label" data-i18n="plan.exportPdf">Export PDF</span>
                 </button>
-                <button class="primary-button" type="button" id="regenerateTimelineButton">Regenerate Timeline</button>
+                <button class="primary-button" type="button" id="regenerateTimelineButton" data-i18n="plan.regenerate">Regenerate Timeline</button>
               </div>
             </div>
 
@@ -481,6 +492,6 @@
       </nav>
     </footer>
 
-    <script src="app.js?v=20260712-city-costs"></script>
+    <script src="app.js?v=20260715-insurance-i18n"></script>
   </body>
 </html>

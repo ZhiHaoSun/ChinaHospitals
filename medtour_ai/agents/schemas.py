@@ -54,6 +54,7 @@ class IntakeAnswers(BaseModel):
     traveler_count: int = Field(default=1, ge=1, le=8)
     hotel_preference: str = "near_hospital_foreign_guest_eligible"
     tourism_intensity: str = "light"
+    preferred_language: str = "en"
 
     @field_validator("program_details", mode="before")
     @classmethod

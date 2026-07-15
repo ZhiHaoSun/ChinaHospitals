@@ -73,6 +73,25 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertGreater(len(normalized["city_options"]), 0)
         self.assertTrue(any("local deterministic planner" in item for item in normalized["disclaimers"]))
 
+    def test_adk_payload_includes_requested_language(self) -> None:
+        class FakeRunner:
+            def __init__(self) -> None:
+                self.payload = None
+
+            async def generate_report(self, payload: dict) -> dict:
+                self.payload = payload
+                return {"city_options": []}
+
+        runner = FakeRunner()
+        request = CreateReportRequest(profile_draft_id="draft_test", planner_backend="adk", language="zh-Hans")
+        self.draft["profile"]["preferred_language"] = "zh-Hans"
+
+        with patch("medtour_ai.api.main._get_adk_runner", return_value=runner):
+            asyncio.run(_generate_report(self.draft, request))
+
+        self.assertEqual(runner.payload["generation_request"]["language"], "zh-Hans")
+        self.assertEqual(runner.payload["answers"]["preferred_language"], "zh-Hans")
+
     def test_program_details_normalizes_to_plain_string(self) -> None:
         answers = IntakeAnswers.model_validate(
             {
@@ -93,14 +112,14 @@ class ReportSchemaValidationTests(unittest.TestCase):
             "current prescription: -4.50 both eyes; contact lens usage: soft lenses",
         )
 
-    def test_invalid_city_option_fails_schema_validation(self) -> None:
+    def test_missing_hotel_falls_back_before_schema_validation(self) -> None:
         raw = {
             "profile": self.draft["profile"],
             "city_options": [
                 {
-                    "option_id": "opt_invalid",
+                    "option_id": "opt_missing_hotel",
                     "city": "Shanghai",
-                    "recommendation_label": "Invalid fixture",
+                    "recommendation_label": "Missing hotel fixture",
                     "target_hospital": "Hospital to confirm",
                     "required_days": 3,
                     "total_estimated_cost": {"amount": 1000, "currency": "SGD"},
@@ -115,11 +134,9 @@ class ReportSchemaValidationTests(unittest.TestCase):
 
         normalized = _normalize_generated_report(raw, self.draft, self.request, "report_invalid")
 
-        self.assertEqual(normalized["status"], "failed")
-        self.assertEqual(normalized["error"]["code"], "REPORT_SCHEMA_VALIDATION_FAILED")
-        self.assertTrue(
-            any(error["path"].endswith(".hotel") for error in normalized["error"]["validation_errors"])
-        )
+        self.assertEqual(normalized["status"], "ready")
+        self.assertEqual(normalized["city_options"][0]["hotel"]["name"], "Hotel to confirm")
+        self.assertEqual(normalized["city_options"][0]["hotel"]["nightly_rate"]["amount"], 0)
 
     def test_agent_style_partial_travel_output_is_normalized_before_validation(self) -> None:
         raw = {
@@ -206,6 +223,39 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(normalized["audit_summary"]["summary"], "Agent audit completed with confirmation blockers.")
         self.assertEqual(normalized["confirmation_requests"][0]["confirmation_id"], "conf_agent_1")
         self.assertEqual(option["readiness_items"][0]["priority"], "high")
+
+    def test_agent_string_hotel_is_normalized_before_schema_validation(self) -> None:
+        raw = {
+            "profile": self.draft["profile"],
+            "city_options": [
+                {
+                    "option_id": "opt_string_hotel",
+                    "city": "Shanghai",
+                    "recommendation_label": "String hotel fixture",
+                    "target_hospital": "Shanghai International Medical Center",
+                    "required_days": 3,
+                    "flight": {"estimated_cost": {"amount": 520, "currency": "SGD"}},
+                    "hotel": "Hotel near Shanghai International Medical Center to confirm",
+                    "cost_breakdown": {
+                        "medical": {"amount": 2800, "currency": "SGD"},
+                        "flight": {"amount": 520, "currency": "SGD"},
+                    },
+                    "total_estimated_cost": {"amount": 3320, "currency": "SGD"},
+                    "estimated_net_savings": {"amount": 1200, "currency": "SGD"},
+                    "timeline": [],
+                    "key_risks": [],
+                    "metadata": {"source": "agent_estimate"},
+                }
+            ],
+        }
+
+        normalized = _normalize_generated_report(raw, self.draft, self.request, "report_string_hotel")
+
+        self.assertEqual(normalized["status"], "ready")
+        option = normalized["city_options"][0]
+        self.assertEqual(option["hotel"]["name"], "Hotel near Shanghai International Medical Center to confirm")
+        self.assertEqual(option["hotel"]["nightly_rate"]["amount"], 0)
+        self.assertEqual(option["hotel"]["nights"], 2)
 
     def test_empty_timeline_day_shells_fall_back_to_itemized_timeline(self) -> None:
         raw = {
