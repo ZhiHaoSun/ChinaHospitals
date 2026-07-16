@@ -2,11 +2,14 @@
 
 MedTour AI is a working prototype web app for planning medical travel to China. It helps a user enter medical travel preferences, generate multi-city hospital plans, compare options, inspect a detailed hospital timeline, review insurance and billing guidance, draft registration emails, and track readiness tasks before travel.
 
+> **Built extensively with Codex & GPT-5.6.** They were used throughout the project as core development and reasoning collaborators for product architecture, multi-agent workflow design, implementation, debugging, testing, prompt and schema refinement, documentation, and deployment preparation.
+
 The project currently has:
 
 - A deployed Vercel web prototype: `https://traechinahospital1355.vercel.app/`
 - A local static UI for development: `http://127.0.0.1:5173`
 - A local FastAPI backend: `http://127.0.0.1:8000`
+- Extensive use of **Codex & GPT-5.6** across the full software-development lifecycle.
 - A working multi-agent planning flow using Google ADK, LiteLLM, and OpenAI models.
 - A deterministic local planner for demos, fallback behavior, and fast UI testing.
 - Pydantic schema enforcement and normalization for generated report outputs.
@@ -39,6 +42,7 @@ For hackathon evaluation, the project highlights:
 
 - **Working product surface:** deployed Vercel demo, local UI, FastAPI backend, report generation, comparison view, plan timeline, readiness checklist, and PDF export.
 - **AI-native workflow:** agent orchestration for profile normalization, medical rules, city planning, hospital contact lookup, insurance review, timeline generation, and source/cost audit.
+- **AI-assisted engineering:** Codex & GPT-5.6 were used heavily to translate the product concept into architecture, working code, validated schemas, tests, documentation, and deployment improvements.
 - **Schema-first reliability:** Pydantic contracts validate generated reports before the UI renders them, reducing brittle LLM output failures.
 - **Business relevance:** the app targets high-friction, high-value medical travel decisions where users need cost clarity, verified hospital routes, insurance/billing checks, and operational confidence.
 - **Practical deployment learning:** Vercel serverless statelessness is handled with browser-side plan snapshots, keeping the deployed demo usable even when in-memory report state is unavailable.
@@ -68,6 +72,24 @@ The project can support multiple revenue streams as it matures:
 - **Enterprise API:** partners can embed the planner into health benefit platforms, insurer portals, or medical tourism marketplaces.
 
 The near-term monetization path is advisor-assisted conversion: use the AI plan as a high-quality intake and decision-support layer, then monetize the handoff when users need official confirmation or booking support.
+
+## Built with Codex & GPT-5.6
+
+**Codex & GPT-5.6 were central to the creation of MedTour AI**, serving as active engineering and reasoning collaborators rather than being used only for isolated code generation. Their use covered the project from early product exploration through implementation and deployment.
+
+They contributed heavily to:
+
+- Translating the medical-tourism problem into a practical product journey and technical architecture.
+- Designing the multi-agent workflow and defining clear responsibilities for each planning stage.
+- Implementing and refining the frontend, FastAPI backend, planner services, and deployment behavior.
+- Designing Pydantic schemas, normalization rules, validation paths, and deterministic fallbacks for more reliable model output.
+- Debugging integration issues across Google ADK, LiteLLM, OpenAI models, the browser UI, and Vercel serverless functions.
+- Developing test flows, smoke-test artifacts, edge-case handling, and production replacement guidance.
+- Improving prompts, documentation, user-facing copy, business positioning, and project storytelling.
+
+This AI-assisted development process remained human-directed: product decisions, implementation choices, generated code, and medical-travel guidance were reviewed and tested before being incorporated. Codex & GPT-5.6 accelerated iteration while the repository's schemas, validation, fallbacks, and audit signals provided the engineering guardrails needed for a high-stakes planning domain.
+
+The application's runtime AI is separate and configurable. The multi-agent planner calls OpenAI models through Google ADK and LiteLLM using `LLM_MODEL` and `PLANNER_MODEL`, so deployments can select suitable models without changing the application architecture.
 
 ## Tech Stack
 
@@ -111,7 +133,7 @@ The ADK path uses:
 
 - Google ADK workflow agents
 - LiteLLM
-- OpenAI models via `OPENAI_API_KEY`
+- Configurable OpenAI models via `OPENAI_API_KEY`, `LLM_MODEL`, and `PLANNER_MODEL`
 - `orjson`, required by the LiteLLM/OpenAI runtime stack in this project environment.
 
 If the ADK/OpenAI path fails in a deployed environment, the API can fall back to the local deterministic planner and attach fallback metadata/disclaimers to the report.
