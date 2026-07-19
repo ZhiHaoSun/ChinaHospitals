@@ -142,6 +142,32 @@ const UI_TEXT = {
     "plan.estimated": "Est.",
     "plan.mediumConfidence": "medium confidence",
     "plan.medicalConstraint": "Medical constraint",
+    "plan.detail.appointment": "Appointment",
+    "plan.detail.email": "Email",
+    "plan.detail.careTeam": "Care team",
+    "plan.detail.billing": "Billing",
+    "plan.detail.confirmNext": "Confirm next",
+    "plan.detail.beforeYouGo": "Before you go",
+    "plan.detail.flight": "Flight",
+    "plan.detail.airline": "Airline",
+    "plan.detail.from": "From",
+    "plan.detail.to": "To",
+    "plan.detail.departure": "Departure",
+    "plan.detail.arrival": "Arrival",
+    "plan.detail.hotel": "Hotel",
+    "plan.detail.documents": "Documents",
+    "plan.detail.claimDocuments": "Claim documents",
+    "plan.detail.notes": "Notes",
+    "plan.detail.note": "Note",
+    "plan.detail.cost": "Cost",
+    "plan.detail.payment": "Payment",
+    "plan.detail.appointmentTime": "Appointment time",
+    "plan.detail.contact": "Contact",
+    "plan.detail.phone": "Phone",
+    "plan.detail.address": "Address",
+    "plan.detail.sourceLeads": "Source leads",
+    "plan.detail.sourceLinks": "Source links",
+    "plan.detail.contactSourceRecords": "Contact source records",
     "plan.cityPlans": "City Plans",
     "plan.compareCityPlans": "Generate options to compare city plans.",
     "plan.costTitle": "Est. Costs",
@@ -291,6 +317,32 @@ const UI_TEXT = {
     "plan.estimated": "估算",
     "plan.mediumConfidence": "中等置信度",
     "plan.medicalConstraint": "医疗约束",
+    "plan.detail.appointment": "预约",
+    "plan.detail.email": "邮箱",
+    "plan.detail.careTeam": "医疗团队",
+    "plan.detail.billing": "账单",
+    "plan.detail.confirmNext": "下一步确认",
+    "plan.detail.beforeYouGo": "出发前",
+    "plan.detail.flight": "航班",
+    "plan.detail.airline": "航空公司",
+    "plan.detail.from": "出发地",
+    "plan.detail.to": "到达地",
+    "plan.detail.departure": "出发",
+    "plan.detail.arrival": "抵达",
+    "plan.detail.hotel": "酒店",
+    "plan.detail.documents": "文件",
+    "plan.detail.claimDocuments": "理赔文件",
+    "plan.detail.notes": "备注",
+    "plan.detail.note": "备注",
+    "plan.detail.cost": "费用",
+    "plan.detail.payment": "支付",
+    "plan.detail.appointmentTime": "预约时间",
+    "plan.detail.contact": "联系方式",
+    "plan.detail.phone": "电话",
+    "plan.detail.address": "地址",
+    "plan.detail.sourceLeads": "来源线索",
+    "plan.detail.sourceLinks": "来源链接",
+    "plan.detail.contactSourceRecords": "联系来源记录",
     "plan.cityPlans": "城市方案",
     "plan.compareCityPlans": "生成方案以对比城市。",
     "plan.costTitle": "预计费用",
@@ -440,6 +492,32 @@ const UI_TEXT = {
     "plan.estimated": "Est.",
     "plan.mediumConfidence": "keyakinan sedang",
     "plan.medicalConstraint": "Batasan medis",
+    "plan.detail.appointment": "Janji temu",
+    "plan.detail.email": "Email",
+    "plan.detail.careTeam": "Tim perawatan",
+    "plan.detail.billing": "Penagihan",
+    "plan.detail.confirmNext": "Konfirmasi berikutnya",
+    "plan.detail.beforeYouGo": "Sebelum berangkat",
+    "plan.detail.flight": "Penerbangan",
+    "plan.detail.airline": "Maskapai",
+    "plan.detail.from": "Dari",
+    "plan.detail.to": "Ke",
+    "plan.detail.departure": "Keberangkatan",
+    "plan.detail.arrival": "Kedatangan",
+    "plan.detail.hotel": "Hotel",
+    "plan.detail.documents": "Dokumen",
+    "plan.detail.claimDocuments": "Dokumen klaim",
+    "plan.detail.notes": "Catatan",
+    "plan.detail.note": "Catatan",
+    "plan.detail.cost": "Biaya",
+    "plan.detail.payment": "Pembayaran",
+    "plan.detail.appointmentTime": "Waktu janji",
+    "plan.detail.contact": "Kontak",
+    "plan.detail.phone": "Telepon",
+    "plan.detail.address": "Alamat",
+    "plan.detail.sourceLeads": "Petunjuk sumber",
+    "plan.detail.sourceLinks": "Tautan sumber",
+    "plan.detail.contactSourceRecords": "Catatan sumber kontak",
     "plan.cityPlans": "Rencana Kota",
     "plan.compareCityPlans": "Buat opsi untuk membandingkan rencana kota.",
     "plan.costTitle": "Estimasi Biaya",
@@ -1062,6 +1140,7 @@ const PREVIEW_TEXT = {
     "Follow-up and Return Readiness": "复查与返程准备",
     "Arrival flight SQ850": "抵达航班 SQ850",
     "Hotel check-in": "酒店入住",
+    "Hotel check-in near international clinic": "国际门诊附近酒店入住",
     "International desk pre-registration email check": "国际部预登记邮箱确认",
     "International desk registration and outpatient file setup": "国际部挂号与门诊档案建立",
     "Diagnostics and refractive-surgery suitability tests": "屈光手术适配性检查",
@@ -1206,6 +1285,11 @@ const PREVIEW_TEXT = {
 const LOCAL_PLANNER_TEXT = {
   "zh-Hans": {
     "Best Overall": "最佳综合",
+    Shanghai: "上海",
+    Guangzhou: "广州",
+    Beijing: "北京",
+    Shenzhen: "深圳",
+    "Selected city": "已选城市",
     "Lowest Total Cost": "最低总费用",
     "Shortest Trip": "最短行程",
     "Strongest Medical Resources": "医疗资源最强",
@@ -1238,6 +1322,7 @@ const LOCAL_PLANNER_TEXT = {
     "Hotel check-out": "酒店退房",
     "Transfer to airport": "前往机场",
     "Return flight": "返程航班",
+    "Return flight after medical clearance": "医疗确认后返程航班",
     "Light recovery-friendly sightseeing": "轻量恢复友好观光",
     "Flexible city activity block": "灵活城市活动时段",
     "Recovery-friendly meals": "恢复友好餐食",
@@ -1312,6 +1397,7 @@ const LOCAL_PLANNER_TEXT = {
     "Arrival flight": "Penerbangan kedatangan",
     "Airport transfer to hotel": "Transfer bandara ke hotel",
     "Hotel check-in": "Check-in hotel",
+    "Hotel check-in near international clinic": "Check-in hotel dekat klinik internasional",
     "International desk pre-registration email check": "Cek email pra-registrasi meja internasional",
     "International desk registration and outpatient file setup": "Registrasi meja internasional dan pembuatan berkas rawat jalan",
     "Nurse intake, consent forms, and payment/pre-auth check": "Intake perawat, formulir persetujuan, dan cek pembayaran/pra-otorisasi",
@@ -1326,6 +1412,7 @@ const LOCAL_PLANNER_TEXT = {
     "Hotel check-out": "Check-out hotel",
     "Transfer to airport": "Transfer ke bandara",
     "Return flight": "Penerbangan pulang",
+    "Return flight after medical clearance": "Penerbangan pulang setelah izin medis",
     "Light recovery-friendly sightseeing": "Wisata ringan ramah pemulihan",
     "Flexible city activity block": "Blok aktivitas kota fleksibel",
     "Recovery-friendly meals": "Makanan ramah pemulihan",
@@ -1411,9 +1498,16 @@ function optionForDisplay(option) {
 function localizeLocalPlannerString(value, language = normalizeLanguage(state.language)) {
   const dictionary = LOCAL_PLANNER_TEXT[language] || {};
   if (dictionary[value]) return dictionary[value];
+  const arrivalSetupMatch = value.match(/^Arrival and (.+) setup$/i);
+  if (arrivalSetupMatch) {
+    const city = dictionary[arrivalSetupMatch[1]] || arrivalSetupMatch[1];
+    if (language === "zh-Hans") return `抵达与${city}准备`;
+    if (language === "id") return `Kedatangan dan persiapan ${city}`;
+  }
   const reasonMatch = value.match(/^(.+) (balances international medical service, flight access, and predictable planning|is positioned as the lower-cost candidate while keeping international patient support|supports a compact schedule with manageable transfers and hospital access|is selected for stronger specialist depth and hospital reputation)\. Key strengths: (.+)\.$/);
   if (reasonMatch) {
     const [, city, reason, strengths] = reasonMatch;
+    const translatedCity = dictionary[city] || city;
     const translatedStrengths = strengths
       .split(", ")
       .map((strength) => dictionary[strength] || strength)
@@ -1421,23 +1515,23 @@ function localizeLocalPlannerString(value, language = normalizeLanguage(state.la
     const translatedReasons = {
       "zh-Hans": {
         "balances international medical service, flight access, and predictable planning":
-          `${city} 兼顾国际医疗服务、航班便利和可预期的规划流程`,
+          `${translatedCity} 兼顾国际医疗服务、航班便利和可预期的规划流程`,
         "is positioned as the lower-cost candidate while keeping international patient support":
-          `${city} 是较低费用候选城市，同时保留国际患者支持`,
+          `${translatedCity} 是较低费用候选城市，同时保留国际患者支持`,
         "supports a compact schedule with manageable transfers and hospital access":
-          `${city} 支持紧凑行程，转运和就医交通较易安排`,
+          `${translatedCity} 支持紧凑行程，转运和就医交通较易安排`,
         "is selected for stronger specialist depth and hospital reputation":
-          `${city} 因更强的专科深度和医院声誉而入选`,
+          `${translatedCity} 因更强的专科深度和医院声誉而入选`,
       },
       id: {
         "balances international medical service, flight access, and predictable planning":
-          `${city} menyeimbangkan layanan medis internasional, akses penerbangan, dan perencanaan yang lebih terprediksi`,
+          `${translatedCity} menyeimbangkan layanan medis internasional, akses penerbangan, dan perencanaan yang lebih terprediksi`,
         "is positioned as the lower-cost candidate while keeping international patient support":
-          `${city} diposisikan sebagai kandidat biaya lebih rendah sambil tetap memiliki dukungan pasien internasional`,
+          `${translatedCity} diposisikan sebagai kandidat biaya lebih rendah sambil tetap memiliki dukungan pasien internasional`,
         "supports a compact schedule with manageable transfers and hospital access":
-          `${city} mendukung jadwal ringkas dengan transfer dan akses rumah sakit yang mudah dikelola`,
+          `${translatedCity} mendukung jadwal ringkas dengan transfer dan akses rumah sakit yang mudah dikelola`,
         "is selected for stronger specialist depth and hospital reputation":
-          `${city} dipilih karena kedalaman spesialis dan reputasi rumah sakit yang lebih kuat`,
+          `${translatedCity} dipilih karena kedalaman spesialis dan reputasi rumah sakit yang lebih kuat`,
       },
     };
     if (language === "zh-Hans") return `${translatedReasons[language][reason]}。主要优势：${translatedStrengths}。`;
@@ -1451,6 +1545,12 @@ function localizeLocalPlannerString(value, language = normalizeLanguage(state.la
       return _match;
     }
   );
+}
+
+function localizeTimelineText(value) {
+  if (typeof value !== "string") return value;
+  const language = normalizeLanguage(state.language);
+  return PREVIEW_TEXT[language]?.[value] || localizeLocalPlannerString(value, language);
 }
 
 const COST_CATEGORY_LABELS = {
@@ -2918,11 +3018,11 @@ function renderTimelineDetails(item, option, day) {
   const doctorLine = meaningfulDoctorLine(details) || (!isGenericDoctorText(details.suggested_doctor_specialty) ? details.suggested_doctor_specialty : "");
   const appointmentRoute = [
     details.registration_desk,
-    details.appointment_phone ? `Phone: ${details.appointment_phone}` : "",
+    details.appointment_phone ? `${t("plan.detail.phone")}: ${details.appointment_phone}` : "",
     details.wechat_or_portal_route ? `WeChat/portal: ${details.wechat_or_portal_route}` : "",
   ].filter(Boolean).join(" · ");
   const billingLine = [
-    details.service_billing_status ? `Billing: ${details.service_billing_status.replaceAll("_", " ")}` : "",
+    details.service_billing_status ? `${t("plan.detail.billing")}: ${details.service_billing_status.replaceAll("_", " ")}` : "",
     details.direct_billing_status ? `Direct billing: ${details.direct_billing_status.replaceAll("_", " ")}` : "",
   ].filter(Boolean).join(" · ");
   const nextConfirmation = !isGenericDoctorRequest(details.suggested_doctor_request) ? details.suggested_doctor_request : "";
@@ -2949,32 +3049,32 @@ function renderTimelineDetails(item, option, day) {
       ${structuredRows}
       ${
         appointmentRoute
-          ? timelineDetailRowHtml("support_agent", "Appointment", appointmentRoute)
+          ? timelineDetailRowHtml("support_agent", t("plan.detail.appointment"), appointmentRoute)
           : ""
       }
       ${
         details.registration_email
-          ? `<div class="timeline-detail-row"><span class="material-symbols-outlined">alternate_email</span><b>Email</b><p><a href="${escapeHtml(registrationEmailHref)}">${escapeHtml(details.registration_email)}</a>${escapeHtml(status)}</p></div>`
+          ? `<div class="timeline-detail-row"><span class="material-symbols-outlined">alternate_email</span><b>${escapeHtml(t("plan.detail.email"))}</b><p><a href="${escapeHtml(registrationEmailHref)}">${escapeHtml(details.registration_email)}</a>${escapeHtml(status)}</p></div>`
           : ""
       }
       ${
         doctorLine
-          ? timelineDetailRowHtml("stethoscope", "Care team", doctorLine)
+          ? timelineDetailRowHtml("stethoscope", t("plan.detail.careTeam"), doctorLine)
           : ""
       }
       ${
         billingLine
-          ? timelineDetailRowHtml("receipt_long", "Billing", billingLine)
+          ? timelineDetailRowHtml("receipt_long", t("plan.detail.billing"), billingLine)
           : ""
       }
       ${
         nextConfirmation
-          ? timelineDetailRowHtml("assignment_ind", "Confirm next", nextConfirmation)
+          ? timelineDetailRowHtml("assignment_ind", t("plan.detail.confirmNext"), nextConfirmation)
           : ""
       }
       ${
         details.hospital_steps?.length
-          ? `<div class="timeline-detail-row timeline-detail-steps"><span class="material-symbols-outlined">checklist</span><b>Before you go</b><ul>${details.hospital_steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ul></div>`
+          ? `<div class="timeline-detail-row timeline-detail-steps"><span class="material-symbols-outlined">checklist</span><b>${escapeHtml(t("plan.detail.beforeYouGo"))}</b><ul>${details.hospital_steps.map((step) => `<li>${escapeHtml(localizeTimelineText(step))}</li>`).join("")}</ul></div>`
           : ""
       }
     </div>
@@ -3025,29 +3125,29 @@ function isTechnicalTimelineDetailKey(key) {
 
 function friendlyTimelineDetailLabel(key) {
   const labels = {
-    flight: "Flight",
-    flight_number: "Flight",
-    airline: "Airline",
-    departure_airport: "From",
-    arrival_airport: "To",
-    departure_time: "Departure",
-    arrival_time: "Arrival",
-    hotel: "Hotel",
-    documents: "Documents",
-    claim_documents: "Claim documents",
-    notes: "Notes",
-    note: "Note",
-    cost: "Cost",
-    estimated_cost: "Cost",
-    payment: "Payment",
-    appointment_time: "Appointment time",
-    contact: "Contact",
-    phone: "Phone",
-    address: "Address",
-    contact_lookup_seed_sources: "Source leads",
-    seed_official_sources: "Source leads",
-    source_records: "Source links",
-    contact_source_records: "Contact source records",
+    flight: t("plan.detail.flight"),
+    flight_number: t("plan.detail.flight"),
+    airline: t("plan.detail.airline"),
+    departure_airport: t("plan.detail.from"),
+    arrival_airport: t("plan.detail.to"),
+    departure_time: t("plan.detail.departure"),
+    arrival_time: t("plan.detail.arrival"),
+    hotel: t("plan.detail.hotel"),
+    documents: t("plan.detail.documents"),
+    claim_documents: t("plan.detail.claimDocuments"),
+    notes: t("plan.detail.notes"),
+    note: t("plan.detail.note"),
+    cost: t("plan.detail.cost"),
+    estimated_cost: t("plan.detail.cost"),
+    payment: t("plan.detail.payment"),
+    appointment_time: t("plan.detail.appointmentTime"),
+    contact: t("plan.detail.contact"),
+    phone: t("plan.detail.phone"),
+    address: t("plan.detail.address"),
+    contact_lookup_seed_sources: t("plan.detail.sourceLeads"),
+    seed_official_sources: t("plan.detail.sourceLeads"),
+    source_records: t("plan.detail.sourceLinks"),
+    contact_source_records: t("plan.detail.contactSourceRecords"),
   };
   return labels[key] || humanizeKey(key);
 }
@@ -3060,19 +3160,19 @@ function timelineDetailValueHtml(key, value) {
   if (Array.isArray(parsed)) {
     const items = parsed.map(compactStructuredValue).filter(Boolean);
     if (!items.length) return "";
-    return `<ul class="timeline-detail-mini-list">${items.map((item) => `<li>${flightSearchLinks(item)}</li>`).join("")}</ul>`;
+    return `<ul class="timeline-detail-mini-list">${items.map((item) => `<li>${flightSearchLinks(localizeTimelineText(item))}</li>`).join("")}</ul>`;
   }
   if (isObjectValue(parsed)) {
     const chips = Object.entries(parsed)
       .filter(([nestedKey, nestedValue]) => !isTechnicalTimelineDetailKey(nestedKey) && compactStructuredValue(nestedValue))
       .map(([nestedKey, nestedValue]) => {
         const nestedLabel = friendlyTimelineDetailLabel(nestedKey);
-        const nestedText = isMoneyObject(nestedValue) ? money(nestedValue) : compactStructuredValue(nestedValue);
+        const nestedText = isMoneyObject(nestedValue) ? money(nestedValue) : localizeTimelineText(compactStructuredValue(nestedValue));
         return `<span class="timeline-detail-chip"><b>${escapeHtml(nestedLabel)}</b>${flightSearchLinks(nestedText)}</span>`;
       });
     return chips.length ? `<span class="timeline-detail-chipset">${chips.join("")}</span>` : "";
   }
-  const text = compactStructuredValue(parsed);
+  const text = localizeTimelineText(compactStructuredValue(parsed));
   const sentenceParts = splitTimelineDetailText(text);
   if (sentenceParts.length > 1) {
     return `<ul class="timeline-detail-mini-list">${sentenceParts.map((part) => `<li>${flightSearchLinks(part)}</li>`).join("")}</ul>`;
@@ -3233,14 +3333,14 @@ function timelineItemTitle(item) {
   const value = structuredValue(item?.title || item?.event || item?.name || "Plan item");
   if (isObjectValue(value)) {
     const directTitle = value.title || value.event || value.name || value.activity || value.description || value.summary;
-    if (directTitle && !isObjectValue(structuredValue(directTitle))) return compactStructuredValue(directTitle);
+    if (directTitle && !isObjectValue(structuredValue(directTitle))) return localizeTimelineText(compactStructuredValue(directTitle));
     if (value.flight_number) {
-      return ["Flight", value.flight_number, value.arrival_time ? `arrives ${value.arrival_time}` : ""].filter(Boolean).join(" ");
+      return [t("plan.detail.flight"), value.flight_number, value.arrival_time ? `${t("plan.detail.arrival")} ${value.arrival_time}` : ""].filter(Boolean).join(" ");
     }
-    if (value.appointment_time || value.appointment_phone || value.registration_email) return "Appointment details";
-    return `${humanizeKey(item?.category || "Plan")} details`;
+    if (value.appointment_time || value.appointment_phone || value.registration_email) return t("plan.detail.appointment");
+    return localizeTimelineText(`${humanizeKey(item?.category || "Plan")} details`);
   }
-  return compactStructuredValue(value) || "Plan item";
+  return localizeTimelineText(compactStructuredValue(value)) || "Plan item";
 }
 
 function flightSearchLinks(value) {
@@ -3522,7 +3622,7 @@ function renderTimeline(days, option) {
     .map(
       (day) => `
         <article class="day-card">
-          <h2>${t("plan.day")} ${escapeHtml(day.day)}: ${escapeHtml(compactStructuredValue(day.title) || `${t("plan.day")} ${day.day}`)}</h2>
+          <h2>${t("plan.day")} ${escapeHtml(day.day)}: ${escapeHtml(localizeTimelineText(compactStructuredValue(day.title)) || `${t("plan.day")} ${day.day}`)}</h2>
           <p>${escapeHtml(textDate(day.date))}</p>
           <div class="timeline-list">
             ${(day.items || [])
