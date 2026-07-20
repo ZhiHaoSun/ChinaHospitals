@@ -584,6 +584,14 @@ function normalizeLanguage(language) {
   return SUPPORTED_LANGUAGES.includes(language) ? language : "en";
 }
 
+function localeForLanguage(language = state.language) {
+  return {
+    en: "en",
+    "zh-Hans": "zh-Hans",
+    id: "id",
+  }[normalizeLanguage(language)];
+}
+
 function t(key, vars = {}) {
   const language = normalizeLanguage(state.language);
   let text = UI_TEXT[language]?.[key] || UI_TEXT.en[key] || key;
@@ -608,6 +616,9 @@ function applyTranslations() {
   });
   const languageSelect = document.querySelector("#languageSelect");
   if (languageSelect) languageSelect.value = language;
+  document.querySelectorAll("[data-localized-date]").forEach((element) => {
+    element.textContent = textDate(element.dataset.localizedDate);
+  });
   if (!state.agentProgress.running && !state.agentProgress.completedStepIds?.length && !state.agentProgress.failedStepId) {
     state.agentProgress.statusMessage = t("agent.waiting");
   }
@@ -2204,7 +2215,7 @@ function sessionDate(value) {
   if (!value) return "Unknown";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString(localeForLanguage(), { month: "short", day: "numeric", year: "numeric" });
 }
 
 function renderAuth() {
@@ -2569,7 +2580,12 @@ function isMoneyObject(value) {
 function textDate(value) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString(localeForLanguage(), {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function timeRange(item) {
