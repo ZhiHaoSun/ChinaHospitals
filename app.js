@@ -148,6 +148,7 @@ const UI_TEXT = {
     "plan.detail.billing": "Billing",
     "plan.detail.confirmNext": "Confirm next",
     "plan.detail.beforeYouGo": "Before you go",
+    "plan.detail.details": "Details",
     "plan.detail.flight": "Flight",
     "plan.detail.airline": "Airline",
     "plan.detail.from": "From",
@@ -323,6 +324,7 @@ const UI_TEXT = {
     "plan.detail.billing": "账单",
     "plan.detail.confirmNext": "下一步确认",
     "plan.detail.beforeYouGo": "出发前",
+    "plan.detail.details": "详情",
     "plan.detail.flight": "航班",
     "plan.detail.airline": "航空公司",
     "plan.detail.from": "出发地",
@@ -498,6 +500,7 @@ const UI_TEXT = {
     "plan.detail.billing": "Penagihan",
     "plan.detail.confirmNext": "Konfirmasi berikutnya",
     "plan.detail.beforeYouGo": "Sebelum berangkat",
+    "plan.detail.details": "Detail",
     "plan.detail.flight": "Penerbangan",
     "plan.detail.airline": "Maskapai",
     "plan.detail.from": "Dari",
@@ -3045,7 +3048,12 @@ function renderTimelineDetails(item, option, day) {
   ]);
   const structuredRows = timelineDetailRows(details, consumedKeys);
   return `
-    <div class="timeline-details">
+    <details class="timeline-details">
+      <summary>
+        <span class="material-symbols-outlined" aria-hidden="true">segment</span>
+        <span>${escapeHtml(t("plan.detail.details"))}</span>
+      </summary>
+      <div class="timeline-detail-grid">
       ${structuredRows}
       ${
         appointmentRoute
@@ -3077,7 +3085,8 @@ function renderTimelineDetails(item, option, day) {
           ? `<div class="timeline-detail-row timeline-detail-steps"><span class="material-symbols-outlined">checklist</span><b>${escapeHtml(t("plan.detail.beforeYouGo"))}</b><ul>${details.hospital_steps.map((step) => `<li>${escapeHtml(localizeTimelineText(step))}</li>`).join("")}</ul></div>`
           : ""
       }
-    </div>
+      </div>
+    </details>
   `;
 }
 
@@ -3476,7 +3485,7 @@ function renderCities() {
           </span>
           <h2>${option.city}</h2>
           <div class="hospital-line">
-            <strong><span class="material-symbols-outlined" style="font-size:16px">local_hospital</span> ${option.target_hospital}</strong>
+            <strong><span class="material-symbols-outlined inline-hospital-icon">local_hospital</span> ${option.target_hospital}</strong>
             <span>${option.recommendation_reason || t("compare.internationalEstimate")}</span>
           </div>
           <div class="mini-divider"></div>

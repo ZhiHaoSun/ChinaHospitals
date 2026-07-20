@@ -4,13 +4,28 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MedTour AI Planner</title>
+    <meta
+      name="description"
+      content="Compare China medical travel options, costs, timelines, hospital logistics, and readiness tasks in one planning workspace."
+    />
+    <meta name="theme-color" content="#0f766e" />
+    <meta property="og:title" content="MedTour AI Planner" />
+    <meta
+      property="og:description"
+      content="A calm planning workspace for comparing medical travel options, costs, timelines, and readiness tasks."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Cpath d='M16 7v18M7 16h18' stroke='white' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M10 10h12v12H10z' fill='none' stroke='white' stroke-width='2' opacity='.72'/%3E%3C/svg%3E"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260720-redesign-ui-3" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="top-nav">
       <a class="brand" href="#intake" data-route="intake" aria-label="MedTour AI">
         <span class="material-symbols-outlined brand-icon">medical_services</span>
@@ -43,7 +58,7 @@
       </div>
     </div>
 
-    <main>
+    <main id="main-content">
       <section class="view active" id="view-intake" aria-labelledby="intake-title">
         <div class="center-shell intake-shell">
           <div class="intro-copy">
@@ -441,7 +456,7 @@
                 <div>
                   <div class="item-title-row"><strong>Apply for Medical Visa</strong><span>Action Required</span></div>
                   <p>Required for entry into destination country. Standard processing takes 10-15 days.</p>
-                  <div class="item-footer"><b>Deadline: Oct 15</b><a href="#">Official Portal ↗</a></div>
+                  <div class="item-footer"><b>Deadline: Oct 15</b><span class="text-action disabled">Official Portal</span></div>
                 </div>
               </div>
               <div class="check-item completed">
@@ -460,7 +475,7 @@
                 <div>
                   <div class="item-title-row"><strong>Translate Medical Records</strong><span>In Progress</span></div>
                   <p>Hospital requires translated copies of recent eye examination records.</p>
-                  <div class="item-footer"><b>Priority: Medium</b><a href="#">Upload Docs</a></div>
+                  <div class="item-footer"><b>Priority: Medium</b><span class="text-action disabled">Upload Docs</span></div>
                 </div>
               </div>
 
@@ -470,7 +485,7 @@
                 <div>
                   <div class="item-title-row"><strong>Setup Mobile Payment (Alipay)</strong><span>To Do</span></div>
                   <p>Primary payment method for hospital deposit and daily expenses.</p>
-                  <a href="#">Setup Guide ⓘ</a>
+                  <span class="text-action disabled">Setup Guide</span>
                 </div>
               </div>
             </section>
@@ -485,13 +500,13 @@
         <p>© 2024 MedTour AI. Medical decisions should be made in consultation with a qualified professional.</p>
       </div>
       <nav>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Medical Disclaimer</a>
-        <a href="#">Contact Support</a>
+        <span class="footer-link disabled">Privacy Policy</span>
+        <span class="footer-link disabled">Terms of Service</span>
+        <span class="footer-link disabled">Medical Disclaimer</span>
+        <span class="footer-link disabled">Contact Support</span>
       </nav>
     </footer>
 
-    <script src="app.js?v=20260715-insurance-i18n"></script>
+    <script src="app.js?v=20260720-redesign-ui-3"></script>
   </body>
 </html>

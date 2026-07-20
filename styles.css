@@ -1,23 +1,25 @@
 :root {
-  --background: #f8f9ff;
+  --background: #f6f8f7;
   --surface: #ffffff;
-  --surface-low: #eff4ff;
-  --surface-high: #e5eeff;
-  --surface-highest: #d3e4fe;
-  --text: #0b1c30;
-  --muted: #3e4947;
-  --border: #bdc9c6;
-  --border-soft: #d7e1de;
-  --primary: #005c55;
-  --primary-strong: #006a63;
-  --primary-soft: #d5f6f1;
-  --secondary: #0051d5;
-  --danger: #ba1a1a;
-  --danger-bg: #ffdad6;
-  --warning: #a15600;
-  --warning-bg: #ffdcc3;
+  --surface-low: #eef4f2;
+  --surface-high: #e4ece9;
+  --surface-highest: #d4e2de;
+  --text: #142126;
+  --muted: #52615d;
+  --border: #c7d2ce;
+  --border-soft: #dbe5e1;
+  --primary: #0f766e;
+  --primary-strong: #0b5f59;
+  --primary-soft: #dff5f1;
+  --secondary: #2563eb;
+  --danger: #b42318;
+  --danger-bg: #ffe7e3;
+  --warning: #9a5b12;
+  --warning-bg: #fff0d8;
   --ready: #0f766e;
-  --shadow: 0 1px 2px rgba(11, 28, 48, 0.06);
+  --focus-ring: rgba(37, 99, 235, 0.28);
+  --shadow: 0 1px 2px rgba(20, 33, 38, 0.06);
+  --shadow-hover: 0 14px 34px rgba(20, 33, 38, 0.1);
 }
 
 * {
@@ -30,10 +32,11 @@ html {
 
 body {
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Outfit, "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--background);
   color: var(--text);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 
 button,
@@ -47,6 +50,30 @@ button {
 
 a {
   color: inherit;
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 12px;
+  z-index: 200;
+  transform: translateY(-160%);
+  border-radius: 6px;
+  padding: 9px 12px;
+  background: var(--text);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 180ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+:where(a, button, input, select):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .material-symbols-outlined {
@@ -64,8 +91,9 @@ a {
   gap: 24px;
   min-height: 72px;
   padding: 12px 48px;
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
 }
 
 .brand,
@@ -86,10 +114,12 @@ a {
 
 .brand {
   gap: 8px;
+  flex: 0 0 auto;
   text-decoration: none;
   font-size: 23px;
   font-weight: 800;
   color: var(--primary);
+  white-space: nowrap;
 }
 
 .brand-icon {
@@ -115,6 +145,7 @@ a {
 
 .nav-actions {
   gap: 12px;
+  flex: 0 0 auto;
 }
 
 .ghost {
@@ -134,6 +165,7 @@ a {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--primary);
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 160ms ease;
 }
 
 .primary-button {
@@ -144,10 +176,28 @@ a {
 
 .primary-button:hover {
   background: var(--primary-strong);
+  border-color: var(--primary-strong);
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.16);
+}
+
+.outline-button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.outline-button:active,
+.primary-button:active,
+.chip:active,
+.choice-card:active,
+.plan-city-option:active,
+.ghost-link:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .auth-button {
   max-width: 220px;
+  flex: 0 0 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -382,8 +432,8 @@ a {
 }
 
 .intro-copy {
-  text-align: center;
-  margin-bottom: 34px;
+  text-align: left;
+  margin-bottom: 30px;
 }
 
 .intro-copy h1,
@@ -394,17 +444,22 @@ a {
   font-size: 40px;
   line-height: 1.16;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .intro-copy h1 {
-  font-size: 18px;
-  font-weight: 500;
+  max-width: 680px;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .intro-copy p {
   max-width: 590px;
-  margin: 8px auto 0;
+  margin: 12px 0 0;
   font-size: 16px;
+  color: var(--muted);
+  text-wrap: pretty;
 }
 
 .form-card {
@@ -452,6 +507,12 @@ a {
   justify-content: center;
   gap: 13px;
   padding: 18px;
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 160ms ease;
+}
+
+.choice-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 24px rgba(20, 33, 38, 0.08);
 }
 
 .choice-card .material-symbols-outlined {
@@ -520,6 +581,13 @@ label,
   border-radius: 8px;
   background: var(--surface);
   padding: 0 12px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.input-shell:focus-within {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  background: var(--surface);
 }
 
 .input-shell input {
@@ -560,6 +628,12 @@ label,
   padding: 8px 16px;
   margin: 0 6px 6px 0;
   color: var(--text);
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 160ms ease;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  background: var(--surface-low);
 }
 
 .chip.selected {
@@ -591,6 +665,7 @@ label,
   border-radius: 999px;
   background: var(--surface-highest);
   position: relative;
+  transition: background 200ms ease, box-shadow 200ms ease;
 }
 
 .switch::after {
@@ -603,6 +678,7 @@ label,
   border-radius: 50%;
   background: var(--surface);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transition: transform 200ms ease;
 }
 
 .switch.on {
@@ -610,7 +686,8 @@ label,
 }
 
 .switch.on::after {
-  left: 22px;
+  left: 2px;
+  transform: translateX(20px);
 }
 
 .form-actions {
@@ -624,6 +701,12 @@ label,
   background: transparent;
   color: var(--primary);
   font-weight: 600;
+  transition: color 180ms ease, transform 160ms ease;
+}
+
+.ghost-link:hover {
+  color: var(--primary-strong);
+  text-decoration: underline;
 }
 
 .breadcrumbs {
@@ -816,9 +899,10 @@ label,
 
 .city-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: minmax(320px, 1.18fr) repeat(3, minmax(220px, 0.94fr));
   gap: 16px;
   margin: 34px 0;
+  align-items: stretch;
 }
 
 .status-banner {
@@ -844,19 +928,24 @@ label,
 }
 
 .city-card {
+  display: flex;
+  flex-direction: column;
   border: 2px solid var(--border);
   border-radius: 12px;
   padding: 18px;
   background: transparent;
   cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease, transform 160ms ease;
 }
 
 .city-card:hover,
 .city-card:focus-visible {
   border-color: var(--primary);
-  box-shadow: 0 6px 20px rgba(11, 28, 48, 0.08);
-  outline: 0;
+  box-shadow: var(--shadow-hover);
+}
+
+.city-card:hover {
+  transform: translateY(-2px);
 }
 
 .city-card.selected {
@@ -890,7 +979,22 @@ label,
 }
 
 .hospital-line strong {
+  display: inline-flex;
+  gap: 6px;
+  align-items: flex-start;
   color: var(--text);
+  line-height: 1.35;
+}
+
+.hospital-line > span {
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+
+.inline-hospital-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  font-size: 16px;
 }
 
 .mini-divider {
@@ -944,7 +1048,7 @@ label,
 
 .select-plan {
   width: 100%;
-  margin-top: 20px;
+  margin-top: auto;
 }
 
 .select-plan.selected {
@@ -1111,6 +1215,12 @@ label,
   padding: 12px 18px;
   text-decoration: none;
   font-weight: 700;
+  transition: background 180ms ease, color 180ms ease, transform 160ms ease;
+}
+
+.side-link:hover {
+  background: var(--surface-low);
+  color: var(--primary);
 }
 
 .side-link.active {
@@ -1250,13 +1360,52 @@ label,
 }
 
 .timeline-details {
-  display: grid;
-  gap: 8px;
   margin-top: 12px;
-  padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+}
+
+.timeline-details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+  transition: background 180ms ease;
+}
+
+.timeline-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.timeline-details summary::after {
+  content: "expand_more";
+  margin-left: auto;
+  font-family: "Material Symbols Outlined";
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.timeline-details[open] summary {
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(223, 245, 241, 0.42);
+}
+
+.timeline-details[open] summary::after {
+  content: "expand_less";
+}
+
+.timeline-detail-grid {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
 }
 
 .timeline-detail-row {
@@ -1264,6 +1413,7 @@ label,
   grid-template-columns: 22px minmax(88px, 112px) minmax(0, 1fr);
   gap: 8px;
   align-items: start;
+  min-width: 0;
 }
 
 .timeline-details .material-symbols-outlined {
@@ -1481,6 +1631,12 @@ label,
   border: 0;
   background: var(--surface-low);
   padding: 8px 13px;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.currency-tabs button:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .currency-tabs button.active {
@@ -1683,10 +1839,18 @@ label,
 }
 
 .item-footer a,
-.check-item a {
+.check-item a,
+.text-action {
   color: var(--secondary);
   font-weight: 700;
   text-decoration: none;
+}
+
+.text-action.disabled,
+.footer-link.disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.78;
 }
 
 .footer {
@@ -1718,11 +1882,24 @@ label,
 @media (max-width: 1000px) {
   .top-nav {
     padding: 12px 16px;
+    gap: 12px;
   }
 
   .desktop-only,
   .nav-links {
     display: none;
+  }
+
+  .brand {
+    font-size: 21px;
+  }
+
+  .brand-icon {
+    font-size: 28px;
+  }
+
+  .nav-actions {
+    gap: 8px;
   }
 
   .page-shell {
@@ -1772,12 +1949,30 @@ label,
   .analysis-table .row {
     min-width: 920px;
   }
+
 }
 
 @media (max-width: 560px) {
   .outline-button,
   .primary-button {
     padding: 8px 12px;
+  }
+
+  .top-nav {
+    min-height: 76px;
+  }
+
+  .brand {
+    gap: 6px;
+    font-size: 20px;
+  }
+
+  .brand-icon {
+    font-size: 26px;
+  }
+
+  .auth-button {
+    max-width: none;
   }
 
   .auth-dialog {
@@ -1801,6 +1996,14 @@ label,
 
   .form-card {
     padding: 18px;
+  }
+
+  .intro-copy {
+    text-align: center;
+  }
+
+  .intro-copy p {
+    margin-inline: auto;
   }
 
   .intro-copy h1,
