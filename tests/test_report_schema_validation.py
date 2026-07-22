@@ -11,6 +11,7 @@ from medtour_ai.agents.tools import (
     estimate_trip_costs,
     get_city_cost_profile,
     get_hospital_visit_protocol,
+    get_medical_process_timeline_guidance,
     lookup_china_hospital_contact_guidance,
     search_hotels,
 )
@@ -533,6 +534,39 @@ class ReportSchemaValidationTests(unittest.TestCase):
         self.assertEqual(protocol["service_billing"]["service_billing_status"], "needs_confirmation")
         self.assertGreater(len(protocol["source_records"]), 0)
 
+    def test_medical_process_guidance_routes_to_split_reference_files(self) -> None:
+        eye = get_medical_process_timeline_guidance("eye_surgery", "lasik")
+        implant = get_medical_process_timeline_guidance("dental_care", "single_implant")
+        car_t = get_medical_process_timeline_guidance("car_t_blood_cancer", "car_t_consult")
+        checkup = get_medical_process_timeline_guidance("health_checkup", "executive_screening")
+
+        self.assertEqual(eye["skill_name"], "medical-process-timeline-planner")
+        self.assertEqual(eye["selected_reference_file"], "skills/medical-process-timeline-planner/references/eye-surgery.md")
+        self.assertEqual(implant["selected_reference_file"], "skills/medical-process-timeline-planner/references/tooth-implant.md")
+        self.assertEqual(car_t["selected_reference_file"], "skills/medical-process-timeline-planner/references/car-t.md")
+        self.assertEqual(checkup["selected_reference_file"], "skills/medical-process-timeline-planner/references/premium-medical-check.md")
+
+    def test_local_planner_timeline_preserves_medical_process_skill_reference(self) -> None:
+        raw = LocalPlannerService().generate_report(self.draft, self.request.model_dump())
+        option = raw["city_options"][0]
+        medical_items = [
+            item
+            for day in option["timeline"]
+            for item in day["items"]
+            if item["category"] == "medical"
+        ]
+
+        self.assertEqual(option["medical_process_timeline_guidance"]["skill_name"], "medical-process-timeline-planner")
+        self.assertEqual(
+            option["medical_process_timeline_guidance"]["selected_reference_file"],
+            "skills/medical-process-timeline-planner/references/eye-surgery.md",
+        )
+        self.assertTrue(any(
+            item["details"].get("medical_process_reference_file")
+            == "skills/medical-process-timeline-planner/references/eye-surgery.md"
+            for item in medical_items
+        ))
+
     def test_audit_flags_unverified_service_billing(self) -> None:
         raw = LocalPlannerService().generate_report(self.draft, self.request.model_dump())
         option = raw["city_options"][0]
@@ -541,6 +575,9 @@ class ReportSchemaValidationTests(unittest.TestCase):
 
         self.assertTrue(
             any(check["category"] == "service_billing" for check in audit["checks"])
+        )
+        self.assertTrue(
+            any(check["check_id"] == "medical_process_timeline_skill" for check in audit["checks"])
         )
 
 

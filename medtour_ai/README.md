@@ -33,6 +33,11 @@ The graph uses Google ADK workflow agents:
 - `LlmAgent` for specialized reasoning steps.
 - `LiteLlm(model="openai/...")` so reasoning calls OpenAI through `OPENAI_API_KEY`.
 
+The final `report_synthesis_agent` uses `REPORT_SYNTHESIS_MODEL`, defaulting to
+`openai/gpt-5.1`, while earlier planning agents keep `PLANNER_MODEL`. This
+spends the stronger reasoning model on the last merge, ranking, audit-summary,
+and schema-shaping step.
+
 The audit step checks whether each selected hospital source, flight estimate,
 hotel estimate, medical cost, insurance data, and total-cost calculation is
 reasonable enough for planning. It marks values that still need official or live
@@ -44,6 +49,20 @@ that workflow before trusting a registration email, named contact person,
 appointment phone, WeChat/mini-program route, or international department
 contact. The audit step treats placeholder, general, or unverified contact
 routes as confirmation blockers.
+
+Medical process timelines use the split skill at
+`skills/medical-process-timeline-planner/SKILL.md`. Agents route each medical
+purpose to one focused reference file:
+
+- `references/eye-surgery.md`
+- `references/tooth-implant.md`
+- `references/car-t.md`
+- `references/premium-medical-check.md`
+
+City option and timeline-regeneration agents must use the selected reference
+before setting checkup, treatment, recovery, post-procedure review, return
+travel, urgent-sign, and ask-the-hospital constraints. The audit step flags
+compressed medical timelines that do not preserve this skill reference.
 
 ## Local Setup
 

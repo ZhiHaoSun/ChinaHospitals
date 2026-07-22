@@ -289,6 +289,7 @@ class LocalPlannerService:
             "insurance_policy": insurance,
             "hospital_visit_protocol": hospital_protocol,
             "contact_lookup_guidance": hospital_protocol.get("contact_lookup_guidance"),
+            "medical_process_timeline_guidance": hospital_protocol.get("medical_process_timeline_guidance"),
             "readiness_items": _readiness_items(visa, alipay, insurance),
             "key_risks": _key_risks(visa, medical_rules, insurance),
             "medical_hard_constraints": medical_rules.get("hard_constraints", []),
@@ -495,6 +496,7 @@ def _protocol_details(protocol: dict[str, Any], step_key: str) -> dict[str, Any]
     contact = protocol.get("registration_contact", {})
     doctor = protocol.get("suggested_doctor", {})
     contact_lookup_guidance = protocol.get("contact_lookup_guidance", {})
+    medical_process_guidance = protocol.get("medical_process_timeline_guidance", {})
     service_billing = protocol.get("service_billing", {})
     return {
         "registration_desk": contact.get("desk"),
@@ -510,6 +512,14 @@ def _protocol_details(protocol: dict[str, Any], step_key: str) -> dict[str, Any]
         "contact_lookup_seed_sources": contact_lookup_guidance.get("seed_official_sources", []),
         "contact_lookup_required_fields": contact_lookup_guidance.get("required_output_fields", []),
         "contact_lookup_audit_requirements": contact_lookup_guidance.get("audit_requirements", []),
+        "medical_process_skill": medical_process_guidance.get("skill_name"),
+        "medical_process_skill_path": medical_process_guidance.get("skill_path"),
+        "medical_process_reference_file": medical_process_guidance.get("selected_reference_file"),
+        "medical_process_selected_type": medical_process_guidance.get("selected_medical_type"),
+        "medical_process_baseline_anchors": medical_process_guidance.get("baseline_anchors", []),
+        "medical_process_required_intake": medical_process_guidance.get("required_intake", []),
+        "medical_process_urgent_signs": medical_process_guidance.get("urgent_signs", []),
+        "medical_process_audit_requirements": medical_process_guidance.get("audit_requirements", []),
         "service_billing": service_billing,
         "service_billing_status": service_billing.get("service_billing_status", "needs_confirmation"),
         "direct_billing_status": service_billing.get("direct_billing_status", "unknown"),
@@ -657,6 +667,7 @@ def _audit_summary(options: list[dict[str, Any]]) -> dict[str, Any]:
             "total_cost_math",
             "source_freshness",
             "hospital_contact_lookup_skill",
+            "medical_process_timeline_skill",
         ],
         "required_before_booking": [
             "Verify selected hospital international department and official appointment contact.",

@@ -202,6 +202,155 @@ CHINA_HOSPITAL_CONTACT_LOOKUP_SKILL: dict[str, Any] = {
     ],
 }
 
+MEDICAL_PROCESS_TIMELINE_SKILL: dict[str, Any] = {
+    "skill_name": "medical-process-timeline-planner",
+    "skill_path": "skills/medical-process-timeline-planner/SKILL.md",
+    "purpose": (
+        "Create evidence-based day-by-day medical process timelines for planned "
+        "care, including checkup, treatment, recovery, post-procedure follow-up, "
+        "red flags, and hospital questions."
+    ),
+    "reference_router": {
+        "eye_surgery": "skills/medical-process-timeline-planner/references/eye-surgery.md",
+        "dental_care": "skills/medical-process-timeline-planner/references/tooth-implant.md",
+        "health_checkup": "skills/medical-process-timeline-planner/references/premium-medical-check.md",
+        "car_t_blood_cancer": "skills/medical-process-timeline-planner/references/car-t.md",
+    },
+    "source_authority_ranking": [
+        "treating hospital written protocol, consent form, discharge sheet, or patient pathway",
+        "government or regulator sources such as NEI, FDA, NCI, CDC, USPSTF, NHS, or NICE",
+        "specialty societies such as AAO, AAOMS, AAP, ACP, ACS, ASCO, ASTCT, or EBMT",
+        "peer-reviewed guidelines, systematic reviews, or medically reviewed academic hospital sources",
+    ],
+    "output_requirements": [
+        "Use Day 0 for the surgery, treatment, infusion, or checkup start anchor.",
+        "Separate before-arrival, on-site care, treatment day, recovery, follow-up, and return-travel considerations.",
+        "Mark medical hard constraints as hard_constraint=true.",
+        "Include typical minimum stay, cannot-miss appointments, ask-the-hospital questions, urgent signs, and source basis.",
+        "Do not diagnose, promise eligibility, guarantee outcomes, or replace treating-clinician instructions.",
+    ],
+}
+
+MEDICAL_PROCESS_REFERENCE_DETAILS: dict[str, dict[str, Any]] = {
+    "eye_surgery": {
+        "medical_type": "eye_surgery",
+        "reference_file": MEDICAL_PROCESS_TIMELINE_SKILL["reference_router"]["eye_surgery"],
+        "variants": ["cataract", "lasik", "prk", "smile", "icl", "not_sure"],
+        "baseline_anchors": [
+            "Cataract: pre-op exam and biometry before Day 0; early post-op review usually within 24-48 hours; healing checks through about 8 weeks.",
+            "LASIK/refractive: stop contact lenses before measurements according to lens type; first review within 24-48 hours; follow regular checks for at least 6 months.",
+        ],
+        "trusted_sources": [
+            "National Eye Institute cataract surgery patient information",
+            "FDA LASIK before/during/after expectations",
+            "FDA LASIK surgery checklist",
+            "American Academy of Ophthalmology Preferred Practice Pattern sources when current and accessible",
+        ],
+        "required_intake": [
+            "procedure type and one-eye/both-eye plan",
+            "eye disease history such as glaucoma, retina disease, diabetes, dry eye, or prior surgery",
+            "contact lens type and last date worn for refractive evaluation",
+            "medicine and allergy review, including blood thinners and eye drops",
+            "escort, travel date, and ability to attend early follow-up",
+        ],
+        "urgent_signs": [
+            "vision loss",
+            "severe or worsening pain",
+            "very red eye",
+            "flashes or floaters",
+            "discharge, trauma, or rapidly worsening symptoms",
+        ],
+    },
+    "dental_care": {
+        "medical_type": "tooth_implant",
+        "reference_file": MEDICAL_PROCESS_TIMELINE_SKILL["reference_router"]["dental_care"],
+        "variants": ["single_tooth_implant", "multiple_implants", "full_arch", "bone_graft", "sinus_lift", "not_sure"],
+        "baseline_anchors": [
+            "Consult and imaging before implant placement; early wound check or suture removal commonly around week 1 when sutures are used.",
+            "Osseointegration commonly requires months before final restoration; bone graft or sinus lift can add several months.",
+        ],
+        "trusted_sources": [
+            "AAOMS dental implant patient information",
+            "American Academy of Periodontology sinus augmentation patient information",
+            "American College of Prosthodontists dental implant FAQ and maintenance statements",
+            "Guy's and St Thomas' NHS dental implant patient pathway",
+            "Cleveland Clinic medically reviewed dental implant overview",
+        ],
+        "required_intake": [
+            "which tooth or teeth and whether extraction is needed",
+            "CBCT/X-ray status and whether grafting or sinus lift is needed",
+            "restoration type: crown, bridge, removable overdenture, fixed full arch, immediate temporary, or immediate loading",
+            "smoking, diabetes control, anti-resorptive medicines, anticoagulants, radiation, immunosuppression, and allergies",
+            "number of trips acceptable and ability to return for final restoration",
+        ],
+        "urgent_signs": [
+            "uncontrolled bleeding",
+            "fever or spreading swelling",
+            "pus",
+            "severe pain not improving",
+            "new numbness, implant mobility, or breathing/swallowing difficulty",
+        ],
+    },
+    "health_checkup": {
+        "medical_type": "premium_medical_check",
+        "reference_file": MEDICAL_PROCESS_TIMELINE_SKILL["reference_router"]["health_checkup"],
+        "variants": ["executive_check", "cancer_screening_focus", "cardiometabolic_focus", "longevity", "not_sure"],
+        "baseline_anchors": [
+            "Collect records and goals before arrival; physician intake and risk-based tests on Day 0-1.",
+            "Results review usually Day 2-3; pending pathology or abnormal findings need remote or specialist follow-up.",
+        ],
+        "trusted_sources": [
+            "USPSTF adult preventive recommendations",
+            "USPSTF hypertension and diabetes screening recommendations",
+            "CDC adult immunization schedule",
+            "American Cancer Society cancer screening guidelines",
+        ],
+        "required_intake": [
+            "age, sex at birth, relevant anatomy, pregnancy status, symptoms, and goals",
+            "medical history, medicines, allergies, vaccines, and prior screening dates/results",
+            "family history of early heart disease or cancers",
+            "smoking pack-years, alcohol, exercise, diet, sexual health risks, travel exposure, and work risks",
+            "home doctor or specialist follow-up path for abnormal results",
+        ],
+        "urgent_signs": [
+            "chest pain",
+            "stroke symptoms",
+            "severe shortness of breath",
+            "fainting",
+            "severe abdominal pain, uncontrolled bleeding, suicidal ideation, or any acute severe symptom",
+        ],
+    },
+    "car_t_blood_cancer": {
+        "medical_type": "car_t",
+        "reference_file": MEDICAL_PROCESS_TIMELINE_SKILL["reference_router"]["car_t_blood_cancer"],
+        "variants": ["car_t", "cellular_immunotherapy", "trial_pathway", "not_sure"],
+        "baseline_anchors": [
+            "Eligibility workup and leukapheresis precede manufacturing; manufacturing/bridging commonly takes weeks.",
+            "Lymphodepleting chemotherapy happens shortly before Day 0 infusion; first 28 days after infusion require close monitoring near the CAR-T center.",
+        ],
+        "trusted_sources": [
+            "National Cancer Institute CAR-T overview and T-cell transfer therapy",
+            "UCLH NHS CAR-T patient pathway",
+            "Memorial Sloan Kettering adult CAR-T patient guide",
+            "EBMT/EHA CAR-T Cell Handbook",
+            "product label, trial protocol, and treating CAR-T center instructions",
+        ],
+        "required_intake": [
+            "cancer type, disease status, prior therapies, tumor burden, and urgency",
+            "CAR-T product or trial, target antigen, and treating center pathway",
+            "eligibility workup, infection status, organ function, caregiver, and insurance authorization",
+            "leukapheresis date, product/manufacturing status, bridging therapy, and local-stay rules",
+            "emergency hotline, nearby lodging, language support, and caregiver availability through Day +28",
+        ],
+        "urgent_signs": [
+            "fever or chills",
+            "confusion, trouble speaking or writing, seizure, severe headache, or sudden neurologic change",
+            "breathing trouble, fast heartbeat, dizziness/fainting, or low blood pressure symptoms",
+            "bleeding or severe nausea, vomiting, or diarrhea",
+        ],
+    },
+}
+
 CHINA_HOSPITAL_OFFICIAL_SOURCE_SEEDS: list[dict[str, Any]] = [
     {
         "hospital": "Peking Union Medical College Hospital",
@@ -423,7 +572,51 @@ def retrieve_medical_rules(medical_purpose: str, procedure_subtype: str | None =
         },
     }
     selected = rules.get(medical_purpose, rules["health_checkup"])
-    return {"medical_purpose": medical_purpose, "procedure_subtype": subtype, **selected}
+    process_guidance = get_medical_process_timeline_guidance(medical_purpose, subtype)
+    return {
+        "medical_purpose": medical_purpose,
+        "procedure_subtype": subtype,
+        **selected,
+        "medical_process_timeline_guidance": process_guidance,
+        "medical_process_skill": process_guidance["skill_name"],
+        "medical_process_reference": process_guidance["selected_reference_file"],
+    }
+
+
+def get_medical_process_timeline_guidance(
+    medical_purpose: str,
+    procedure_subtype: str | None = None,
+) -> dict[str, Any]:
+    """Return the split medical-process timeline skill guidance for agent use."""
+
+    purpose = medical_purpose if medical_purpose in MEDICAL_PROCESS_REFERENCE_DETAILS else "health_checkup"
+    subtype = procedure_subtype or "not_sure"
+    detail = MEDICAL_PROCESS_REFERENCE_DETAILS[purpose]
+    return {
+        **MEDICAL_PROCESS_TIMELINE_SKILL,
+        "medical_purpose": medical_purpose,
+        "procedure_subtype": subtype,
+        "selected_medical_type": detail["medical_type"],
+        "selected_reference_file": detail["reference_file"],
+        "procedure_variants": detail["variants"],
+        "baseline_anchors": detail["baseline_anchors"],
+        "trusted_sources": detail["trusted_sources"],
+        "required_intake": detail["required_intake"],
+        "urgent_signs": detail["urgent_signs"],
+        "audit_requirements": [
+            "Confirm the selected_reference_file matches the medical purpose and subtype.",
+            "State hospital protocol overrides generic skill timing.",
+            "Mark medical appointments, treatment, recovery checks, and return-fitness reviews as hard constraints.",
+            "Record source basis, source date when known, assumptions, cannot-miss steps, urgent signs, and ask-the-hospital questions.",
+            "Flag timeline compression that conflicts with the selected procedure reference or treating-center protocol.",
+        ],
+        "metadata": {
+            "source": "skill_file",
+            "source_updated_at": date.today().isoformat(),
+            "confidence_level": "high",
+            "data_status": "workflow_guidance_not_medical_advice",
+        },
+    }
 
 
 def search_hospital_city_candidates(
@@ -619,6 +812,7 @@ def get_hospital_visit_protocol(
         medical_purpose=medical_purpose,
         department_or_service=contact.get("desk"),
     )
+    medical_process_guidance = get_medical_process_timeline_guidance(medical_purpose, procedure_subtype)
     seed_source = (contact_lookup_guidance.get("seed_official_sources") or [{}])[0]
     if seed_source:
         contact = {
@@ -675,6 +869,7 @@ def get_hospital_visit_protocol(
         "procedure_subtype": subtype,
         "registration_contact": contact,
         "contact_lookup_guidance": contact_lookup_guidance,
+        "medical_process_timeline_guidance": medical_process_guidance,
         "service_billing": seed_source.get("service_billing") if seed_source else {
             "service_billing_status": "needs_confirmation",
             "direct_billing_status": "unknown",
@@ -832,6 +1027,7 @@ def audit_city_option_sources_and_costs(option: dict[str, Any]) -> dict[str, Any
     cost_breakdown = option.get("cost_breakdown") or {}
     total_cost = option.get("total_estimated_cost") or {}
     metadata = option.get("metadata") or {}
+    purpose = option.get("medical_purpose")
 
     checks: list[dict[str, Any]] = []
 
@@ -960,6 +1156,40 @@ def audit_city_option_sources_and_costs(option: dict[str, Any]) -> dict[str, Any
             "Confirm billing desk, deposit/payment expectations, direct-settlement eligibility, invoice naming, and claim documents with the official international/VIP service route.",
         )
 
+    medical_process_guidance = (
+        option.get("medical_process_timeline_guidance")
+        or hospital_protocol.get("medical_process_timeline_guidance")
+        or (option.get("medical_rules") or {}).get("medical_process_timeline_guidance")
+        or (option.get("audit_inputs") or {}).get("medical_process_timeline_guidance")
+    )
+    selected_reference_file = (
+        (medical_process_guidance or {}).get("selected_reference_file")
+        or (medical_process_guidance or {}).get("reference_file")
+    )
+    if medical_process_guidance and selected_reference_file:
+        add_check(
+            "medical_process_timeline_skill",
+            "itinerary_consistency",
+            "pass",
+            "Medical process timeline used the split medical-process-timeline-planner skill guidance.",
+            [
+                f"skill={medical_process_guidance.get('skill_name', 'medical-process-timeline-planner')}",
+                f"skill_path={medical_process_guidance.get('skill_path', 'skills/medical-process-timeline-planner/SKILL.md')}",
+                f"reference_file={selected_reference_file}",
+                f"medical_purpose={purpose or 'missing'}",
+            ],
+            "Preserve the selected reference file and source basis in patient-facing timeline notes.",
+        )
+    else:
+        add_check(
+            "medical_process_timeline_skill",
+            "itinerary_consistency",
+            "needs_confirmation",
+            "Medical timeline does not expose the medical-process-timeline-planner split reference guidance.",
+            [f"medical_purpose={purpose or 'missing'}", f"hospital={hospital or 'missing'}"],
+            "Call get_medical_process_timeline_guidance and use the matching reference file before compressing or publishing medical timeline days.",
+        )
+
     expected_flight = {"Shanghai": 520, "Guangzhou": 430, "Beijing": 610, "Shenzhen": 460}.get(city)
     flight_amount = _amount(flight.get("estimated_cost"))
     if flight_amount is None:
@@ -1034,7 +1264,6 @@ def audit_city_option_sources_and_costs(option: dict[str, Any]) -> dict[str, Any
 
     medical_amount = _amount(cost_breakdown.get("medical"))
     medical_range = CITY_MEDICAL_DATA.get(city, {}).get("medical_cost_sgd", {})
-    purpose = option.get("medical_purpose")
     expected_range = medical_range.get(purpose) if purpose else None
     if medical_amount is None:
         add_check(

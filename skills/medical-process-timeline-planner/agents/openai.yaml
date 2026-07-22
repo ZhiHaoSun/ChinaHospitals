@@ -1,0 +1,4 @@
+interface:
+  display_name: "Medical Process Timeline Planner"
+  short_description: "Evidence-based care timelines for medical travel"
+  default_prompt: "Use $medical-process-timeline-planner to draft an evidence-based day-by-day care timeline for a procedure."

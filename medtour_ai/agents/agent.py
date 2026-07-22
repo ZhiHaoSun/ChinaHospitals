@@ -19,6 +19,7 @@ from medtour_ai.agents.tools import (
     get_alipay_international_setup,
     get_hospital_insurance_policy,
     get_hospital_visit_protocol,
+    get_medical_process_timeline_guidance,
     get_today,
     get_visa_entry_guidance,
     lookup_china_hospital_contact_guidance,
@@ -105,6 +106,13 @@ explain why it fits the medical purpose, expected care cycle, service language
 considerations, appointment uncertainty, hospital insurance handling hints, and
 any medical hard constraints.
 
+Call `get_medical_process_timeline_guidance` for the user's medical purpose and
+procedure subtype. Use the returned medical-process-timeline-planner skill path
+and selected split reference file to define expected checkup, treatment,
+recovery, post-procedure follow-up, return-travel, urgent-sign, and
+ask-the-hospital constraints. Include the selected reference path in
+medical_rules and medical_hard_constraints.
+
 When evaluating hospitals in China, prefer the hospital's 国际部, international
 department, International Medical Center, International Medical Services,
 international clinic, VIP clinic, or foreign-patient service desk when one is
@@ -124,7 +132,7 @@ Required JSON keys:
 medical_rules, city_shortlist, medical_hard_constraints, insurance_policy_notes,
 confirmation_requests.
 """,
-    tools=[retrieve_medical_rules, search_hospital_city_candidates],
+    tools=[retrieve_medical_rules, get_medical_process_timeline_guidance, search_hospital_city_candidates],
     output_key="medical_shortlist",
 )
 
@@ -160,6 +168,14 @@ For the selected city, call tools to estimate:
   registration email status, suggested doctor or doctor-assignment request,
   diagnostics, consultation, procedure, billing/deposit confirmation, discharge,
   and claim-document steps
+- medical-process timeline guidance from the medical-process-timeline-planner
+  skill. Call `get_medical_process_timeline_guidance` with the medical purpose
+  and procedure subtype, then use its selected split reference file:
+  eye-surgery.md, tooth-implant.md, car-t.md, or premium-medical-check.md.
+  Timeline medical nodes must preserve details.medical_process_skill,
+  details.medical_process_skill_path, details.medical_process_reference_file,
+  details.medical_process_baseline_anchors, details.medical_process_urgent_signs,
+  and details.medical_process_audit_requirements when available.
 - add insurance premium estimate to cost_breakdown.travel_insurance and include it
   in total_estimated_cost and estimated_net_savings calculations
 
@@ -214,11 +230,19 @@ constraints as hard_constraint=true. Include:
 - local transport
 - light tourism only when medically appropriate
 - return flight
+Use the medical-process-timeline-planner guidance to choose usual days for
+checkup, treatment, recovery, and post-procedure review. Do not compress
+cataract/LASIK, tooth implant, CAR-T, or premium medical check steps below the
+selected reference guidance unless the treating hospital protocol explicitly
+supports it. CAR-T must preserve leukapheresis, manufacturing/bridging,
+lymphodepletion, Day 0 infusion, first 28-day monitoring, caregiver, and
+long-term follow-up constraints.
 Each hospital timeline item must include details.registration_email,
 details.registration_email_status, details.suggested_doctor_name,
 details.suggested_doctor_specialty, details.appointment_phone,
 details.wechat_or_portal_route, details.service_billing_status,
-details.direct_billing_status, and details.hospital_steps when available.
+details.direct_billing_status, details.hospital_steps, and medical-process
+skill details when available.
 Do not invent official emails or doctor names; mark them needs_confirmation if
 not verified.
 
@@ -245,6 +269,7 @@ and next_verification_step.
             get_visa_entry_guidance,
             get_alipay_international_setup,
             lookup_china_hospital_contact_guidance,
+            get_medical_process_timeline_guidance,
             lookup_insurance_provider_policy,
             get_hospital_insurance_policy,
             get_hospital_visit_protocol,
@@ -306,6 +331,11 @@ Audit duties:
 - Check service billing evidence: direct settlement, insurance partners,
   deposit/payment expectations, invoice route, and claim-document requirements.
   Missing billing evidence blocks non-refundable booking.
+- Check whether each medical timeline used the medical-process-timeline-planner
+  split reference guidance, including skill_path, selected_reference_file,
+  source basis, urgent signs, cannot-miss reviews, and ask-the-hospital
+  questions. Missing medical-process reference guidance blocks compressed
+  medical timelines.
 - Flag stale, missing, internally inconsistent, or suspiciously precise data.
 - Require user/advisor confirmation before non-refundable booking whenever
   data is not live or official.
@@ -326,7 +356,7 @@ recommended_followups, confirmation_requests, assumptions.
 
 report_synthesis_agent = LlmAgent(
     name="report_synthesis_agent",
-    model=_model(settings.planner_model),
+    model=_model(settings.report_synthesis_model),
     description="Merges city options into the final comparison report.",
     instruction=f"""
 You are the Orchestrator and Report Synthesis Agent.
@@ -352,6 +382,10 @@ Build a final report for the frontend compare page. Requirements:
   email status, appointment phone, WeChat/portal route, service billing status,
   direct billing status, suggested doctor, specialty, source records, and
   hospital_steps.
+- Preserve medical-process-timeline-planner details from timeline items and
+  option metadata, especially medical_process_skill_path,
+  medical_process_reference_file, medical_process_baseline_anchors,
+  medical_process_urgent_signs, cannot-miss steps, and source basis.
 - Hospital recommendations should prefer the hospital's 国际部 / international
   section or equivalent international patient pathway. Keep that section in
   target_hospital and comparison labels. Do not collapse it back to the parent
@@ -427,6 +461,12 @@ Before refreshing hospital_visit_protocol or changing registration/contact
 details, call `lookup_china_hospital_contact_guidance` and preserve its
 email/contact-person/service-billing acceptance rules in the regenerated
 timeline.
+Before changing medical days, treatment order, recovery windows, follow-up
+reviews, or return-travel timing, call `get_medical_process_timeline_guidance`
+and preserve the selected split reference file from the
+medical-process-timeline-planner skill. Do not shorten CAR-T monitoring, tooth
+implant osseointegration assumptions, LASIK/cataract early reviews, or premium
+check abnormal-result follow-up without a hospital protocol basis.
 Use `get_hospital_visit_protocol` to preserve or refresh detailed in-hospital
 steps. Keep registration email and doctor name honest: include official/verified
 values only when available; otherwise use a doctor-assignment request and
@@ -448,6 +488,7 @@ insurance_policy, audit_notes, confirmation_requests, assumptions.
         estimate_trip_costs,
         get_visa_entry_guidance,
         lookup_china_hospital_contact_guidance,
+        get_medical_process_timeline_guidance,
         lookup_insurance_provider_policy,
         get_hospital_insurance_policy,
         get_hospital_visit_protocol,

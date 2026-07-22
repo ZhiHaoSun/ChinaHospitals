@@ -14,6 +14,7 @@ The project currently has:
 - A deterministic local planner for demos, fallback behavior, and fast UI testing.
 - Pydantic schema enforcement and normalization for generated report outputs.
 - Embedded hospital-contact lookup guidance for China hospital international departments.
+- Embedded medical-process timeline guidance split by eye surgery, tooth implant, CAR-T, and premium medical check.
 - City-specific travel and cost estimates for Shanghai, Guangzhou, Beijing, and Shenzhen.
 
 ## Current Progress
@@ -33,6 +34,7 @@ The prototype supports the main product journey end to end:
 The deployed Vercel interface has been hardened for serverless behavior. Since Vercel Python functions do not guarantee durable in-memory state across requests, the frontend can now render a selected plan from the generated browser-side report snapshot when a later report lookup is unavailable. This keeps **View Timeline** and plan inspection usable on the deployed site.
 
 The multi-agent system is currently working. It includes staged progress for profile normalization, medical rules, parallel city planning, hospital contact lookup, travel and budget estimation, insurance review, timeline construction, source/cost audit, and report synthesis.
+Timeline construction now uses the `medical-process-timeline-planner` skill and its split reference files so procedure-specific checkup, treatment, recovery, and follow-up constraints stay auditable.
 
 ## Hackathon Positioning
 
@@ -89,7 +91,7 @@ They contributed heavily to:
 
 This AI-assisted development process remained human-directed: product decisions, implementation choices, generated code, and medical-travel guidance were reviewed and tested before being incorporated. Codex & GPT-5.6 accelerated iteration while the repository's schemas, validation, fallbacks, and audit signals provided the engineering guardrails needed for a high-stakes planning domain.
 
-The application's runtime AI is separate and configurable. The multi-agent planner calls OpenAI models through Google ADK and LiteLLM using `LLM_MODEL` and `PLANNER_MODEL`, so deployments can select suitable models without changing the application architecture.
+The application's runtime AI is separate and configurable. The multi-agent planner calls OpenAI models through Google ADK and LiteLLM using `LLM_MODEL`, `PLANNER_MODEL`, and `REPORT_SYNTHESIS_MODEL`, so deployments can select suitable models without changing the application architecture.
 
 ## Tech Stack
 
@@ -134,6 +136,7 @@ The ADK path uses:
 - Google ADK workflow agents
 - LiteLLM
 - Configurable OpenAI models via `OPENAI_API_KEY`, `LLM_MODEL`, and `PLANNER_MODEL`
+- `REPORT_SYNTHESIS_MODEL` defaults to `openai/gpt-5.1` for the final report merge/ranking step.
 - `orjson`, required by the LiteLLM/OpenAI runtime stack in this project environment.
 
 If the ADK/OpenAI path fails in a deployed environment, the API can fall back to the local deterministic planner and attach fallback metadata/disclaimers to the report.
